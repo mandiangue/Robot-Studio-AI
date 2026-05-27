@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-27T16:17:38.336147" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779891439520 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779891439520_1\tests\suite_S1779891439520_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-27T16:17:38.670839" level="INFO">Opening browser 'chrome' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:17:38.670436" elapsed="17.151721"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="14">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-27T16:17:55.823268" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:17:55.823057" elapsed="0.388972"/>
+</kw>
+<kw name="Given Login With Valid Credentials" owner="keywords">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:56.212894" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:17:56.212748" elapsed="0.947921"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:57.161728" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${INPUT_USER}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:17:57.161313" elapsed="0.110908"/>
+</kw>
+<arg>${USERNAME}</arg>
+<status status="PASS" start="2026-05-27T16:17:57.160942" elapsed="0.111570"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:57.273408" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${INPUT_PASS}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:17:57.273153" elapsed="0.090949"/>
+</kw>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-05-27T16:17:57.272760" elapsed="0.091485"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:57.364948" level="INFO">Clicking button 'css=button[type='submit']'.</msg>
+<arg>${BTN_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:17:57.364729" elapsed="0.095358"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:17:57.364447" elapsed="0.095775"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:17:56.212419" elapsed="1.247873"/>
+</kw>
+<kw name="Then Check Successful Login" owner="keywords">
+<kw name="Verify Successful Login" owner="main_page">
+<kw name="Location Should Be" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:58.683656" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2147.png"&gt;&lt;img src="selenium-screenshot-2147.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg time="2026-05-27T16:17:58.683872" level="FAIL">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${SECURE_URL}</arg>
+<doc>Verifies that the current URL is exactly ``url``.</doc>
+<status status="FAIL" start="2026-05-27T16:17:57.461117" elapsed="1.226690">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</kw>
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<arg>${MSG_FLASH}</arg>
+<arg>${SUCCESS_LOGIN}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" start="2026-05-27T16:17:58.688020" elapsed="0.000043"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:17:57.460863" elapsed="1.227352">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</kw>
+<status status="FAIL" start="2026-05-27T16:17:57.460513" elapsed="1.227818">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-27T16:17:59.063261" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2148.png"&gt;&lt;img src="selenium-screenshot-2148.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-27T16:17:58.691395" elapsed="0.372009"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:17:55.822422" elapsed="3.241079">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Wrong Password" line="18">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-27T16:17:59.064371" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:17:59.064214" elapsed="0.141080"/>
+</kw>
+<kw name="Given Login With Wrong Password" owner="keywords">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:59.206046" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:17:59.205890" elapsed="0.312141"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:59.518905" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${INPUT_USER}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:17:59.518672" elapsed="0.083396"/>
+</kw>
+<arg>${USERNAME}</arg>
+<status status="PASS" start="2026-05-27T16:17:59.518276" elapsed="0.083933"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:59.602995" level="INFO">Typing text 'WrongPassword123' into text field 'id=password'.</msg>
+<arg>${INPUT_PASS}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:17:59.602751" elapsed="0.084281"/>
+</kw>
+<arg>${WRONG_PASS}</arg>
+<status status="PASS" start="2026-05-27T16:17:59.602411" elapsed="0.084753"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:17:59.687839" level="INFO">Clicking button 'css=button[type='submit']'.</msg>
+<arg>${BTN_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:17:59.687627" elapsed="0.080887"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:17:59.687352" elapsed="0.081497"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:17:59.205592" elapsed="0.563336"/>
+</kw>
+<kw name="Then Check Invalid Password Error" owner="keywords">
+<kw name="Verify Invalid Password Error" owner="main_page">
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:00.391859" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2149.png"&gt;&lt;img src="selenium-screenshot-2149.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg time="2026-05-27T16:18:00.392059" level="FAIL">Element with locator 'id=flash' not found.</msg>
+<arg>${MSG_FLASH}</arg>
+<arg>${ERROR_PASS}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="FAIL" start="2026-05-27T16:17:59.769680" elapsed="0.628549">Element with locator 'id=flash' not found.</status>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<arg>${MSG_FLASH}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-05-27T16:18:00.398443" elapsed="0.000044"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:17:59.769448" elapsed="0.629165">Element with locator 'id=flash' not found.</status>
+</kw>
+<status status="FAIL" start="2026-05-27T16:17:59.769141" elapsed="0.629575">Element with locator 'id=flash' not found.</status>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-27T16:18:00.735655" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2150.png"&gt;&lt;img src="selenium-screenshot-2150.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-27T16:18:00.398958" elapsed="0.336817"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:17:59.063818" elapsed="1.672051">Element with locator 'id=flash' not found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Wrong Username" line="22">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-27T16:18:00.736752" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:18:00.736585" elapsed="0.147012"/>
+</kw>
+<kw name="Given Login With Wrong Username" owner="keywords">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:00.884599" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:18:00.884396" elapsed="0.153533"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:01.039344" level="INFO">Typing text 'wronguser' into text field 'id=username'.</msg>
+<arg>${INPUT_USER}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:18:01.039060" elapsed="0.098786"/>
+</kw>
+<arg>${WRONG_USER}</arg>
+<status status="PASS" start="2026-05-27T16:18:01.038301" elapsed="0.099684"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:01.138791" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${INPUT_PASS}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:18:01.138552" elapsed="0.087366"/>
+</kw>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-05-27T16:18:01.138184" elapsed="0.088000"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:01.227179" level="INFO">Clicking button 'css=button[type='submit']'.</msg>
+<arg>${BTN_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:18:01.226936" elapsed="0.076256"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:18:01.226584" elapsed="0.076743"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:18:00.883959" elapsed="0.419438"/>
+</kw>
+<kw name="Then Check Invalid Username Error" owner="keywords">
+<kw name="Verify Invalid Username Error" owner="main_page">
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:02.114387" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2151.png"&gt;&lt;img src="selenium-screenshot-2151.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg time="2026-05-27T16:18:02.114909" level="FAIL">Element with locator 'id=flash' not found.</msg>
+<arg>${MSG_FLASH}</arg>
+<arg>${ERROR_USER}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="FAIL" start="2026-05-27T16:18:01.304136" elapsed="0.831140">Element with locator 'id=flash' not found.</status>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<arg>${MSG_FLASH}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-05-27T16:18:02.135969" elapsed="0.000155"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:18:01.303907" elapsed="0.832676">Element with locator 'id=flash' not found.</status>
+</kw>
+<status status="FAIL" start="2026-05-27T16:18:01.303605" elapsed="0.833391">Element with locator 'id=flash' not found.</status>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-27T16:18:02.501742" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2152.png"&gt;&lt;img src="selenium-screenshot-2152.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-27T16:18:02.137875" elapsed="0.363984"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:18:00.736198" elapsed="1.765747">Element with locator 'id=flash' not found.</status>
+</test>
+<test id="s1-t4" name="TC_004 — Logout After Successful Login" line="26">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-27T16:18:02.502796" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:18:02.502629" elapsed="0.236225"/>
+</kw>
+<kw name="Given Login With Valid Credentials" owner="keywords">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:02.740532" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-27T16:18:02.740169" elapsed="0.272073"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:03.013245" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${INPUT_USER}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:18:03.012978" elapsed="0.083480"/>
+</kw>
+<arg>${USERNAME}</arg>
+<status status="PASS" start="2026-05-27T16:18:03.012582" elapsed="0.084014"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:03.097354" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${INPUT_PASS}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:18:03.097119" elapsed="0.092725"/>
+</kw>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-05-27T16:18:03.096796" elapsed="0.093309"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:03.190973" level="INFO">Clicking button 'css=button[type='submit']'.</msg>
+<arg>${BTN_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-27T16:18:03.190598" elapsed="0.078936"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:18:03.190312" elapsed="0.079357"/>
+</kw>
+<status status="PASS" start="2026-05-27T16:18:02.739212" elapsed="0.530529"/>
+</kw>
+<kw name="And Check Successful Login" owner="keywords">
+<kw name="Verify Successful Login" owner="main_page">
+<kw name="Location Should Be" owner="SeleniumLibrary">
+<msg time="2026-05-27T16:18:03.690539" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2153.png"&gt;&lt;img src="selenium-screenshot-2153.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg time="2026-05-27T16:18:03.690708" level="FAIL">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${SECURE_URL}</arg>
+<doc>Verifies that the current URL is exactly ``url``.</doc>
+<status status="FAIL" start="2026-05-27T16:18:03.270479" elapsed="0.423803">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</kw>
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<arg>${MSG_FLASH}</arg>
+<arg>${SUCCESS_LOGIN}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" start="2026-05-27T16:18:03.694504" elapsed="0.000042"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:18:03.270252" elapsed="0.424431">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</kw>
+<status status="FAIL" start="2026-05-27T16:18:03.269948" elapsed="0.424842">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</kw>
+<kw name="When Logout From Secure Area" owner="keywords">
+<status status="NOT RUN" start="2026-05-27T16:18:03.694984" elapsed="0.000042"/>
+</kw>
+<kw name="Then Check Successful Logout" owner="keywords">
+<status status="NOT RUN" start="2026-05-27T16:18:03.695185" elapsed="0.000045"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-27T16:18:04.015786" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2154.png"&gt;&lt;img src="selenium-screenshot-2154.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-27T16:18:03.695451" elapsed="0.320476"/>
+</kw>
+<status status="FAIL" start="2026-05-27T16:18:02.502232" elapsed="1.513791">Location should have been 'https://the-internet.herokuapp.com/secure' but was 'https://the-internet.herokuapp.com/login'.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-27T16:18:04.016729" elapsed="6.348090"/>
+</kw>
+<doc>Tests Login — The Internet Herokuapp</doc>
+<status status="FAIL" start="2026-05-27T16:17:38.338408" elapsed="32.026561"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779891439520 1" id="s1" pass="0" fail="4" skip="0">suite S1779891439520 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-27T16:17:38.659759" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779891439520_1\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-27T16:17:38.659895" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779891439520_1\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-27T16:17:38.659960" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779891439520_1\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-27T16:17:38.665614" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779891439520_1\resources\pages\main_page.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-27T16:17:38.665698" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779891439520_1\resources\pages\main_page.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

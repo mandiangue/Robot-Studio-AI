@@ -99,7 +99,11 @@ const LS = {
                 if (card.type === 'suite-report') {
                   setTimeout(() => renderConsolidatedSuiteReport(card), 0);
                 } else if (card.type === 'report') {
-                  setTimeout(() => renderReportCard(card.data), 0);
+                  // Évite le doublon : pas de re-render si isSuite (déjà rendu via suite-report)
+                  // et pas de re-render si déjà dans le DOM
+                  if (!card.data?.isSuite && !document.getElementById('reportCard-' + card.data?.runNumber)) {
+                    setTimeout(() => renderReportCard(card.data), 0);
+                  }
                 } else if (card.type === 'multi' || card.files?.[0]) {
                   const files = (card.files||[]).map(f => ({
                     ...f,
@@ -3606,8 +3610,9 @@ function openTestReport(data, suiteCtx) {
     data.suiteTests = suiteCtx.tests;
   }
 
-  data.runNumber = _reportHistory.length + 1;
-  data.runDate   = new Date().toLocaleString('fr-FR');
+  // runNumber = timestamp unique pour éviter les collisions au reload
+  data.runNumber = data.runNumber || Date.now();
+  data.runDate   = data.runDate || new Date().toLocaleString('fr-FR');
   // runType comes from server results or _lastRunType
   if (!data.runType) data.runType = window._lastRunType || 'web';
   // Save environment string for dashboard detection
@@ -3668,7 +3673,7 @@ try {
   if (saved) _reportHistory = JSON.parse(saved);
 } catch(e) {}
 
-function renderReportCard(data) {
+function renderReportCard(data, suiteCardId) {
   // Each run gets its own card — don't remove previous ones
 
   const reportHtml = buildInlineReport(data);
@@ -3676,8 +3681,10 @@ function renderReportCard(data) {
   const blobUrl = URL.createObjectURL(blob);
   const date    = new Date().toISOString().slice(0,10);
 
-  const runNum = data.runNumber || _reportHistory.length || 1;
-  const cardId = 'reportCard-' + runNum + '-' + Date.now();
+  const runNum = data.runNumber || Date.now();
+  data.runNumber = runNum; // ensure runNumber is always set
+  // cardId stable basé uniquement sur runNumber — même rapport = même cardId
+  const cardId = 'reportCard-' + runNum;
   const div = document.createElement('div');
   div.className = 'msg agent';
   div.id = cardId;
@@ -3750,9 +3757,17 @@ function renderReportCard(data) {
       : lastCode.includes('RequestsLibrary') ? 'api'
       : lastCode.includes('DatabaseLibrary') ? 'database' : 'web');
   }
-  window._codeCards = window._codeCards.filter(c => !(c.type === 'report' && c.data?.runNumber === data.runNumber));
-  window._codeCards.push({ type: 'report', data: JSON.parse(JSON.stringify(data)) });
-  try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+  // Déduplique par runNumber — un seul rapport par run
+  window._codeCards = (window._codeCards||[]).filter(c =>
+    !(c.type === 'report' && (c.cardId === cardId || c.data?.runNumber === runNum))
+  );
+  const reportEntry = { type: 'report', cardId, suiteCardId: suiteCardId||null, data: JSON.parse(JSON.stringify(data)) };
+  window._codeCards.push(reportEntry);
+  // Si c'est un rapport de suite, ne pas sauvegarder maintenant —
+  // renderConsolidatedSuiteReport_inline appellera saveCodeCards() après avoir pushé le suite-report
+  if (!suiteCardId) {
+    try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+  }
   updateStatsBar();
 }
 
@@ -6327,36 +6342,48 @@ function deleteReportCard(cardId, runNum) {
   showConfirmDialog('🗑 Supprimer le rapport', 'Supprimer le rapport <b>RUN #' + runNum + '</b> ?', () => {
     // Remove from DOM
     document.getElementById(cardId)?.remove();
-    // Remove from _codeCards
-    window._codeCards = (window._codeCards||[]).filter(c =>
-      !(c.type === 'report' && c.data?.runNumber === runNum)
-    );
+    // Remove from _codeCards — filter by cardId (reliable) AND runNum (fallback)
+    window._codeCards = (window._codeCards||[]).filter(c => {
+      if (c.cardId === cardId) return false;
+      if (c.cardId === 'suite-report-' + runNum) return false;
+      return true;
+    });
     // Remove from _reportHistory
     _reportHistory = (_reportHistory||[]).filter(r => r.runNumber !== runNum);
-    // Persist
-    try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+    // Persiste
+    try {
+      localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards));
+      localStorage.setItem('qa_run_history', JSON.stringify(_reportHistory));
+    } catch(e) {}
+    updateStatsBar();
     showToast('🗑 Rapport supprimé');
   });
 }
 
 // ── Render consolidated suite report (restore from localStorage) ─────────────
 function renderConsolidatedSuiteReport(card) {
-  // Build a merged data object similar to renderConsolidatedSuiteReport_inline
+  // Use saved data directly if available (preserves real TC names)
+  if (card.data) {
+    renderReportCard(card.data);
+    return;
+  }
+  // Fallback: rebuild from blocs
   const suiteTitle = card.suiteTitle || 'Suite';
+  const tests = card.tests || (card.blocs||[]).flatMap(b =>
+    Array.from({length: b.total||0}, (_, i) => ({
+      name: b.name ? b.name + ' TC_' + String(i+1).padStart(3,'0') : 'TC_' + String(i+1).padStart(3,'0'),
+      status: i < (b.passed||0) ? 'PASS' : 'FAIL',
+      duration: 0,
+      tags: []
+    }))
+  );
   const merged = {
     status:      (card.failed||0) === 0 ? 'PASS' : 'FAIL',
     total:       card.total   || 0,
     passed:      card.passed  || 0,
     failed:      card.failed  || 0,
     duration:    (card.blocs||[]).reduce((s,b) => s+(b.duration||0), 0),
-    tests:       (card.blocs||[]).flatMap(b =>
-      Array.from({length: b.total||0}, (_, i) => ({
-        name: 'TC_' + String(i+1).padStart(3,'0'),
-        status: i < (b.passed||0) ? 'PASS' : 'FAIL',
-        duration: 0,
-        tags: []
-      }))
-    ),
+    tests,
     runType:     'suite',
     environment: 'RoboTest·AI — Robot Framework',
     reportTitle: 'Rapport de Tests Automatisés',
@@ -6370,9 +6397,26 @@ function renderConsolidatedSuiteReport(card) {
 
 function deleteConsolidatedReport(cardId) {
   showConfirmDialog('🗑 Supprimer le rapport', 'Supprimer ce rapport de suite ?', () => {
+    // Remove from DOM — le rapport suite est rendu via renderReportCard avec un cardId différent
     document.getElementById(cardId)?.remove();
-    window._codeCards = (window._codeCards||[]).filter(c => c.cardId !== cardId);
-    saveCodeCards();
+    // Cherche aussi le reportCard associé dans le DOM (reportCard-XXX)
+    document.querySelectorAll('[id^="reportCard-"]').forEach(el => {
+      // Supprime les reportCards créés depuis ce suite-report
+      if (el.dataset.suiteCardId === cardId) el.remove();
+    });
+    // Supprime de _codeCards : le suite-report ET le report lié
+    window._codeCards = (window._codeCards||[]).filter(c => {
+      if (c.cardId === cardId) return false;
+      if (c.suiteCardId === cardId) return false;
+      return true;
+    });
+    // Supprime aussi le reportCard du DOM (dataset.suiteCardId en JS = data-suite-card-id en HTML)
+    document.querySelectorAll('[id^="reportCard-"]').forEach(el => {
+      if (el.dataset.suiteCardId === cardId) el.remove();
+    });
+    // Persiste directement sans passer par saveCodeCards (évite reset des stats)
+    try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+    updateStatsBar();
     showToast('🗑 Rapport supprimé');
   });
 }
@@ -6408,7 +6452,7 @@ function renderConsolidatedSuiteReport_inline() {
   };
 
   // Use the exact same renderReportCard as individual reports
-  renderReportCard(merged);
+  renderReportCard(merged, 'suite-report-' + merged.runNumber);
 
   // Persist
   window._codeCards = window._codeCards || [];
@@ -6418,6 +6462,8 @@ function renderConsolidatedSuiteReport_inline() {
     total: merged.total, passed: merged.passed, failed: merged.failed,
     rate: merged.total > 0 ? Math.round(merged.passed/merged.total*100) : 0,
     blocs: suiteReports.map((r,i) => ({idx:i+1,name:r.suiteName||'',total:r.total||0,passed:r.passed||0,failed:r.failed||0,duration:r.duration||0})),
+    tests: merged.tests,
+    data: merged,
     createdAt: new Date().toISOString()
   });
   saveCodeCards();
@@ -6501,9 +6547,14 @@ function onProviderChange(provider) {
   // Update placeholder
   const key = document.getElementById('apiKey');
   if (key) key.placeholder = PROVIDER_PLACEHOLDER[provider] || 'Clé API...';
-  // Clear stored key when switching provider
-  document.getElementById('keyStatus').textContent = '⬤ no key';
-  document.getElementById('keyStatus').classList.remove('ok');
+  // Remet le statut seulement si pas de clé déjà saisie
+  const existingKey = document.getElementById('apiKey')?.value || '';
+  if (!existingKey) {
+    document.getElementById('keyStatus').textContent = '⬤ no key';
+    document.getElementById('keyStatus').classList.remove('ok');
+  } else {
+    updateKeyStatus(existingKey);
+  }
 }
 
 function getCurrentProvider() {
@@ -6600,27 +6651,28 @@ function updateStatsBar() {
   try {
     const allCards = window._codeCards || [];
 
-    // 1. Cas de tests — depuis TC_STORE (en mémoire) ou depuis les rapports (après reload)
+    // 1. Cas de tests — depuis TC_STORE (en mémoire)
     const tcFromStore = Object.values(window.TC_STORE||{}).reduce((s,v) => {
       return s + (v?.pages
         ? v.pages.reduce((ps, p) => ps + (p.cases?.length||0), 0)
         : (v?.cases?.length||0));
     }, 0);
-    const simpleReports = allCards.filter(c => c.type === 'report' && c.data && !c.data.isSuite);
-    // Fallback: si TC_STORE vide (après reload), utilise le total du dernier rapport
-    const lastReport = simpleReports[simpleReports.length - 1];
-    const tcCount = tcFromStore > 0 ? tcFromStore : (lastReport?.data?.total || 0);
+    // Fallback après reload : cumul de TOUS les rapports
+    const allReports = allCards.filter(c => c.type === 'report' && c.data);
+    const tcFallback = allReports.reduce((s,c) => s + (c.data?.total||0), 0);
+    const tcCount = tcFromStore > 0 ? tcFromStore : tcFallback;
 
-    // 2. Tests RF lancés — nombre de runs (1 rapport = 1 run)
+    // 2. Tests RF lancés — rapports simples uniquement (hors suites)
+    const simpleReports = allCards.filter(c => c.type === 'report' && c.data && !c.data.isSuite);
     const runsCount = simpleReports.length;
 
-    // 3. Réussis / Échoués / Taux — cumul des résultats
-    const passed = simpleReports.reduce((s,c) => s + (c.data?.passed||0), 0);
-    const failed = simpleReports.reduce((s,c) => s + (c.data?.failed||0), 0);
-    const total  = simpleReports.reduce((s,c) => s + (c.data?.total ||0), 0);
+    // 3. Réussis / Échoués / Taux — tous les rapports (simples + suites)
+    const passed = allReports.reduce((s,c) => s + (c.data?.passed||0), 0);
+    const failed = allReports.reduce((s,c) => s + (c.data?.failed||0), 0);
+    const total  = allReports.reduce((s,c) => s + (c.data?.total ||0), 0);
     const rate   = total > 0 ? Math.round(passed/total*100) : 0;
 
-    // 4. Suites lancées — rapports de suite
+    // 4. Suites lancées
     const suiteReports = allCards.filter(c => c.type === 'suite-report');
     const suites = new Set(suiteReports.map(c => c.suiteTitle || c.cardId)).size;
 
@@ -6634,7 +6686,6 @@ function updateStatsBar() {
     set('statFailed',    failed);
     set('statRate',      rate, '%');
     set('statSuites',    suites);
-
     try { localStorage.setItem('qa_stats', JSON.stringify({tcCount, total: runsCount, passed, failed, rate, suites})); } catch(e) {}
   } catch(e) { console.error('updateStatsBar error:', e); }
 }
