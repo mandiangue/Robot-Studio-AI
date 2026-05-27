@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T15:08:54.718836" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779455328298 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_1\suite_S1779455328298_1.robot">
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="27">
+<kw name="When User Enters Valid Credentials">
+<msg time="2026-05-22T15:08:54.956782" level="FAIL">No keyword with name 'When User Enters Valid Credentials' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:54.956723" elapsed="0.000124">No keyword with name 'When User Enters Valid Credentials' found.</status>
+</kw>
+<kw name="Then User Should Be Redirected To Secure Area">
+<status status="NOT RUN" start="2026-05-22T15:08:54.957051" elapsed="0.000030"/>
+</kw>
+<kw name="And User Should See Success Message">
+<status status="NOT RUN" start="2026-05-22T15:08:54.957192" elapsed="0.000021"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:54.958038" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:54.958003" elapsed="0.000077">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:54.955398" elapsed="0.002749">No keyword with name 'When User Enters Valid Credentials' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Failed Login With Invalid Password" line="34">
+<kw name="When User Enters Valid Username And Invalid Password">
+<msg time="2026-05-22T15:08:54.959165" level="FAIL">No keyword with name 'When User Enters Valid Username And Invalid Password' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:54.959133" elapsed="0.000072">No keyword with name 'When User Enters Valid Username And Invalid Password' found.</status>
+</kw>
+<kw name="Then User Should Remain On Login Page">
+<status status="NOT RUN" start="2026-05-22T15:08:54.959330" elapsed="0.000021"/>
+</kw>
+<kw name="And User Should See Invalid Password Error Message">
+<status status="NOT RUN" start="2026-05-22T15:08:54.959447" elapsed="0.000018"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:54.960223" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:54.960192" elapsed="0.000065">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:54.958421" elapsed="0.001888">No keyword with name 'When User Enters Valid Username And Invalid Password' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Login With Invalid Username" line="41">
+<kw name="When User Enters Invalid Username And Valid Password">
+<msg time="2026-05-22T15:08:54.961269" level="FAIL">No keyword with name 'When User Enters Invalid Username And Valid Password' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:54.961240" elapsed="0.000065">No keyword with name 'When User Enters Invalid Username And Valid Password' found.</status>
+</kw>
+<kw name="Then User Should Remain On Login Page">
+<status status="NOT RUN" start="2026-05-22T15:08:54.961468" elapsed="0.000022"/>
+</kw>
+<kw name="And User Should See Invalid Username Error Message">
+<status status="NOT RUN" start="2026-05-22T15:08:54.961591" elapsed="0.000019"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:54.962334" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:54.962305" elapsed="0.000064">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:54.960570" elapsed="0.001845">No keyword with name 'When User Enters Invalid Username And Valid Password' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<status status="FAIL" start="2026-05-22T15:08:54.721175" elapsed="0.241649"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779455328298 1" id="s1" pass="0" fail="3" skip="0">suite S1779455328298 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T15:08:54.721640" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_1\suite_S1779455328298_1.robot' on line 19: Setting variable 'Suite Setup' failed: Invalid variable name 'Suite Setup'.</msg>
+<msg time="2026-05-22T15:08:54.722081" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_1\suite_S1779455328298_1.robot' on line 20: Setting variable 'Suite Teardown' failed: Invalid variable name 'Suite Teardown'.</msg>
+<msg time="2026-05-22T15:08:54.722148" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_1\suite_S1779455328298_1.robot' on line 21: Setting variable 'Documentation' failed: Invalid variable name 'Documentation'.</msg>
+<msg time="2026-05-22T15:08:54.722198" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_1\suite_S1779455328298_1.robot' on line 22: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-05-22T15:08:54.722245" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_1\suite_S1779455328298_1.robot' on line 24: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>

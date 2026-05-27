@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T15:24:06.331354" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779456233379 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779456233379_1\tests\suite_S1779456233379_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-22T15:24:06.671055" level="FAIL">Variable '${BASE_URL}' not found.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="FAIL" start="2026-05-22T15:24:06.670412" elapsed="0.000725">Variable '${BASE_URL}' not found.</status>
+</kw>
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="12">
+<doc>Verify that user can login with valid credentials 'tomsmith' and 'SuperSecretPassword!' on login page</doc>
+<status status="FAIL" start="2026-05-22T15:24:06.671341" elapsed="0.000573">Parent suite setup failed:
+Variable '${BASE_URL}' not found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Login Attempt With Invalid Password" line="19">
+<doc>Verify that login fails when entering username 'tomsmith' with incorrect password 'WrongPassword'</doc>
+<status status="FAIL" start="2026-05-22T15:24:06.672214" elapsed="0.000500">Parent suite setup failed:
+Variable '${BASE_URL}' not found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Login Attempt With Invalid Username" line="27">
+<doc>Verify that login fails when entering incorrect username 'wronguser' with correct password 'SuperSecretPassword!'</doc>
+<status status="FAIL" start="2026-05-22T15:24:06.672970" elapsed="0.000446">Parent suite setup failed:
+Variable '${BASE_URL}' not found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-22T15:24:06.673985" elapsed="0.000228"/>
+</kw>
+<doc>Tests</doc>
+<status status="FAIL" start="2026-05-22T15:24:06.334618" elapsed="0.339672">Suite setup failed:
+Variable '${BASE_URL}' not found.</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779456233379 1" id="s1" pass="0" fail="3" skip="0">suite S1779456233379 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T15:24:06.668453" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779456233379_1\tests\suite_S1779456233379_1.robot' on line 8: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' does not exist.</msg>
+<msg time="2026-05-22T15:24:06.668976" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779456233379_1\tests\suite_S1779456233379_1.robot' on line 9: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\keywords.robot' does not exist.</msg>
+</errors>
+</robot>

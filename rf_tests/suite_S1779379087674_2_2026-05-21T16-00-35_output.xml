@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-21T18:00:36.002492" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779379087674 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_S1779379087674_2.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-21T18:00:36.372076" level="INFO">Opening browser 'chrome' to base url 'https://www.saucedemo.com'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-21T18:00:36.371730" elapsed="4.673475"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Login With Valid Credentials" line="12">
+<kw name="Given The User Is On The Login Page">
+<msg time="2026-05-21T18:00:41.048882" level="FAIL">No keyword with name 'Given The User Is On The Login Page' found.</msg>
+<status status="FAIL" start="2026-05-21T18:00:41.048775" elapsed="0.000191">No keyword with name 'Given The User Is On The Login Page' found.</status>
+</kw>
+<kw name="When The User Logs In With Valid Credentials">
+<status status="NOT RUN" start="2026-05-21T18:00:41.051012" elapsed="0.000072"/>
+</kw>
+<kw name="Then The User Should Be Redirected To The Products Page">
+<status status="NOT RUN" start="2026-05-21T18:00:41.051333" elapsed="0.000048"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T18:00:42.057471" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-468.png"&gt;&lt;img src="selenium-screenshot-468.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T18:00:41.051733" elapsed="1.005873"/>
+</kw>
+<doc>Access saucedemo.com and log in with valid username 'standard_user' and password 'secret_sauce'. The user should be redirected to the products page and the title 'Products' should be displayed.</doc>
+<tag>login</tag>
+<tag>smoke</tag>
+<tag>valid</tag>
+<status status="FAIL" start="2026-05-21T18:00:41.045616" elapsed="1.012082">No keyword with name 'Given The User Is On The Login Page' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Login With Invalid Credentials" line="19">
+<kw name="Given The User Is On The Login Page">
+<msg time="2026-05-21T18:00:42.062757" level="FAIL">No keyword with name 'Given The User Is On The Login Page' found.</msg>
+<status status="FAIL" start="2026-05-21T18:00:42.062662" elapsed="0.000167">No keyword with name 'Given The User Is On The Login Page' found.</status>
+</kw>
+<kw name="When The User Logs In With Invalid Credentials">
+<status status="NOT RUN" start="2026-05-21T18:00:42.063058" elapsed="0.000035"/>
+</kw>
+<kw name="Then An Error Message Should Be Displayed For Invalid Credentials">
+<status status="NOT RUN" start="2026-05-21T18:00:42.063236" elapsed="0.000029"/>
+</kw>
+<kw name="And The User Should Remain On The Login Page">
+<status status="NOT RUN" start="2026-05-21T18:00:42.063400" elapsed="0.000027"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T18:00:42.206188" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-469.png"&gt;&lt;img src="selenium-screenshot-469.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T18:00:42.063715" elapsed="0.142591"/>
+</kw>
+<doc>Access saucedemo.com and attempt to log in with incorrect username 'wrong_user' and password 'secret_sauce'. An error message should be displayed and the user should remain on the login page.</doc>
+<tag>invalid</tag>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-21T18:00:42.058063" elapsed="0.148333">No keyword with name 'Given The User Is On The Login Page' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Login With Locked Out User" line="27">
+<kw name="Given The User Is On The Login Page">
+<msg time="2026-05-21T18:00:42.209552" level="FAIL">No keyword with name 'Given The User Is On The Login Page' found.</msg>
+<status status="FAIL" start="2026-05-21T18:00:42.209466" elapsed="0.000148">No keyword with name 'Given The User Is On The Login Page' found.</status>
+</kw>
+<kw name="When The User Logs In With Locked Account Credentials">
+<status status="NOT RUN" start="2026-05-21T18:00:42.209834" elapsed="0.000035"/>
+</kw>
+<kw name="Then An Error Message Should Be Displayed For Locked User">
+<status status="NOT RUN" start="2026-05-21T18:00:42.210022" elapsed="0.000030"/>
+</kw>
+<kw name="And The User Should Remain On The Login Page">
+<status status="NOT RUN" start="2026-05-21T18:00:42.210194" elapsed="0.000028"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T18:00:42.322123" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-470.png"&gt;&lt;img src="selenium-screenshot-470.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T18:00:42.210533" elapsed="0.111704"/>
+</kw>
+<doc>Access saucedemo.com and attempt to log in with locked username 'locked_out_user' and password 'secret_sauce'. An error message should be displayed indicating the user is locked out and access is denied.</doc>
+<tag>locked</tag>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-21T18:00:42.206735" elapsed="0.115585">No keyword with name 'Given The User Is On The Login Page' found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-21T18:00:42.322906" elapsed="2.294966"/>
+</kw>
+<doc>Test suite for SauceDemo login scenarios</doc>
+<status status="FAIL" start="2026-05-21T18:00:36.004646" elapsed="8.613341"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="1" skip="0">invalid</stat>
+<stat pass="0" fail="1" skip="0">locked</stat>
+<stat pass="0" fail="3" skip="0">login</stat>
+<stat pass="0" fail="2" skip="0">negative</stat>
+<stat pass="0" fail="1" skip="0">smoke</stat>
+<stat pass="0" fail="1" skip="0">valid</stat>
+</tag>
+<suite>
+<stat name="suite S1779379087674 2" id="s1" pass="0" fail="3" skip="0">suite S1779379087674 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-21T18:00:36.353728" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T18:00:36.353861" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-21T18:00:36.353923" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T18:00:36.363333" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\products_page.robot' on line 9: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+</errors>
+</robot>

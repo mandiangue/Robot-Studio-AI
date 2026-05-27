@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-24T17:44:38.748191" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779636580941 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779636580941_2\suite_S1779636580941_2.robot">
+<kw name="Open Browser No Popup" type="SETUP">
+<msg time="2026-05-24T17:44:39.143485" level="FAIL">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-05-24T17:44:39.143390" elapsed="0.000170">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<test id="s1-t1" name="TC_SAUCE_001 Login With Valid Credentials" line="11">
+<status status="FAIL" start="2026-05-24T17:44:39.143734" elapsed="0.000425">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t2" name="TC_SAUCE_002 Add Product To Cart" line="18">
+<status status="FAIL" start="2026-05-24T17:44:39.144403" elapsed="0.000274">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t3" name="TC_SAUCE_003 Complete Payment Process" line="28">
+<status status="FAIL" start="2026-05-24T17:44:39.144884" elapsed="0.000258">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-24T17:44:39.145621" elapsed="0.000180"/>
+</kw>
+<doc>Test Cases for Sauce Demo application</doc>
+<status status="FAIL" start="2026-05-24T17:44:38.752347" elapsed="0.393514">Suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779636580941 2" id="s1" pass="0" fail="3" skip="0">suite S1779636580941 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-24T17:44:39.139966" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779636580941_2\suite_S1779636580941_2.robot' on line 7: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' does not exist.</msg>
+<msg time="2026-05-24T17:44:39.140359" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779636580941_2\suite_S1779636580941_2.robot' on line 8: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\keywords.robot' does not exist.</msg>
+</errors>
+</robot>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T13:48:06.424286" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779450471631 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450471631_1\suite_S1779450471631_1.robot">
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="26">
+<kw name="Login With Valid Credentials">
+<msg time="2026-05-22T13:48:06.477513" level="FAIL">No keyword with name 'Login With Valid Credentials' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</msg>
+<status status="FAIL" start="2026-05-22T13:48:06.477450" elapsed="0.000135">No keyword with name 'Login With Valid Credentials' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<kw name="Verify Success Message">
+<status status="NOT RUN" start="2026-05-22T13:48:06.477745" elapsed="0.000025"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T13:48:06.478599" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T13:48:06.478568" elapsed="0.000069">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T13:48:06.475964" elapsed="0.002727">No keyword with name 'Login With Valid Credentials' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Failed Login With Incorrect Password" line="31">
+<kw name="Login With Invalid Password">
+<msg time="2026-05-22T13:48:06.479842" level="FAIL">No keyword with name 'Login With Invalid Password' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</msg>
+<status status="FAIL" start="2026-05-22T13:48:06.479814" elapsed="0.000064">No keyword with name 'Login With Invalid Password' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<kw name="Verify Error Password Message">
+<status status="NOT RUN" start="2026-05-22T13:48:06.479991" elapsed="0.000029"/>
+</kw>
+<kw name="Verify User Remains On Login Page">
+<status status="NOT RUN" start="2026-05-22T13:48:06.480105" elapsed="0.000018"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T13:48:06.480950" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T13:48:06.480910" elapsed="0.000075">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T13:48:06.478954" elapsed="0.002083">No keyword with name 'Login With Invalid Password' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Login With Incorrect Username" line="37">
+<kw name="Login With Invalid Username">
+<msg time="2026-05-22T13:48:06.482487" level="FAIL">No keyword with name 'Login With Invalid Username' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</msg>
+<status status="FAIL" start="2026-05-22T13:48:06.482455" elapsed="0.000073">No keyword with name 'Login With Invalid Username' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<kw name="Verify Error Username Message">
+<status status="NOT RUN" start="2026-05-22T13:48:06.482648" elapsed="0.000029"/>
+</kw>
+<kw name="Verify User Remains On Login Page">
+<status status="NOT RUN" start="2026-05-22T13:48:06.482756" elapsed="0.000018"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T13:48:06.483549" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T13:48:06.483520" elapsed="0.000062">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T13:48:06.481422" elapsed="0.002210">No keyword with name 'Login With Invalid Username' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<status status="FAIL" start="2026-05-22T13:48:06.426394" elapsed="0.057627"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779450471631 1" id="s1" pass="0" fail="3" skip="0">suite S1779450471631 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T13:48:06.426829" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450471631_1\suite_S1779450471631_1.robot' on line 18: Setting variable 'Suite Setup' failed: Invalid variable name 'Suite Setup'.</msg>
+<msg time="2026-05-22T13:48:06.426957" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450471631_1\suite_S1779450471631_1.robot' on line 19: Setting variable 'Suite Teardown' failed: Invalid variable name 'Suite Teardown'.</msg>
+<msg time="2026-05-22T13:48:06.427381" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450471631_1\suite_S1779450471631_1.robot' on line 20: Setting variable 'Documentation' failed: Invalid variable name 'Documentation'.</msg>
+<msg time="2026-05-22T13:48:06.427444" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450471631_1\suite_S1779450471631_1.robot' on line 21: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-05-22T13:48:06.427496" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450471631_1\suite_S1779450471631_1.robot' on line 23: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>

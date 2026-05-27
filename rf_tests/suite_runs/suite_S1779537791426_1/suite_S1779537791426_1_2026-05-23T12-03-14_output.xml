@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-23T14:03:15.155210" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779537791426 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\tests\suite_S1779537791426_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T14:03:15.567089" level="INFO">Opening browser 'chrome' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-23T14:03:15.566693" elapsed="8.665035"/>
+</kw>
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="12">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T14:03:24.233504" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-23T14:03:24.233100" elapsed="2.066777"/>
+</kw>
+<kw name="When User Enters Valid Username And Valid Password" owner="keywords">
+<kw name="Enter Username" owner="login_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-23T14:03:26.301555" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-23T14:03:26.301100" elapsed="0.132344"/>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<status status="PASS" start="2026-05-23T14:03:26.300730" elapsed="0.132888"/>
+</kw>
+<kw name="Enter Password" owner="login_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-23T14:03:26.434562" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-23T14:03:26.434276" elapsed="0.118402"/>
+</kw>
+<arg>${VALID_PASSWORD}</arg>
+<status status="PASS" start="2026-05-23T14:03:26.433876" elapsed="0.118947"/>
+</kw>
+<status status="PASS" start="2026-05-23T14:03:26.300317" elapsed="0.252578"/>
+</kw>
+<kw name="And User Clicks Login Button">
+<msg time="2026-05-23T14:03:26.556876" level="FAIL">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</msg>
+<status status="FAIL" start="2026-05-23T14:03:26.556719" elapsed="0.000258">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</status>
+</kw>
+<kw name="Then User Should See Success Message" owner="keywords">
+<status status="NOT RUN" start="2026-05-23T14:03:26.557385" elapsed="0.000208"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-23T14:03:26.767260" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-935.png"&gt;&lt;img src="selenium-screenshot-935.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-23T14:03:26.558093" elapsed="0.209293"/>
+</kw>
+<status status="FAIL" start="2026-05-23T14:03:24.232022" elapsed="2.535461">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</status>
+</test>
+<test id="s1-t2" name="TC_002 Failed Login With Invalid Password" line="19">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T14:03:26.768419" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-23T14:03:26.768239" elapsed="0.153331"/>
+</kw>
+<kw name="When User Enters Valid Username And Invalid Password" owner="keywords">
+<kw name="Enter Username" owner="login_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-23T14:03:26.923327" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-23T14:03:26.922981" elapsed="0.091944"/>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<status status="PASS" start="2026-05-23T14:03:26.922571" elapsed="0.092493"/>
+</kw>
+<kw name="Enter Password" owner="login_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-23T14:03:27.015816" level="INFO">Typing text 'WrongPassword' into text field 'id=password'.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.015586" elapsed="0.109185"/>
+</kw>
+<arg>${INVALID_PASSWORD}</arg>
+<status status="PASS" start="2026-05-23T14:03:27.015255" elapsed="0.109651"/>
+</kw>
+<status status="PASS" start="2026-05-23T14:03:26.922053" elapsed="0.202928"/>
+</kw>
+<kw name="And User Clicks Login Button">
+<msg time="2026-05-23T14:03:27.126822" level="FAIL">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</msg>
+<status status="FAIL" start="2026-05-23T14:03:27.126744" elapsed="0.000146">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</status>
+</kw>
+<kw name="Then User Should See Password Error Message" owner="keywords">
+<status status="NOT RUN" start="2026-05-23T14:03:27.127135" elapsed="0.000043"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-23T14:03:27.384062" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-936.png"&gt;&lt;img src="selenium-screenshot-936.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.127426" elapsed="0.256764"/>
+</kw>
+<status status="FAIL" start="2026-05-23T14:03:26.767860" elapsed="0.616423">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Login With Invalid Username" line="26">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T14:03:27.385154" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.384972" elapsed="0.160712"/>
+</kw>
+<kw name="When User Enters Invalid Username And Valid Password" owner="keywords">
+<kw name="Enter Username" owner="login_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-23T14:03:27.546894" level="INFO">Typing text 'wronguser' into text field 'id=username'.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.546644" elapsed="0.102672"/>
+</kw>
+<arg>${INVALID_USERNAME}</arg>
+<status status="PASS" start="2026-05-23T14:03:27.546357" elapsed="0.103091"/>
+</kw>
+<kw name="Enter Password" owner="login_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-23T14:03:27.650551" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.650299" elapsed="0.113787"/>
+</kw>
+<arg>${VALID_PASSWORD}</arg>
+<status status="PASS" start="2026-05-23T14:03:27.649637" elapsed="0.114580"/>
+</kw>
+<status status="PASS" start="2026-05-23T14:03:27.546038" elapsed="0.218250"/>
+</kw>
+<kw name="And User Clicks Login Button">
+<msg time="2026-05-23T14:03:27.766012" level="FAIL">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</msg>
+<status status="FAIL" start="2026-05-23T14:03:27.765946" elapsed="0.000123">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</status>
+</kw>
+<kw name="Then User Should See Username Error Message" owner="keywords">
+<status status="NOT RUN" start="2026-05-23T14:03:27.766313" elapsed="0.000043"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-23T14:03:27.964411" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-937.png"&gt;&lt;img src="selenium-screenshot-937.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.766583" elapsed="0.197953"/>
+</kw>
+<status status="FAIL" start="2026-05-23T14:03:27.384612" elapsed="0.580010">No keyword with name 'And User Clicks Login Button' found. Did you mean:
+    keywords.When User Clicks Login Button</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-23T14:03:27.965262" elapsed="6.472913"/>
+</kw>
+<doc>Tests</doc>
+<status status="FAIL" start="2026-05-23T14:03:15.158590" elapsed="19.279707"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779537791426 1" id="s1" pass="0" fail="3" skip="0">suite S1779537791426 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-23T14:03:15.551576" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.551710" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\variables.robot' on line 3: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.551775" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\variables.robot' on line 4: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.551827" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\variables.robot' on line 5: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.556507" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\keywords.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.556662" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\keywords.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.562525" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\pages\login_page.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-23T14:03:15.562643" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779537791426_1\resources\pages\login_page.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

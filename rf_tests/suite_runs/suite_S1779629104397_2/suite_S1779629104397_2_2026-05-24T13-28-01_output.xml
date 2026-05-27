@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-24T15:28:02.157624" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779629104397 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779629104397_2\suite_S1779629104397_2.robot">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-05-24T15:28:02.587896" level="FAIL">Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</msg>
+<var>${opts}</var>
+<arg>__import__('no_popup').create_chrome_options()</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-05-24T15:28:02.584278" elapsed="0.003945">Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</kw>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-05-24T15:28:02.588524" elapsed="0.000058"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-05-24T15:28:02.583270" elapsed="0.005499">Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</kw>
+<test id="s1-t1" name="TC_001 Login With Valid Credentials" line="11">
+<status status="FAIL" start="2026-05-24T15:28:02.588910" elapsed="0.000536">Parent suite setup failed:
+Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</test>
+<test id="s1-t2" name="TC_002 Login With Invalid Password" line="18">
+<status status="FAIL" start="2026-05-24T15:28:02.589770" elapsed="0.000371">Parent suite setup failed:
+Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</test>
+<test id="s1-t3" name="TC_003 Login With Invalid Username" line="25">
+<status status="FAIL" start="2026-05-24T15:28:02.590389" elapsed="0.000307">Parent suite setup failed:
+Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</test>
+<test id="s1-t4" name="TC_004 Logout After Successful Login" line="32">
+<status status="FAIL" start="2026-05-24T15:28:02.590921" elapsed="0.000303">Parent suite setup failed:
+Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-24T15:28:02.594163" elapsed="0.000410"/>
+</kw>
+<doc>Test Cases for Login Application</doc>
+<status status="FAIL" start="2026-05-24T15:28:02.162018" elapsed="0.432658">Suite setup failed:
+Evaluating expression "__import__('no_popup').create_chrome_options()" failed: ModuleNotFoundError: No module named 'no_popup'</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779629104397 2" id="s1" pass="0" fail="4" skip="0">suite S1779629104397 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-24T15:28:02.565642" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779629104397_2\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-24T15:28:02.566104" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779629104397_2\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-24T15:28:02.566237" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779629104397_2\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

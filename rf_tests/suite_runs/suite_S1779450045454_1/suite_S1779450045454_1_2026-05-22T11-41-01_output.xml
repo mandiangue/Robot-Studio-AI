@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T13:41:02.788241" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779450045454 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450045454_1\suite_S1779450045454_1.robot">
+<test id="s1-t1" name="TC_001 Login With Valid Credentials" line="31">
+<kw name="User Connects With Valid Credentials">
+<msg time="2026-05-22T13:41:02.864427" level="FAIL">No keyword with name 'User Connects With Valid Credentials' found.</msg>
+<status status="FAIL" start="2026-05-22T13:41:02.864372" elapsed="0.000115">No keyword with name 'User Connects With Valid Credentials' found.</status>
+</kw>
+<kw name="Verify Inventory Page Is Displayed">
+<status status="NOT RUN" start="2026-05-22T13:41:02.864638" elapsed="0.000027"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T13:41:02.865464" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T13:41:02.865432" elapsed="0.000072">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>User connects to saucedemo.com with valid username and password and is redirected to inventory page</doc>
+<status status="FAIL" start="2026-05-22T13:41:02.863048" elapsed="0.002511">No keyword with name 'User Connects With Valid Credentials' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Add Articles To Cart" line="37">
+<kw name="User Connects With Valid Credentials">
+<msg time="2026-05-22T13:41:02.866553" level="FAIL">No keyword with name 'User Connects With Valid Credentials' found.</msg>
+<status status="FAIL" start="2026-05-22T13:41:02.866526" elapsed="0.000062">No keyword with name 'User Connects With Valid Credentials' found.</status>
+</kw>
+<kw name="User Adds Two Products To Cart">
+<status status="NOT RUN" start="2026-05-22T13:41:02.866687" elapsed="0.000020"/>
+</kw>
+<kw name="User Navigates To Cart And Verifies Content">
+<status status="NOT RUN" start="2026-05-22T13:41:02.866790" elapsed="0.000019"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T13:41:02.867514" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T13:41:02.867485" elapsed="0.000062">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>User adds 2 articles to cart and verifies cart badge and content</doc>
+<status status="FAIL" start="2026-05-22T13:41:02.865792" elapsed="0.001802">No keyword with name 'User Connects With Valid Credentials' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Validate Checkout Process" line="44">
+<kw name="User Connects With Valid Credentials">
+<msg time="2026-05-22T13:41:02.868557" level="FAIL">No keyword with name 'User Connects With Valid Credentials' found.</msg>
+<status status="FAIL" start="2026-05-22T13:41:02.868530" elapsed="0.000060">No keyword with name 'User Connects With Valid Credentials' found.</status>
+</kw>
+<kw name="User Adds Two Products To Cart">
+<status status="NOT RUN" start="2026-05-22T13:41:02.868689" elapsed="0.000019"/>
+</kw>
+<kw name="User Completes Checkout With Billing Information">
+<status status="NOT RUN" start="2026-05-22T13:41:02.868783" elapsed="0.000017"/>
+</kw>
+<kw name="User Finalizes Purchase">
+<status status="NOT RUN" start="2026-05-22T13:41:02.868881" elapsed="0.000017"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T13:41:02.869588" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T13:41:02.869559" elapsed="0.000060">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>User completes checkout with billing information and validates order</doc>
+<status status="FAIL" start="2026-05-22T13:41:02.867804" elapsed="0.001861">No keyword with name 'User Connects With Valid Credentials' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<status status="FAIL" start="2026-05-22T13:41:02.811787" elapsed="0.058266"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779450045454 1" id="s1" pass="0" fail="3" skip="0">suite S1779450045454 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T13:41:02.812670" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450045454_1\suite_S1779450045454_1.robot' on line 23: Setting variable 'Suite Setup' failed: Invalid variable name 'Suite Setup'.</msg>
+<msg time="2026-05-22T13:41:02.812812" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450045454_1\suite_S1779450045454_1.robot' on line 24: Setting variable 'Suite Teardown' failed: Invalid variable name 'Suite Teardown'.</msg>
+<msg time="2026-05-22T13:41:02.812875" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450045454_1\suite_S1779450045454_1.robot' on line 25: Setting variable 'Documentation' failed: Invalid variable name 'Documentation'.</msg>
+<msg time="2026-05-22T13:41:02.812924" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450045454_1\suite_S1779450045454_1.robot' on line 26: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-05-22T13:41:02.812970" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779450045454_1\suite_S1779450045454_1.robot' on line 28: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>

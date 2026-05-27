@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-21T17:06:54.617593" rpa="false" schemaversion="5">
+<suite id="s1" name="Suite Best Suite 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_best_suite_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-21T17:06:54.985864" level="INFO">Opening browser 'chrome' to base url 'https://www.saucedemo.com'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>chrome</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-21T17:06:54.985478" elapsed="4.802212"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="12">
+<kw name="When Enter Username" owner="login_page">
+<msg time="2026-05-21T17:06:59.789455" level="FAIL">Variable '${VALID_USER}' not found.</msg>
+<arg>${VALID_USER}</arg>
+<doc>Enters username in the login form</doc>
+<status status="FAIL" start="2026-05-21T17:06:59.788662" elapsed="0.000857">Variable '${VALID_USER}' not found.</status>
+</kw>
+<kw name="And Enter Password" owner="login_page">
+<arg>${VALID_PASS}</arg>
+<doc>Enters password in the login form</doc>
+<status status="NOT RUN" start="2026-05-21T17:06:59.789734" elapsed="0.000039"/>
+</kw>
+<kw name="And Click Login Button" owner="login_page">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-05-21T17:06:59.789929" elapsed="0.000035"/>
+</kw>
+<kw name="Then Verify Successful Login Message">
+<status status="NOT RUN" start="2026-05-21T17:06:59.790157" elapsed="0.000036"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T17:06:59.995245" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-414.png"&gt;&lt;img src="selenium-screenshot-414.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T17:06:59.790442" elapsed="0.204934"/>
+</kw>
+<status status="FAIL" start="2026-05-21T17:06:59.787947" elapsed="0.207522">Variable '${VALID_USER}' not found.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Incorrect Password" line="19">
+<kw name="When Enter Username" owner="login_page">
+<msg time="2026-05-21T17:06:59.999825" level="FAIL">Variable '${VALID_USER}' not found.</msg>
+<arg>${VALID_USER}</arg>
+<doc>Enters username in the login form</doc>
+<status status="FAIL" start="2026-05-21T17:06:59.999026" elapsed="0.000890">Variable '${VALID_USER}' not found.</status>
+</kw>
+<kw name="And Enter Password" owner="login_page">
+<arg>${INVALID_PASS}</arg>
+<doc>Enters password in the login form</doc>
+<status status="NOT RUN" start="2026-05-21T17:07:00.000138" elapsed="0.000076"/>
+</kw>
+<kw name="And Click Login Button" owner="login_page">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-05-21T17:07:00.000390" elapsed="0.000038"/>
+</kw>
+<kw name="Then Verify Invalid Password Message">
+<status status="NOT RUN" start="2026-05-21T17:07:00.002878" elapsed="0.000076"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T17:07:00.136202" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-415.png"&gt;&lt;img src="selenium-screenshot-415.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T17:07:00.003255" elapsed="0.133091"/>
+</kw>
+<status status="FAIL" start="2026-05-21T17:06:59.998400" elapsed="0.138050">Variable '${VALID_USER}' not found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Incorrect Username" line="26">
+<kw name="When Enter Username" owner="login_page">
+<msg time="2026-05-21T17:07:00.138020" level="FAIL">Variable '${INVALID_USER}' not found.</msg>
+<arg>${INVALID_USER}</arg>
+<doc>Enters username in the login form</doc>
+<status status="FAIL" start="2026-05-21T17:07:00.137290" elapsed="0.000789">Variable '${INVALID_USER}' not found.</status>
+</kw>
+<kw name="And Enter Password" owner="login_page">
+<arg>${INVALID_PASS}</arg>
+<doc>Enters password in the login form</doc>
+<status status="NOT RUN" start="2026-05-21T17:07:00.138283" elapsed="0.000041"/>
+</kw>
+<kw name="And Click Login Button" owner="login_page">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-05-21T17:07:00.138468" elapsed="0.000035"/>
+</kw>
+<kw name="Then Verify Invalid Username Message">
+<status status="NOT RUN" start="2026-05-21T17:07:00.138666" elapsed="0.000035"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T17:07:00.235528" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-416.png"&gt;&lt;img src="selenium-screenshot-416.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T17:07:00.138919" elapsed="0.096733"/>
+</kw>
+<status status="FAIL" start="2026-05-21T17:07:00.136794" elapsed="0.098943">Variable '${INVALID_USER}' not found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-21T17:07:00.236364" elapsed="2.428550"/>
+</kw>
+<doc>Login test cases for the-internet.herokuapp.com</doc>
+<status status="FAIL" start="2026-05-21T17:06:54.619772" elapsed="8.045273"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Suite Best Suite 1" id="s1" pass="0" fail="3" skip="0">Suite Best Suite 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-21T17:06:54.964736" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:06:54.964876" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:06:54.964938" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:06:54.976238" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\products_page.robot' on line 9: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+</errors>
+</robot>

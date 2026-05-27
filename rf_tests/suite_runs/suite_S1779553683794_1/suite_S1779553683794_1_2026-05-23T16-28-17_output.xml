@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-23T18:28:17.953388" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779553683794 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\tests\suite_S1779553683794_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T18:28:18.369315" level="INFO">Opening browser 'chrome' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-23T18:28:18.368916" elapsed="5.893555"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="13">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T18:28:24.264315" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-23T18:28:24.264056" elapsed="1.951085"/>
+</kw>
+<kw name="When Enter Username">
+<msg time="2026-05-23T18:28:26.215506" level="FAIL">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-23T18:28:26.215451" elapsed="0.000115">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</status>
+</kw>
+<kw name="And Enter Password">
+<arg>${VALID_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-23T18:28:26.215745" elapsed="0.000036"/>
+</kw>
+<kw name="And Click Login Button">
+<status status="NOT RUN" start="2026-05-23T18:28:26.215906" elapsed="0.000029"/>
+</kw>
+<kw name="Then User Should Be On Secure Page">
+<status status="NOT RUN" start="2026-05-23T18:28:26.216050" elapsed="0.000028"/>
+</kw>
+<kw name="And Flash Message Should Contain Success">
+<status status="NOT RUN" start="2026-05-23T18:28:26.216182" elapsed="0.000027"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-23T18:28:26.418510" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-1120.png"&gt;&lt;img src="selenium-screenshot-1120.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-23T18:28:26.216466" elapsed="0.202161"/>
+</kw>
+<doc>Navigate to the login page, enter valid credentials and verify
+the user is redirected to the secure area with a success message.</doc>
+<tag>login</tag>
+<tag>positive</tag>
+<status status="FAIL" start="2026-05-23T18:28:24.262727" elapsed="2.155994">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</status>
+</test>
+<test id="s1-t2" name="TC_002 — Login Failure With Incorrect Password" line="24">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T18:28:26.419848" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-23T18:28:26.419682" elapsed="0.169362"/>
+</kw>
+<kw name="When Enter Username">
+<msg time="2026-05-23T18:28:26.589669" level="FAIL">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-23T18:28:26.589588" elapsed="0.000145">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</status>
+</kw>
+<kw name="And Enter Password">
+<arg>${WRONG_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-23T18:28:26.589906" elapsed="0.000035"/>
+</kw>
+<kw name="And Click Login Button">
+<status status="NOT RUN" start="2026-05-23T18:28:26.590061" elapsed="0.000029"/>
+</kw>
+<kw name="Then User Should Remain On Login Page">
+<status status="NOT RUN" start="2026-05-23T18:28:26.590197" elapsed="0.000037"/>
+</kw>
+<kw name="And Flash Message Should Contain Invalid Password Error">
+<status status="NOT RUN" start="2026-05-23T18:28:26.590349" elapsed="0.000030"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-23T18:28:26.783916" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-1121.png"&gt;&lt;img src="selenium-screenshot-1121.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-23T18:28:26.590751" elapsed="0.193329"/>
+</kw>
+<doc>Navigate to the login page, enter a wrong password and verify
+the user stays on the login page with an invalid password error.</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-23T18:28:26.419081" elapsed="0.365127">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</status>
+</test>
+<test id="s1-t3" name="TC_003 — Login Failure With Incorrect Username" line="35">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-23T18:28:26.785766" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-23T18:28:26.785495" elapsed="0.152263"/>
+</kw>
+<kw name="When Enter Username">
+<msg time="2026-05-23T18:28:26.938819" level="FAIL">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</msg>
+<arg>${WRONG_USERNAME}</arg>
+<status status="FAIL" start="2026-05-23T18:28:26.938744" elapsed="0.000139">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</status>
+</kw>
+<kw name="And Enter Password">
+<arg>${VALID_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-23T18:28:26.939062" elapsed="0.000038"/>
+</kw>
+<kw name="And Click Login Button">
+<status status="NOT RUN" start="2026-05-23T18:28:26.939236" elapsed="0.000031"/>
+</kw>
+<kw name="Then User Should Remain On Login Page">
+<status status="NOT RUN" start="2026-05-23T18:28:26.939587" elapsed="0.000104"/>
+</kw>
+<kw name="And Flash Message Should Contain Invalid Username Error">
+<status status="NOT RUN" start="2026-05-23T18:28:26.939840" elapsed="0.000289"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-23T18:28:27.132776" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-1122.png"&gt;&lt;img src="selenium-screenshot-1122.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-23T18:28:26.940454" elapsed="0.192437"/>
+</kw>
+<doc>Navigate to the login page, enter a wrong username and verify
+the user stays on the login page with an invalid username error.</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-23T18:28:26.784692" elapsed="0.348285">Multiple keywords with name 'Enter Username' found. Give the full name of the keyword you want to use:
+    keywords.Enter Username
+    main_page.Enter Username</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-23T18:28:27.133747" elapsed="2.440443"/>
+</kw>
+<doc>Login test cases for the-internet.herokuapp.com</doc>
+<status status="FAIL" start="2026-05-23T18:28:17.957401" elapsed="11.616976"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="3" skip="0">login</stat>
+<stat pass="0" fail="2" skip="0">negative</stat>
+<stat pass="0" fail="1" skip="0">positive</stat>
+</tag>
+<suite>
+<stat name="suite S1779553683794 1" id="s1" pass="0" fail="3" skip="0">suite S1779553683794 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-23T18:28:18.353053" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T18:28:18.353192" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-23T18:28:18.353257" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T18:28:18.360054" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\keywords.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-23T18:28:18.360469" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\keywords.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-23T18:28:18.365196" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\pages\main_page.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-23T18:28:18.365306" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_1\resources\pages\main_page.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-23T18:39:26.018732" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779553683794 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_2\suite_S1779553683794_2.robot">
+<kw name="Open Browser No Popup" type="SETUP">
+<msg time="2026-05-23T18:39:26.405792" level="FAIL">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-05-23T18:39:26.405646" elapsed="0.000230">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="11">
+<doc>Verify that a user can log in with valid credentials and is redirected to the Products page.</doc>
+<tag>login</tag>
+<tag>smoke</tag>
+<status status="FAIL" start="2026-05-23T18:39:26.406084" elapsed="0.000993">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t2" name="TC_002 — Add A Product To The Cart" line="20">
+<doc>Verify that after login, adding the first product to the cart updates the cart badge to 1 and changes the button to Remove.</doc>
+<tag>cart</tag>
+<tag>smoke</tag>
+<status status="FAIL" start="2026-05-23T18:39:26.407354" elapsed="0.000490">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Incorrect Password" line="32">
+<doc>Verify that logging in with a wrong password displays an error message and keeps the user on the login page.</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-23T18:39:26.408508" elapsed="0.000497">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-23T18:39:26.409541" elapsed="0.000190"/>
+</kw>
+<doc>Test suite for SauceDemo application</doc>
+<status status="FAIL" start="2026-05-23T18:39:26.021422" elapsed="0.388373">Suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="1" skip="0">cart</stat>
+<stat pass="0" fail="2" skip="0">login</stat>
+<stat pass="0" fail="1" skip="0">negative</stat>
+<stat pass="0" fail="2" skip="0">smoke</stat>
+</tag>
+<suite>
+<stat name="suite S1779553683794 2" id="s1" pass="0" fail="3" skip="0">suite S1779553683794 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-23T18:39:26.401512" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_2\suite_S1779553683794_2.robot' on line 7: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' does not exist.</msg>
+<msg time="2026-05-23T18:39:26.401887" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779553683794_2\suite_S1779553683794_2.robot' on line 8: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\keywords.robot' does not exist.</msg>
+</errors>
+</robot>

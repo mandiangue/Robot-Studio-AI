@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-24T14:59:43.163689" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779627141831 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779627141831_2\suite_S1779627141831_2.robot">
+<kw name="Open Browser No Popup" type="SETUP">
+<msg time="2026-05-24T14:59:43.547536" level="FAIL">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-05-24T14:59:43.547373" elapsed="0.000278">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<test id="s1-t1" name="TC_001 — Login With Valid Credentials" line="11">
+<doc>Verify that a user can log in with valid credentials and is redirected to the secure area</doc>
+<tag>login</tag>
+<tag>positive</tag>
+<status status="FAIL" start="2026-05-24T14:59:43.547959" elapsed="0.000934">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t2" name="TC_002 — Login With Wrong Password" line="20">
+<doc>Verify that an error message is displayed when login is attempted with an incorrect password</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-24T14:59:43.549209" elapsed="0.000487">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t3" name="TC_003 — Login With Wrong Username" line="29">
+<doc>Verify that an error message is displayed when login is attempted with an incorrect username</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-05-24T14:59:43.549933" elapsed="0.000431">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t4" name="TC_004 — Logout After Successful Login" line="38">
+<doc>Verify that a user can log out after a successful login and is redirected to the login page</doc>
+<tag>logout</tag>
+<tag>positive</tag>
+<status status="FAIL" start="2026-05-24T14:59:43.550580" elapsed="0.000423">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-24T14:59:43.551527" elapsed="0.000198"/>
+</kw>
+<doc>Test suite for login scenarios on the-internet.herokuapp.com</doc>
+<status status="FAIL" start="2026-05-24T14:59:43.165998" elapsed="0.385794">Suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="3" skip="0">login</stat>
+<stat pass="0" fail="1" skip="0">logout</stat>
+<stat pass="0" fail="2" skip="0">negative</stat>
+<stat pass="0" fail="2" skip="0">positive</stat>
+</tag>
+<suite>
+<stat name="suite S1779627141831 2" id="s1" pass="0" fail="4" skip="0">suite S1779627141831 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-24T14:59:43.543462" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779627141831_2\suite_S1779627141831_2.robot' on line 7: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' does not exist.</msg>
+<msg time="2026-05-24T14:59:43.543891" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779627141831_2\suite_S1779627141831_2.robot' on line 8: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\keywords.robot' does not exist.</msg>
+</errors>
+</robot>

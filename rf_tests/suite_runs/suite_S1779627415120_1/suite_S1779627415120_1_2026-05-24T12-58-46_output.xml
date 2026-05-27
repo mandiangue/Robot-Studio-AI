@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-24T14:58:46.899118" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779627415120 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779627415120_1\suite_S1779627415120_1.robot">
+<kw name="Open Browser No Popup" type="SETUP">
+<msg time="2026-05-24T14:58:47.271255" level="FAIL">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-05-24T14:58:47.271175" elapsed="0.000149">No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<test id="s1-t1" name="TC_SAUCE_007 — Sort Products By Price Low To High" line="11">
+<doc>After login with standard_user, access the inventory page and use the sort
+dropdown to select 'Price (low to high)'. Verify products are reordered
+from lowest to highest price.</doc>
+<tag>inventory</tag>
+<tag>sorting</tag>
+<tag>TC_SAUCE_007</tag>
+<status status="FAIL" start="2026-05-24T14:58:47.271491" elapsed="0.000700">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t2" name="TC_SAUCE_008 — Remove An Item From The Cart" line="24">
+<doc>After login with standard_user, add a product to the cart from the inventory
+page, navigate to the cart, then click 'Remove'. Verify the cart is empty
+and the cart badge counter is gone.</doc>
+<tag>cart</tag>
+<tag>remove</tag>
+<tag>TC_SAUCE_008</tag>
+<status status="FAIL" start="2026-05-24T14:58:47.272483" elapsed="0.000587">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t3" name="TC_SAUCE_009 — Logout Via Burger Menu" line="40">
+<doc>After login with standard_user, click the hamburger menu, then click 'Logout'.
+Verify the user is redirected to the login page with empty username
+and password fields.</doc>
+<tag>logout</tag>
+<tag>navigation</tag>
+<tag>TC_SAUCE_009</tag>
+<status status="FAIL" start="2026-05-24T14:58:47.273325" elapsed="0.000526">Parent suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-24T14:58:47.274650" elapsed="0.000633"/>
+</kw>
+<doc>Test suite for SauceDemo — TC_SAUCE_007, TC_SAUCE_008, TC_SAUCE_009</doc>
+<status status="FAIL" start="2026-05-24T14:58:46.901641" elapsed="0.373758">Suite setup failed:
+No keyword with name 'Open Browser No Popup' found. Did you try using keyword 'SeleniumLibrary.Open Browser' and forgot to use enough whitespace between keyword and arguments?</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="1" skip="0">cart</stat>
+<stat pass="0" fail="1" skip="0">inventory</stat>
+<stat pass="0" fail="1" skip="0">logout</stat>
+<stat pass="0" fail="1" skip="0">navigation</stat>
+<stat pass="0" fail="1" skip="0">remove</stat>
+<stat pass="0" fail="1" skip="0">sorting</stat>
+<stat pass="0" fail="1" skip="0">TC_SAUCE_007</stat>
+<stat pass="0" fail="1" skip="0">TC_SAUCE_008</stat>
+<stat pass="0" fail="1" skip="0">TC_SAUCE_009</stat>
+</tag>
+<suite>
+<stat name="suite S1779627415120 1" id="s1" pass="0" fail="3" skip="0">suite S1779627415120 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-24T14:58:47.267805" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779627415120_1\suite_S1779627415120_1.robot' on line 7: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' does not exist.</msg>
+<msg time="2026-05-24T14:58:47.268225" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779627415120_1\suite_S1779627415120_1.robot' on line 8: Resource file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\keywords.robot' does not exist.</msg>
+</errors>
+</robot>

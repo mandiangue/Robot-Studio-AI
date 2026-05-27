@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-17T15:24:31.440767" rpa="false" schemaversion="5">
+<suite id="s1" name="Test Generated" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot">
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="43">
+<kw name="Given Create Login Session">
+<kw name="Create Session" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:32.231931" level="INFO">Creating Session using : alias=login_session, url=https://the-internet.herokuapp.com, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<arg>login_session</arg>
+<arg>${BASE_URL}</arg>
+<arg>disable_warnings=True</arg>
+<doc>Create Session: create a HTTP session to a server</doc>
+<status status="PASS" start="2026-05-17T15:24:32.212755" elapsed="0.019465"/>
+</kw>
+<status status="PASS" start="2026-05-17T15:24:32.211766" elapsed="0.020571"/>
+</kw>
+<kw name="When Post Login Request">
+<kw name="Create Dictionary" owner="BuiltIn">
+<msg time="2026-05-17T15:24:32.233318" level="INFO">${payload} = {'username': 'tomsmith', 'password': 'SuperSecretPassword!'}</msg>
+<var>${payload}</var>
+<arg>username=${username}</arg>
+<arg>password=${password}</arg>
+<doc>Creates and returns a dictionary based on the given ``items``.</doc>
+<status status="PASS" start="2026-05-17T15:24:32.232938" elapsed="0.000412"/>
+</kw>
+<kw name="POST On Session" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:32.862893" level="INFO">POST Request : url=https://the-internet.herokuapp.com/login 
+ path_url=/login 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '49', 'Content-Type': 'application/x-www-form-urlencoded'} 
+ body=username=tomsmith&amp;password=SuperSecretPassword%21 
+ </msg>
+<msg time="2026-05-17T15:24:32.863038" level="INFO">POST Response : url=https://the-internet.herokuapp.com/login 
+ status=404, reason=Not Found 
+ headers={'Content-Length': '18', 'Content-Type': 'text/html;charset=utf-8', 'Date': 'Sun, 17 May 2026 13:24:33 GMT', 'Nel': '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}', 'Report-To': '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=pRFlT%2BUbkpbfOCHpqJI5pZO0PziM%2FS31k6w8u%2Fi49LE%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1779024273"}],"max_age":3600}', 'Reporting-Endpoints': 'heroku-nel="https://nel.heroku.com/reports?s=pRFlT%2BUbkpbfOCHpqJI5pZO0PziM%2FS31k6w8u%2Fi49LE%3D&amp;sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&amp;ts=1779024273"', 'Server': 'Heroku', 'Set-Cookie': 'rack.session=BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTg2MTRhMDc1NmU3NmQyMzY3NTEx%0AYmViNWMxODlmMzJlYWViZTBhOTQ2NzU5ODRhYmY2NGEwNmNjMWUwNTJmYTYG%0AOwBGSSIJY3NyZgY7AEZJIiVmOWVhZGJlNjQ3OGQ0OTllMDhiNzI2N2NmYjY5%0ANDIyMQY7AEZJIg10cmFja2luZwY7AEZ7B0kiFEhUVFBfVVNFUl9BR0VOVAY7%0AAFRJIi0zMzkzOGQyMDg5Yzk4MjFlMzEyNTY3ZGEyZjE0NTVkOGVmNGFjMzU4%0ABjsARkkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsAVEkiLWRhMzlhM2VlNWU2%0AYjRiMGQzMjU1YmZlZjk1NjAxODkwYWZkODA3MDkGOwBG%0A--f81f4a049d8d071af74bb76406566fd2f393c13f; path=/; HttpOnly', 'Via': '1.1 heroku-router', 'X-Cascade': 'pass', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN', 'X-Xss-Protection': '1; mode=block'} 
+ body=&lt;h1&gt;Not Found&lt;/h1&gt; 
+ </msg>
+<msg time="2026-05-17T15:24:32.863281" level="FAIL">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</msg>
+<var>${resp}</var>
+<arg>login_session</arg>
+<arg>${LOGIN_ENDPOINT}</arg>
+<arg>data=${payload}</arg>
+<doc>Sends a POST request on a previously created HTTP Session.</doc>
+<status status="FAIL" start="2026-05-17T15:24:32.233451" elapsed="0.705306">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</kw>
+<return>
+<value>${resp}</value>
+<status status="NOT RUN" start="2026-05-17T15:24:32.938873" elapsed="0.000035"/>
+</return>
+<arg>${USERNAME_VALID}</arg>
+<arg>${PASSWORD_VALID}</arg>
+<status status="FAIL" start="2026-05-17T15:24:32.232573" elapsed="0.706465">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</kw>
+<kw name="POST On Session" owner="RequestsLibrary">
+<var>${response}</var>
+<arg>login_session</arg>
+<arg>${LOGIN_ENDPOINT}</arg>
+<arg>data=username=${USERNAME_VALID}&amp;password=${PASSWORD_VALID}</arg>
+<doc>Sends a POST request on a previously created HTTP Session.</doc>
+<status status="NOT RUN" start="2026-05-17T15:24:32.939174" elapsed="0.000023"/>
+</kw>
+<kw name="Then Validate Successful Login Response">
+<arg>${response}</arg>
+<status status="NOT RUN" start="2026-05-17T15:24:32.939368" elapsed="0.000027"/>
+</kw>
+<kw name="Delete Login Session" type="TEARDOWN">
+<kw name="Delete All Sessions" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:32.939941" level="INFO">Deleting All Sessions</msg>
+<doc>Removes all the session objects</doc>
+<status status="PASS" start="2026-05-17T15:24:32.939865" elapsed="0.000154"/>
+</kw>
+<status status="PASS" start="2026-05-17T15:24:32.939635" elapsed="0.000439"/>
+</kw>
+<doc>Verify user can login with valid username and password</doc>
+<status status="FAIL" start="2026-05-17T15:24:32.210601" elapsed="0.729509">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</test>
+<test id="s1-t2" name="TC_002 Failed Login With Invalid Password" line="51">
+<kw name="Given Create Login Session">
+<kw name="Create Session" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:32.941425" level="INFO">Creating Session using : alias=login_session, url=https://the-internet.herokuapp.com, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<arg>login_session</arg>
+<arg>${BASE_URL}</arg>
+<arg>disable_warnings=True</arg>
+<doc>Create Session: create a HTTP session to a server</doc>
+<status status="PASS" start="2026-05-17T15:24:32.941120" elapsed="0.000611"/>
+</kw>
+<status status="PASS" start="2026-05-17T15:24:32.940886" elapsed="0.000943"/>
+</kw>
+<kw name="When Post Login Request">
+<kw name="Create Dictionary" owner="BuiltIn">
+<msg time="2026-05-17T15:24:32.942918" level="INFO">${payload} = {'username': 'tomsmith', 'password': 'WrongPassword123'}</msg>
+<var>${payload}</var>
+<arg>username=${username}</arg>
+<arg>password=${password}</arg>
+<doc>Creates and returns a dictionary based on the given ``items``.</doc>
+<status status="PASS" start="2026-05-17T15:24:32.942543" elapsed="0.000415"/>
+</kw>
+<kw name="POST On Session" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:33.424708" level="INFO">POST Request : url=https://the-internet.herokuapp.com/login 
+ path_url=/login 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '43', 'Content-Type': 'application/x-www-form-urlencoded'} 
+ body=username=tomsmith&amp;password=WrongPassword123 
+ </msg>
+<msg time="2026-05-17T15:24:33.424913" level="INFO">POST Response : url=https://the-internet.herokuapp.com/login 
+ status=404, reason=Not Found 
+ headers={'Content-Length': '18', 'Content-Type': 'text/html;charset=utf-8', 'Date': 'Sun, 17 May 2026 13:24:33 GMT', 'Nel': '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}', 'Report-To': '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=pRFlT%2BUbkpbfOCHpqJI5pZO0PziM%2FS31k6w8u%2Fi49LE%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1779024273"}],"max_age":3600}', 'Reporting-Endpoints': 'heroku-nel="https://nel.heroku.com/reports?s=pRFlT%2BUbkpbfOCHpqJI5pZO0PziM%2FS31k6w8u%2Fi49LE%3D&amp;sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&amp;ts=1779024273"', 'Server': 'Heroku', 'Set-Cookie': 'rack.session=BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTM3ZmM2NDQxNGRhODA1MWU4YWI5%0ANmFlYjU2ODE3Y2UzMDRiZmE0NWI3YWIyZDMyNjFhZGMxNWIzNDg4OWU0MzEG%0AOwBGSSIJY3NyZgY7AEZJIiVjMjI3MWJhNjEwNDEzMTQwM2Q1NDNjNjdiMmIx%0ANmQyNwY7AEZJIg10cmFja2luZwY7AEZ7B0kiFEhUVFBfVVNFUl9BR0VOVAY7%0AAFRJIi0zMzkzOGQyMDg5Yzk4MjFlMzEyNTY3ZGEyZjE0NTVkOGVmNGFjMzU4%0ABjsARkkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsAVEkiLWRhMzlhM2VlNWU2%0AYjRiMGQzMjU1YmZlZjk1NjAxODkwYWZkODA3MDkGOwBG%0A--da5e4c5977ea0f151ba512ae635921fb9eaec1ed; path=/; HttpOnly', 'Via': '1.1 heroku-router', 'X-Cascade': 'pass', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN', 'X-Xss-Protection': '1; mode=block'} 
+ body=&lt;h1&gt;Not Found&lt;/h1&gt; 
+ </msg>
+<msg time="2026-05-17T15:24:33.425749" level="FAIL">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</msg>
+<var>${resp}</var>
+<arg>login_session</arg>
+<arg>${LOGIN_ENDPOINT}</arg>
+<arg>data=${payload}</arg>
+<doc>Sends a POST request on a previously created HTTP Session.</doc>
+<status status="FAIL" start="2026-05-17T15:24:32.943106" elapsed="0.487450">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</kw>
+<return>
+<value>${resp}</value>
+<status status="NOT RUN" start="2026-05-17T15:24:33.430719" elapsed="0.000069"/>
+</return>
+<arg>${USERNAME_VALID}</arg>
+<arg>${PASSWORD_INVALID}</arg>
+<status status="FAIL" start="2026-05-17T15:24:32.942085" elapsed="0.488901">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</kw>
+<kw name="POST On Session" owner="RequestsLibrary">
+<var>${response}</var>
+<arg>login_session</arg>
+<arg>${LOGIN_ENDPOINT}</arg>
+<arg>data=username=${USERNAME_VALID}&amp;password=${PASSWORD_INVALID}</arg>
+<doc>Sends a POST request on a previously created HTTP Session.</doc>
+<status status="NOT RUN" start="2026-05-17T15:24:33.431172" elapsed="0.000024"/>
+</kw>
+<kw name="Then Validate Failed Login Response With Password Error">
+<arg>${response}</arg>
+<status status="NOT RUN" start="2026-05-17T15:24:33.431377" elapsed="0.000026"/>
+</kw>
+<kw name="Delete Login Session" type="TEARDOWN">
+<kw name="Delete All Sessions" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:33.431941" level="INFO">Deleting All Sessions</msg>
+<doc>Removes all the session objects</doc>
+<status status="PASS" start="2026-05-17T15:24:33.431864" elapsed="0.000146"/>
+</kw>
+<status status="PASS" start="2026-05-17T15:24:33.431621" elapsed="0.000441"/>
+</kw>
+<doc>Verify error message displayed when password is incorrect</doc>
+<status status="FAIL" start="2026-05-17T15:24:32.940406" elapsed="0.491694">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Login With Invalid Username" line="59">
+<kw name="Given Create Login Session">
+<kw name="Create Session" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:33.433152" level="INFO">Creating Session using : alias=login_session, url=https://the-internet.herokuapp.com, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<arg>login_session</arg>
+<arg>${BASE_URL}</arg>
+<arg>disable_warnings=True</arg>
+<doc>Create Session: create a HTTP session to a server</doc>
+<status status="PASS" start="2026-05-17T15:24:33.432934" elapsed="0.000386"/>
+</kw>
+<status status="PASS" start="2026-05-17T15:24:33.432747" elapsed="0.000639"/>
+</kw>
+<kw name="When Post Login Request">
+<kw name="Create Dictionary" owner="BuiltIn">
+<msg time="2026-05-17T15:24:33.434026" level="INFO">${payload} = {'username': 'invaliduser', 'password': 'SuperSecretPassword!'}</msg>
+<var>${payload}</var>
+<arg>username=${username}</arg>
+<arg>password=${password}</arg>
+<doc>Creates and returns a dictionary based on the given ``items``.</doc>
+<status status="PASS" start="2026-05-17T15:24:33.433789" elapsed="0.000263"/>
+</kw>
+<kw name="POST On Session" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:33.904329" level="INFO">POST Request : url=https://the-internet.herokuapp.com/login 
+ path_url=/login 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '52', 'Content-Type': 'application/x-www-form-urlencoded'} 
+ body=username=invaliduser&amp;password=SuperSecretPassword%21 
+ </msg>
+<msg time="2026-05-17T15:24:33.904431" level="INFO">POST Response : url=https://the-internet.herokuapp.com/login 
+ status=404, reason=Not Found 
+ headers={'Content-Length': '18', 'Content-Type': 'text/html;charset=utf-8', 'Date': 'Sun, 17 May 2026 13:24:34 GMT', 'Nel': '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}', 'Report-To': '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=QL5lLSIEnjog0s1DqaDW%2F3oBLpCpQxfilIhBb0znumU%3D\\u0026sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add\\u0026ts=1779024274"}],"max_age":3600}', 'Reporting-Endpoints': 'heroku-nel="https://nel.heroku.com/reports?s=QL5lLSIEnjog0s1DqaDW%2F3oBLpCpQxfilIhBb0znumU%3D&amp;sid=c46efe9b-d3d2-4a0c-8c76-bfafa16c5add&amp;ts=1779024274"', 'Server': 'Heroku', 'Set-Cookie': 'rack.session=BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTg3MDM0YzcyZjlhODIwYzhhY2Qx%0AYWZmZmEzNzhlMjU4YzY2MmU5YTc5NjE4YzY1YjhlOWE5NjQ2Y2E2N2VhNjcG%0AOwBGSSIJY3NyZgY7AEZJIiViYWQzZTdjMmVjNmI5ZDk0ZmU2MDQ0MWMzYjRk%0AMzZhNAY7AEZJIg10cmFja2luZwY7AEZ7B0kiFEhUVFBfVVNFUl9BR0VOVAY7%0AAFRJIi0zMzkzOGQyMDg5Yzk4MjFlMzEyNTY3ZGEyZjE0NTVkOGVmNGFjMzU4%0ABjsARkkiGUhUVFBfQUNDRVBUX0xBTkdVQUdFBjsAVEkiLWRhMzlhM2VlNWU2%0AYjRiMGQzMjU1YmZlZjk1NjAxODkwYWZkODA3MDkGOwBG%0A--dbcea95e94c989eacf4b086404d20db96f50cbb0; path=/; HttpOnly', 'Via': '1.1 heroku-router', 'X-Cascade': 'pass', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN', 'X-Xss-Protection': '1; mode=block'} 
+ body=&lt;h1&gt;Not Found&lt;/h1&gt; 
+ </msg>
+<msg time="2026-05-17T15:24:33.904579" level="FAIL">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</msg>
+<var>${resp}</var>
+<arg>login_session</arg>
+<arg>${LOGIN_ENDPOINT}</arg>
+<arg>data=${payload}</arg>
+<doc>Sends a POST request on a previously created HTTP Session.</doc>
+<status status="FAIL" start="2026-05-17T15:24:33.434150" elapsed="0.475252">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</kw>
+<return>
+<value>${resp}</value>
+<status status="NOT RUN" start="2026-05-17T15:24:33.909595" elapsed="0.000038"/>
+</return>
+<arg>${USERNAME_INVALID}</arg>
+<arg>${PASSWORD_VALID}</arg>
+<status status="FAIL" start="2026-05-17T15:24:33.433513" elapsed="0.476251">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</kw>
+<kw name="POST On Session" owner="RequestsLibrary">
+<var>${response}</var>
+<arg>login_session</arg>
+<arg>${LOGIN_ENDPOINT}</arg>
+<arg>data=username=${USERNAME_INVALID}&amp;password=${PASSWORD_VALID}</arg>
+<doc>Sends a POST request on a previously created HTTP Session.</doc>
+<status status="NOT RUN" start="2026-05-17T15:24:33.909925" elapsed="0.000026"/>
+</kw>
+<kw name="Then Validate Failed Login Response With Username Error">
+<arg>${response}</arg>
+<status status="NOT RUN" start="2026-05-17T15:24:33.910144" elapsed="0.000028"/>
+</kw>
+<kw name="Delete Login Session" type="TEARDOWN">
+<kw name="Delete All Sessions" owner="RequestsLibrary">
+<msg time="2026-05-17T15:24:33.910733" level="INFO">Deleting All Sessions</msg>
+<doc>Removes all the session objects</doc>
+<status status="PASS" start="2026-05-17T15:24:33.910654" elapsed="0.000144"/>
+</kw>
+<status status="PASS" start="2026-05-17T15:24:33.910392" elapsed="0.000464"/>
+</kw>
+<doc>Verify error message displayed when username is incorrect</doc>
+<status status="FAIL" start="2026-05-17T15:24:33.432353" elapsed="0.478540">HTTPError: 404 Client Error: Not Found for url: https://the-internet.herokuapp.com/login</status>
+</test>
+<status status="FAIL" start="2026-05-17T15:24:31.445892" elapsed="2.465634"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Test Generated" id="s1" pass="0" fail="3" skip="0">Test Generated</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-17T15:24:31.435361" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 24: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+</errors>
+</robot>

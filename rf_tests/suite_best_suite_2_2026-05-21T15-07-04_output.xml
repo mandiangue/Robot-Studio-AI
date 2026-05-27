@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-21T17:07:05.296216" rpa="false" schemaversion="5">
+<suite id="s1" name="Suite Best Suite 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_best_suite_2.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-21T17:07:05.668926" level="INFO">Opening browser 'chrome' to base url 'https://www.saucedemo.com'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-21T17:07:05.668536" elapsed="4.920608"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="11">
+<kw name="When Fill In Login Form With Valid Credentials">
+<msg time="2026-05-21T17:07:10.591583" level="FAIL">No keyword with name 'When Fill In Login Form With Valid Credentials' found.</msg>
+<status status="FAIL" start="2026-05-21T17:07:10.591478" elapsed="0.000177">No keyword with name 'When Fill In Login Form With Valid Credentials' found.</status>
+</kw>
+<kw name="And Submit Login Form">
+<status status="NOT RUN" start="2026-05-21T17:07:10.591897" elapsed="0.000033"/>
+</kw>
+<kw name="Then Verify Successful Login And Products Page">
+<status status="NOT RUN" start="2026-05-21T17:07:10.592078" elapsed="0.000030"/>
+</kw>
+<kw name="Tear Down Test" type="TEARDOWN">
+<msg time="2026-05-21T17:07:10.595933" level="FAIL">No keyword with name 'Tear Down Test' found.</msg>
+<status status="FAIL" start="2026-05-21T17:07:10.595853" elapsed="0.000138">No keyword with name 'Tear Down Test' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-21T17:07:10.589383" elapsed="0.006710">No keyword with name 'When Fill In Login Form With Valid Credentials' found.
+
+Also teardown failed:
+No keyword with name 'Tear Down Test' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Wrong Password" line="17">
+<kw name="When Fill In Login Form With Wrong Password">
+<msg time="2026-05-21T17:07:10.598149" level="FAIL">No keyword with name 'When Fill In Login Form With Wrong Password' found.</msg>
+<status status="FAIL" start="2026-05-21T17:07:10.598103" elapsed="0.000094">No keyword with name 'When Fill In Login Form With Wrong Password' found.</status>
+</kw>
+<kw name="And Submit Login Form">
+<status status="NOT RUN" start="2026-05-21T17:07:10.598370" elapsed="0.000030"/>
+</kw>
+<kw name="Then Verify Failed Login With Error Message">
+<status status="NOT RUN" start="2026-05-21T17:07:10.598541" elapsed="0.000029"/>
+</kw>
+<kw name="Tear Down Test" type="TEARDOWN">
+<msg time="2026-05-21T17:07:10.601277" level="FAIL">No keyword with name 'Tear Down Test' found.</msg>
+<status status="FAIL" start="2026-05-21T17:07:10.601143" elapsed="0.000250">No keyword with name 'Tear Down Test' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-21T17:07:10.596431" elapsed="0.005100">No keyword with name 'When Fill In Login Form With Wrong Password' found.
+
+Also teardown failed:
+No keyword with name 'Tear Down Test' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Add A Product To The Cart" line="23">
+<kw name="And Fill In Login Form With Valid Credentials">
+<msg time="2026-05-21T17:07:10.603804" level="FAIL">No keyword with name 'And Fill In Login Form With Valid Credentials' found.</msg>
+<status status="FAIL" start="2026-05-21T17:07:10.603726" elapsed="0.000141">No keyword with name 'And Fill In Login Form With Valid Credentials' found.</status>
+</kw>
+<kw name="And Submit Login Form">
+<status status="NOT RUN" start="2026-05-21T17:07:10.604079" elapsed="0.000036"/>
+</kw>
+<kw name="And Verify Successful Login And Products Page">
+<status status="NOT RUN" start="2026-05-21T17:07:10.604269" elapsed="0.000031"/>
+</kw>
+<kw name="When Add First Product To Cart">
+<status status="NOT RUN" start="2026-05-21T17:07:10.604441" elapsed="0.000029"/>
+</kw>
+<kw name="Then Verify Cart Has One Item And Button Changed">
+<status status="NOT RUN" start="2026-05-21T17:07:10.604620" elapsed="0.000029"/>
+</kw>
+<kw name="Tear Down Test" type="TEARDOWN">
+<msg time="2026-05-21T17:07:10.606314" level="FAIL">No keyword with name 'Tear Down Test' found.</msg>
+<status status="FAIL" start="2026-05-21T17:07:10.606267" elapsed="0.000096">No keyword with name 'Tear Down Test' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-21T17:07:10.601912" elapsed="0.004519">No keyword with name 'And Fill In Login Form With Valid Credentials' found.
+
+Also teardown failed:
+No keyword with name 'Tear Down Test' found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-21T17:07:10.607031" elapsed="2.394281"/>
+</kw>
+<doc>Test suite for SauceDemo — Login and Cart scenarios</doc>
+<status status="FAIL" start="2026-05-21T17:07:05.299990" elapsed="7.701509"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Suite Best Suite 2" id="s1" pass="0" fail="3" skip="0">Suite Best Suite 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-21T17:07:05.647037" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:07:05.647174" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:07:05.647237" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:07:05.659831" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\products_page.robot' on line 9: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+</errors>
+</robot>

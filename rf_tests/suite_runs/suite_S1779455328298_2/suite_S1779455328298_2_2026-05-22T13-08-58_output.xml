@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T15:08:58.705162" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779455328298 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_2\suite_S1779455328298_2.robot">
+<test id="s1-t1" name="TC_001 Valid Authentication With Correct Credentials" line="32">
+<kw name="When User Enters Valid Username And Password">
+<msg time="2026-05-22T15:08:58.758574" level="FAIL">No keyword with name 'When User Enters Valid Username And Password' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.758517" elapsed="0.000121">No keyword with name 'When User Enters Valid Username And Password' found.</status>
+</kw>
+<kw name="And User Clicks Login Button">
+<status status="NOT RUN" start="2026-05-22T15:08:58.758814" elapsed="0.000029"/>
+</kw>
+<kw name="Then User Should Be Redirected To Inventory Page">
+<status status="NOT RUN" start="2026-05-22T15:08:58.758958" elapsed="0.000021"/>
+</kw>
+<kw name="And Product List Should Be Displayed Correctly">
+<status status="NOT RUN" start="2026-05-22T15:08:58.759076" elapsed="0.000019"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:58.759903" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.759871" elapsed="0.000074">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:58.757281" elapsed="0.002722">No keyword with name 'When User Enters Valid Username And Password' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Add Product To Cart" line="39">
+<kw name="When User Enters Valid Username And Password">
+<msg time="2026-05-22T15:08:58.760940" level="FAIL">No keyword with name 'When User Enters Valid Username And Password' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.760912" elapsed="0.000064">No keyword with name 'When User Enters Valid Username And Password' found.</status>
+</kw>
+<kw name="And User Clicks Login Button">
+<status status="NOT RUN" start="2026-05-22T15:08:58.761092" elapsed="0.000019"/>
+</kw>
+<kw name="Then User Should Be Redirected To Inventory Page">
+<status status="NOT RUN" start="2026-05-22T15:08:58.761206" elapsed="0.000018"/>
+</kw>
+<kw name="When User Adds First Product To Cart">
+<status status="NOT RUN" start="2026-05-22T15:08:58.761314" elapsed="0.000017"/>
+</kw>
+<kw name="Then Product Should Be Added To Cart Successfully">
+<status status="NOT RUN" start="2026-05-22T15:08:58.761426" elapsed="0.000017"/>
+</kw>
+<kw name="And Cart Badge Should Display Count Of One">
+<status status="NOT RUN" start="2026-05-22T15:08:58.761537" elapsed="0.000017"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:58.762291" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.762262" elapsed="0.000063">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:58.760243" elapsed="0.002132">No keyword with name 'When User Enters Valid Username And Password' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Authentication With Incorrect Password" line="48">
+<kw name="When User Enters Username With Invalid Password">
+<msg time="2026-05-22T15:08:58.763255" level="FAIL">No keyword with name 'When User Enters Username With Invalid Password' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.763228" elapsed="0.000063">No keyword with name 'When User Enters Username With Invalid Password' found.</status>
+</kw>
+<kw name="And User Clicks Login Button">
+<status status="NOT RUN" start="2026-05-22T15:08:58.763404" elapsed="0.000019"/>
+</kw>
+<kw name="Then Error Message Should Be Displayed">
+<status status="NOT RUN" start="2026-05-22T15:08:58.763516" elapsed="0.000018"/>
+</kw>
+<kw name="And Error Message Should Contain Invalid Credentials Text">
+<status status="NOT RUN" start="2026-05-22T15:08:58.763625" elapsed="0.000017"/>
+</kw>
+<kw name="And User Should Remain On Login Page">
+<status status="NOT RUN" start="2026-05-22T15:08:58.763735" elapsed="0.000017"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:58.764464" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.764435" elapsed="0.000062">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:58.762590" elapsed="0.001952">No keyword with name 'When User Enters Username With Invalid Password' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t4" name="TC_004 Sort Products By Price Low To High" line="56">
+<kw name="When User Enters Valid Username And Password">
+<msg time="2026-05-22T15:08:58.767295" level="FAIL">No keyword with name 'When User Enters Valid Username And Password' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.767178" elapsed="0.000222">No keyword with name 'When User Enters Valid Username And Password' found.</status>
+</kw>
+<kw name="And User Clicks Login Button">
+<status status="NOT RUN" start="2026-05-22T15:08:58.767635" elapsed="0.000050"/>
+</kw>
+<kw name="Then User Should Be Redirected To Inventory Page">
+<status status="NOT RUN" start="2026-05-22T15:08:58.767917" elapsed="0.000041"/>
+</kw>
+<kw name="When User Selects Price Low To High Sort Option">
+<status status="NOT RUN" start="2026-05-22T15:08:58.768140" elapsed="0.000033"/>
+</kw>
+<kw name="Then Products Should Be Sorted By Price In Ascending Order">
+<status status="NOT RUN" start="2026-05-22T15:08:58.768285" elapsed="0.000019"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:08:58.769141" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:08:58.769107" elapsed="0.000077">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:08:58.764753" elapsed="0.004488">No keyword with name 'When User Enters Valid Username And Password' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<status status="FAIL" start="2026-05-22T15:08:58.707470" elapsed="0.062239"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779455328298 2" id="s1" pass="0" fail="4" skip="0">suite S1779455328298 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T15:08:58.708313" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_2\suite_S1779455328298_2.robot' on line 22: Setting variable 'Suite Setup' failed: Invalid variable name 'Suite Setup'.</msg>
+<msg time="2026-05-22T15:08:58.708435" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_2\suite_S1779455328298_2.robot' on line 23: Setting variable 'Suite Teardown' failed: Invalid variable name 'Suite Teardown'.</msg>
+<msg time="2026-05-22T15:08:58.708494" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_2\suite_S1779455328298_2.robot' on line 24: Setting variable 'Documentation' failed: Invalid variable name 'Documentation'.</msg>
+<msg time="2026-05-22T15:08:58.708540" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_2\suite_S1779455328298_2.robot' on line 25: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-05-22T15:08:58.708597" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779455328298_2\suite_S1779455328298_2.robot' on line 27: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>

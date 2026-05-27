@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-21T17:38:45.318443" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779377905289 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_S1779377905289_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-21T17:38:45.710378" level="INFO">Opening browser 'chrome' to base url 'https://www.saucedemo.com'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>chrome</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-21T17:38:45.709995" elapsed="6.394965"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="12">
+<kw name="When Enter Valid Credentials">
+<msg time="2026-05-21T17:38:52.107494" level="FAIL">No keyword with name 'When Enter Valid Credentials' found. Did you mean:
+    keywords.When User Enters Valid Credentials</msg>
+<status status="FAIL" start="2026-05-21T17:38:52.107423" elapsed="0.000138">No keyword with name 'When Enter Valid Credentials' found. Did you mean:
+    keywords.When User Enters Valid Credentials</status>
+</kw>
+<kw name="And Submit Login Form">
+<status status="NOT RUN" start="2026-05-21T17:38:52.107778" elapsed="0.000033"/>
+</kw>
+<kw name="Then Verify User Is Redirected To Secure Page">
+<status status="NOT RUN" start="2026-05-21T17:38:52.109823" elapsed="0.000090"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T17:38:52.248857" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-435.png"&gt;&lt;img src="selenium-screenshot-435.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T17:38:52.110506" elapsed="0.138480"/>
+</kw>
+<status status="FAIL" start="2026-05-21T17:38:52.105217" elapsed="0.143862">No keyword with name 'When Enter Valid Credentials' found. Did you mean:
+    keywords.When User Enters Valid Credentials</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Wrong Password" line="18">
+<kw name="When Enter Credentials With Wrong Password">
+<msg time="2026-05-21T17:38:52.253171" level="FAIL">No keyword with name 'When Enter Credentials With Wrong Password' found.</msg>
+<status status="FAIL" start="2026-05-21T17:38:52.253113" elapsed="0.000111">No keyword with name 'When Enter Credentials With Wrong Password' found.</status>
+</kw>
+<kw name="And Submit Login Form">
+<status status="NOT RUN" start="2026-05-21T17:38:52.253398" elapsed="0.000031"/>
+</kw>
+<kw name="Then Verify Password Error Message Is Displayed">
+<status status="NOT RUN" start="2026-05-21T17:38:52.253563" elapsed="0.000028"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T17:38:52.381116" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-436.png"&gt;&lt;img src="selenium-screenshot-436.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T17:38:52.253803" elapsed="0.127426"/>
+</kw>
+<status status="FAIL" start="2026-05-21T17:38:52.249428" elapsed="0.131889">No keyword with name 'When Enter Credentials With Wrong Password' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Wrong Username" line="24">
+<kw name="When Enter Credentials With Wrong Username">
+<msg time="2026-05-21T17:38:52.383410" level="FAIL">No keyword with name 'When Enter Credentials With Wrong Username' found.</msg>
+<status status="FAIL" start="2026-05-21T17:38:52.383360" elapsed="0.000111">No keyword with name 'When Enter Credentials With Wrong Username' found.</status>
+</kw>
+<kw name="And Submit Login Form">
+<status status="NOT RUN" start="2026-05-21T17:38:52.383645" elapsed="0.000030"/>
+</kw>
+<kw name="Then Verify Username Error Message Is Displayed">
+<status status="NOT RUN" start="2026-05-21T17:38:52.383810" elapsed="0.000028"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-21T17:38:52.482353" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-437.png"&gt;&lt;img src="selenium-screenshot-437.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-21T17:38:52.384035" elapsed="0.098441"/>
+</kw>
+<status status="FAIL" start="2026-05-21T17:38:52.381623" elapsed="0.100941">No keyword with name 'When Enter Credentials With Wrong Username' found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-21T17:38:52.483192" elapsed="2.693647"/>
+</kw>
+<doc>Test suite for login scenarios on the-internet.herokuapp.com</doc>
+<status status="FAIL" start="2026-05-21T17:38:45.320716" elapsed="9.856231"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779377905289 1" id="s1" pass="0" fail="3" skip="0">suite S1779377905289 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-21T17:38:45.689079" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:38:45.689232" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:38:45.691007" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-21T17:38:45.701571" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\products_page.robot' on line 9: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+</errors>
+</robot>

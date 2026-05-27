@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T14:17:22.475329" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779452219250 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779452219250_2\suite_S1779452219250_2.robot">
+<test id="s1-t1" name="TC_001 Login With Valid Credentials" line="38">
+<kw name="Open Saucedemo Application">
+<msg time="2026-05-22T14:17:22.526275" level="FAIL">No keyword with name 'Open Saucedemo Application' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.526226" elapsed="0.000109">No keyword with name 'Open Saucedemo Application' found.</status>
+</kw>
+<kw name="Login With Valid Credentials">
+<arg>${USERNAME}</arg>
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T14:17:22.526476" elapsed="0.000026"/>
+</kw>
+<kw name="Verify User Is On Products Page">
+<status status="NOT RUN" start="2026-05-22T14:17:22.526601" elapsed="0.000020"/>
+</kw>
+<kw name="Close Saucedemo Application">
+<status status="NOT RUN" start="2026-05-22T14:17:22.526699" elapsed="0.000017"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T14:17:22.527526" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.527493" elapsed="0.000072">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>User logs in with valid credentials and sees the products list</doc>
+<tag>login</tag>
+<tag>sanity</tag>
+<status status="FAIL" start="2026-05-22T14:17:22.524836" elapsed="0.002785">No keyword with name 'Open Saucedemo Application' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Add Product To Cart" line="46">
+<kw name="Open Saucedemo Application">
+<msg time="2026-05-22T14:17:22.528702" level="FAIL">No keyword with name 'Open Saucedemo Application' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.528674" elapsed="0.000062">No keyword with name 'Open Saucedemo Application' found.</status>
+</kw>
+<kw name="Login With Valid Credentials">
+<arg>${USERNAME}</arg>
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T14:17:22.528834" elapsed="0.000019"/>
+</kw>
+<kw name="Verify User Is On Products Page">
+<status status="NOT RUN" start="2026-05-22T14:17:22.528943" elapsed="0.000018"/>
+</kw>
+<kw name="Add Product To Shopping Cart">
+<status status="NOT RUN" start="2026-05-22T14:17:22.529037" elapsed="0.000017"/>
+</kw>
+<kw name="Verify Item Count In Cart">
+<status status="NOT RUN" start="2026-05-22T14:17:22.529126" elapsed="0.000016"/>
+</kw>
+<kw name="Close Saucedemo Application">
+<status status="NOT RUN" start="2026-05-22T14:17:22.529213" elapsed="0.000016"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T14:17:22.529941" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.529912" elapsed="0.000062">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>After successful login, user adds the first product to the cart</doc>
+<tag>cart</tag>
+<tag>functionality</tag>
+<status status="FAIL" start="2026-05-22T14:17:22.527859" elapsed="0.002163">No keyword with name 'Open Saucedemo Application' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Complete Checkout Process" line="56">
+<kw name="Open Saucedemo Application">
+<msg time="2026-05-22T14:17:22.531106" level="FAIL">No keyword with name 'Open Saucedemo Application' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.531079" elapsed="0.000061">No keyword with name 'Open Saucedemo Application' found.</status>
+</kw>
+<kw name="Login With Valid Credentials">
+<arg>${USERNAME}</arg>
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T14:17:22.531239" elapsed="0.000021"/>
+</kw>
+<kw name="Verify User Is On Products Page">
+<status status="NOT RUN" start="2026-05-22T14:17:22.531345" elapsed="0.000018"/>
+</kw>
+<kw name="Add Product To Shopping Cart">
+<status status="NOT RUN" start="2026-05-22T14:17:22.531435" elapsed="0.000017"/>
+</kw>
+<kw name="Access Shopping Cart">
+<status status="NOT RUN" start="2026-05-22T14:17:22.531522" elapsed="0.000016"/>
+</kw>
+<kw name="Complete Checkout Process">
+<arg>${FIRST_NAME}</arg>
+<arg>${LAST_NAME}</arg>
+<arg>${POSTAL_CODE}</arg>
+<status status="NOT RUN" start="2026-05-22T14:17:22.531611" elapsed="0.000027"/>
+</kw>
+<kw name="Verify Order Confirmation Page">
+<status status="NOT RUN" start="2026-05-22T14:17:22.531729" elapsed="0.000027"/>
+</kw>
+<kw name="Close Saucedemo Application">
+<status status="NOT RUN" start="2026-05-22T14:17:22.531918" elapsed="0.000069"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T14:17:22.533028" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.532991" elapsed="0.000078">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>User completes checkout with personal information and reaches order confirmation</doc>
+<tag>checkout</tag>
+<tag>functionality</tag>
+<status status="FAIL" start="2026-05-22T14:17:22.530237" elapsed="0.002886">No keyword with name 'Open Saucedemo Application' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t4" name="TC_004 Logout From Application" line="68">
+<kw name="Open Saucedemo Application">
+<msg time="2026-05-22T14:17:22.536529" level="FAIL">No keyword with name 'Open Saucedemo Application' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.536435" elapsed="0.000162">No keyword with name 'Open Saucedemo Application' found.</status>
+</kw>
+<kw name="Login With Valid Credentials">
+<arg>${USERNAME}</arg>
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T14:17:22.536749" elapsed="0.000022"/>
+</kw>
+<kw name="Verify User Is On Products Page">
+<status status="NOT RUN" start="2026-05-22T14:17:22.536863" elapsed="0.000019"/>
+</kw>
+<kw name="Logout From Application">
+<status status="NOT RUN" start="2026-05-22T14:17:22.536958" elapsed="0.000017"/>
+</kw>
+<kw name="Verify User Is On Login Page">
+<status status="NOT RUN" start="2026-05-22T14:17:22.537048" elapsed="0.000017"/>
+</kw>
+<kw name="Close Saucedemo Application">
+<status status="NOT RUN" start="2026-05-22T14:17:22.537216" elapsed="0.000023"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T14:17:22.538188" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T14:17:22.538148" elapsed="0.000082">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<doc>User logs out using the hamburger menu and is redirected to login page</doc>
+<tag>logout</tag>
+<tag>sanity</tag>
+<status status="FAIL" start="2026-05-22T14:17:22.533369" elapsed="0.004912">No keyword with name 'Open Saucedemo Application' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<status status="FAIL" start="2026-05-22T14:17:22.477929" elapsed="0.060795"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="1" skip="0">cart</stat>
+<stat pass="0" fail="1" skip="0">checkout</stat>
+<stat pass="0" fail="2" skip="0">functionality</stat>
+<stat pass="0" fail="1" skip="0">login</stat>
+<stat pass="0" fail="1" skip="0">logout</stat>
+<stat pass="0" fail="2" skip="0">sanity</stat>
+</tag>
+<suite>
+<stat name="suite S1779452219250 2" id="s1" pass="0" fail="4" skip="0">suite S1779452219250 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T14:17:22.478483" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779452219250_2\suite_S1779452219250_2.robot' on line 30: Setting variable 'Suite Setup' failed: Invalid variable name 'Suite Setup'.</msg>
+<msg time="2026-05-22T14:17:22.478602" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779452219250_2\suite_S1779452219250_2.robot' on line 31: Setting variable 'Suite Teardown' failed: Invalid variable name 'Suite Teardown'.</msg>
+<msg time="2026-05-22T14:17:22.478660" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779452219250_2\suite_S1779452219250_2.robot' on line 32: Setting variable 'Documentation' failed: Invalid variable name 'Documentation'.</msg>
+<msg time="2026-05-22T14:17:22.478711" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779452219250_2\suite_S1779452219250_2.robot' on line 33: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-05-22T14:17:22.478758" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779452219250_2\suite_S1779452219250_2.robot' on line 35: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>

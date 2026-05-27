@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T12:12:08.134987" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779444703644 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779444703644_1\suite_S1779444703644_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-22T12:12:08.502274" level="INFO">Opening browser 'chrome' to base url 'https://www.cdiscount.com'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-22T12:12:08.501878" elapsed="9.238535"/>
+</kw>
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="11">
+<kw name="Login With Valid Credentials">
+<msg time="2026-05-22T12:12:17.743137" level="FAIL">No keyword with name 'Login With Valid Credentials' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</msg>
+<status status="FAIL" start="2026-05-22T12:12:17.743078" elapsed="0.000115">No keyword with name 'Login With Valid Credentials' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<kw name="Verify Successful Login">
+<status status="NOT RUN" start="2026-05-22T12:12:17.743339" elapsed="0.000031"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-22T12:12:17.940338" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-690.png"&gt;&lt;img src="selenium-screenshot-690.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-22T12:12:17.743613" elapsed="0.196862"/>
+</kw>
+<doc>Verify that user can login with valid username and password</doc>
+<status status="FAIL" start="2026-05-22T12:12:17.740664" elapsed="0.199918">No keyword with name 'Login With Valid Credentials' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t2" name="TC_002 Failed Login With Invalid Password" line="18">
+<kw name="Login With Invalid Password">
+<msg time="2026-05-22T12:12:17.943442" level="FAIL">No keyword with name 'Login With Invalid Password' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</msg>
+<status status="FAIL" start="2026-05-22T12:12:17.943375" elapsed="0.000123">No keyword with name 'Login With Invalid Password' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<kw name="Verify Failed Login With Invalid Password">
+<status status="NOT RUN" start="2026-05-22T12:12:17.943665" elapsed="0.000034"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-22T12:12:18.179438" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-691.png"&gt;&lt;img src="selenium-screenshot-691.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-22T12:12:17.943947" elapsed="0.235616"/>
+</kw>
+<doc>Verify that login fails with invalid password and error message is displayed</doc>
+<status status="FAIL" start="2026-05-22T12:12:17.940966" elapsed="0.238754">No keyword with name 'Login With Invalid Password' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Login With Invalid Username" line="25">
+<kw name="Login With Invalid Username">
+<msg time="2026-05-22T12:12:18.183159" level="FAIL">No keyword with name 'Login With Invalid Username' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</msg>
+<status status="FAIL" start="2026-05-22T12:12:18.183091" elapsed="0.000125">No keyword with name 'Login With Invalid Username' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</kw>
+<kw name="Verify Failed Login With Invalid Username">
+<status status="NOT RUN" start="2026-05-22T12:12:18.183371" elapsed="0.000031"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-22T12:12:18.332922" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-692.png"&gt;&lt;img src="selenium-screenshot-692.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-22T12:12:18.183625" elapsed="0.149446"/>
+</kw>
+<doc>Verify that login fails with invalid username and error message is displayed</doc>
+<status status="FAIL" start="2026-05-22T12:12:18.180629" elapsed="0.152532">No keyword with name 'Login With Invalid Username' found. Did you try using keyword 'BuiltIn.Log' and forgot to use enough whitespace between keyword and arguments?</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-22T12:12:18.333802" elapsed="7.416434"/>
+</kw>
+<doc>Login Application Tests</doc>
+<status status="FAIL" start="2026-05-22T12:12:08.137230" elapsed="17.613127"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779444703644 1" id="s1" pass="0" fail="3" skip="0">suite S1779444703644 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T12:12:08.486891" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-22T12:12:08.487038" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-22T12:12:08.487114" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

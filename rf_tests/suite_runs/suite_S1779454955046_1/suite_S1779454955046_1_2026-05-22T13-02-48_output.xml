@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-22T15:02:48.883479" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1779454955046 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779454955046_1\suite_S1779454955046_1.robot">
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="27">
+<kw name="When Enter Username">
+<msg time="2026-05-22T15:02:48.947544" level="FAIL">No keyword with name 'When Enter Username' found.</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-22T15:02:48.947493" elapsed="0.000114">No keyword with name 'When Enter Username' found.</status>
+</kw>
+<kw name="And Enter Password">
+<arg>${VALID_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T15:02:48.947784" elapsed="0.000025"/>
+</kw>
+<kw name="And Click Login Button">
+<status status="NOT RUN" start="2026-05-22T15:02:48.947914" elapsed="0.000018"/>
+</kw>
+<kw name="Then Verify Successful Login">
+<status status="NOT RUN" start="2026-05-22T15:02:48.948022" elapsed="0.000018"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:02:48.948841" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:02:48.948809" elapsed="0.000083">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:02:48.945877" elapsed="0.003071">No keyword with name 'When Enter Username' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Incorrect Password" line="34">
+<kw name="When Enter Username">
+<msg time="2026-05-22T15:02:48.952966" level="FAIL">No keyword with name 'When Enter Username' found.</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-22T15:02:48.952273" elapsed="0.000783">No keyword with name 'When Enter Username' found.</status>
+</kw>
+<kw name="And Enter Password">
+<arg>${WRONG_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T15:02:48.953367" elapsed="0.000022"/>
+</kw>
+<kw name="And Click Login Button">
+<status status="NOT RUN" start="2026-05-22T15:02:48.953649" elapsed="0.000029"/>
+</kw>
+<kw name="Then Verify Invalid Password Error">
+<status status="NOT RUN" start="2026-05-22T15:02:48.953797" elapsed="0.000019"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:02:48.954676" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:02:48.954627" elapsed="0.000102">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:02:48.949383" elapsed="0.005407">No keyword with name 'When Enter Username' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Incorrect Username" line="41">
+<kw name="When Enter Username">
+<msg time="2026-05-22T15:02:48.956137" level="FAIL">No keyword with name 'When Enter Username' found.</msg>
+<arg>${WRONG_USERNAME}</arg>
+<status status="FAIL" start="2026-05-22T15:02:48.956100" elapsed="0.000083">No keyword with name 'When Enter Username' found.</status>
+</kw>
+<kw name="And Enter Password">
+<arg>${WRONG_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-22T15:02:48.956315" elapsed="0.000021"/>
+</kw>
+<kw name="And Click Login Button">
+<status status="NOT RUN" start="2026-05-22T15:02:48.956433" elapsed="0.000018"/>
+</kw>
+<kw name="Then Verify Invalid Username Error">
+<status status="NOT RUN" start="2026-05-22T15:02:48.956539" elapsed="0.000017"/>
+</kw>
+<kw name="Capture Page Screenshot" type="TEARDOWN">
+<msg time="2026-05-22T15:02:48.957472" level="FAIL">No keyword with name 'Capture Page Screenshot' found.</msg>
+<status status="FAIL" start="2026-05-22T15:02:48.957429" elapsed="0.000103">No keyword with name 'Capture Page Screenshot' found.</status>
+</kw>
+<status status="FAIL" start="2026-05-22T15:02:48.955079" elapsed="0.002526">No keyword with name 'When Enter Username' found.
+
+Also teardown failed:
+No keyword with name 'Capture Page Screenshot' found.</status>
+</test>
+<status status="FAIL" start="2026-05-22T15:02:48.889051" elapsed="0.069161"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1779454955046 1" id="s1" pass="0" fail="3" skip="0">suite S1779454955046 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-22T15:02:48.889801" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779454955046_1\suite_S1779454955046_1.robot' on line 18: Setting variable 'Suite Setup' failed: Invalid variable name 'Suite Setup'.</msg>
+<msg time="2026-05-22T15:02:48.889943" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779454955046_1\suite_S1779454955046_1.robot' on line 19: Setting variable 'Suite Teardown' failed: Invalid variable name 'Suite Teardown'.</msg>
+<msg time="2026-05-22T15:02:48.890009" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779454955046_1\suite_S1779454955046_1.robot' on line 20: Setting variable 'Documentation' failed: Invalid variable name 'Documentation'.</msg>
+<msg time="2026-05-22T15:02:48.890060" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779454955046_1\suite_S1779454955046_1.robot' on line 21: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-05-22T15:02:48.890107" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1779454955046_1\suite_S1779454955046_1.robot' on line 23: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>
