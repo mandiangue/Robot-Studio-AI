@@ -32,7 +32,7 @@ const LS = {
       localStorage.setItem('qa_agent_mode',     'multi');
       const hl = document.getElementById('optHeadless'); if (hl) localStorage.setItem('qa_agent_headless', hl.value);
       localStorage.setItem('qa_agent_welcomed', '1');
-    } catch(e) { console.warn('localStorage unavailable — run via https://robotstudioai.onrender.com', e); }
+    } catch(e) { console.warn('localStorage unavailable — run via http://localhost', e); }
   },
   load() {
     // Always show welcome message first
@@ -122,10 +122,7 @@ const LS = {
       // ── Warn if running from file://
       if (window.location.protocol === 'file:') {
         setTimeout(() => {
-          renderAgentMsg(
-            '⚠️ localStorage désactivé en mode file://\n\nOuvre l’application depuis Render :\nhttps://robotstudioai.onrender.com',
-            false
-          );
+          renderAgentMsg('⚠️ **localStorage désactivé** en mode `file://`\n\nLes données ne sont pas persistées. Lance un serveur local :\n\n`node server.js` puis ouvre `http://localhost:3001/qa-agent.html`', false);
         }, 500);
       }
 
@@ -1272,9 +1269,7 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg(`❌ Impossible de contacter l'API Render. 
-        Vérifie que le backend Render est démarré :
-        https://robotstudioai.onrender.com`);
+      renderAgentMsg(`❌ Serveur proxy non démarré.\n\nLance **\`node server.js\`** dans ton terminal.`);
     } else {
       renderAgentMsg(`❌ Erreur : ${err.message}`);
     }
@@ -3275,7 +3270,7 @@ async function uiConnectAzure() {
 
   } catch(err) {
     btn.textContent = '🔗 Connecter';
-    const msg = err.message.includes('fetch') ? '❌ Impossible de contacter l'API Render.' : '❌ ' + err.message;
+    const msg = err.message.includes('fetch') ? '❌ Serveur proxy non démarré — lance node server.js' : '❌ ' + err.message;
     showConnError('azure', msg);
   }
 }
@@ -3290,13 +3285,13 @@ async function uiFetchAzure() {
   if (btn) btn.textContent = '⏳';
 
   try {
-    const r    = await fetch(`https://robotstudioai.onrender.com/api/azure/workitem/${id}`);
+    const r    = await fetch(`https://robotstudioai.onrender.com//api/azure/workitem/${id}`);
     const data = await r.json();
     if (!r.ok) { showConnError('azure', '❌ ' + (data.error || `Erreur HTTP ${r.status}`)); return; }
     const apiKey = document.getElementById('apiKey').value.trim();
     await handleFetchAndGenerate(id, true, apiKey, '', data);  // true = génère les cas
   } catch(err) {
-    showConnError('azure', err.message.includes('fetch') ? '❌ Impossible de contacter l\'API Render.' : '❌ ' + err.message);
+    showConnError('azure', err.message.includes('fetch') ? '❌ Serveur proxy non démarré' : '❌ ' + err.message);
   } finally {
     if (btn) btn.textContent = 'Récupérer';
   }
@@ -3356,7 +3351,7 @@ async function uiConnectJira() {
 
   } catch(err) {
     btn.textContent = '🔗 Connecter';
-    const msg = err.message.includes('fetch') ? '❌ Impossible de contacter l\'API Render.' : '❌ ' + err.message;
+    const msg = err.message.includes('fetch') ? '❌ Serveur proxy non démarré — lance node server.js' : '❌ ' + err.message;
     showConnError('jira', msg);
   }
 }
@@ -3595,9 +3590,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg(`❌ Impossible de contacter le backend Render. 
-        Vérifie que le serveur est bien en ligne :
-        https://robotstudioai.onrender.com`);
+      renderAgentMsg('❌ Serveur proxy non démarré.\n\nLance **`node server.js`** dans ton terminal puis réessaie.');
     } else {
       renderAgentMsg(`❌ Erreur : ${err.message}`);
     }
