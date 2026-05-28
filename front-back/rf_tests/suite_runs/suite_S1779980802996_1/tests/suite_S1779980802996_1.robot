@@ -1,0 +1,26 @@
+*** Settings ***
+Test Setup        Go To    ${BASE_URL}
+Test Teardown    Capture Page Screenshot
+Suite Setup       Open Browser    ${BASE_URL}    ${BROWSER}    options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")
+Suite Teardown    Close Browser
+Documentation    Tests Saucedemo — TC_001 TC_002 TC_003
+Library    SeleniumLibrary
+Resource    C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1779980802996_1/resources/variables.robot
+Resource    C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1779980802996_1/resources/keywords.robot
+
+
+
+*** Test Cases ***
+TC_001 — Login With Locked Out User
+    Given Attempt Login With Locked User
+    Then Verify Locked Out Error Message Is Shown
+
+TC_002 — Add Product To Cart From Product Detail Page
+    Given Login As Standard User
+    When Navigate To Product Detail And Add To Cart
+    Then Verify Cart Counter Is One And Remove Button Shown
+
+TC_003 — Sort Products By Price Low To High
+    Given Login As Standard User
+    When Sort Products By Price Low To High
+    Then Verify Products Are Sorted By Price Ascending

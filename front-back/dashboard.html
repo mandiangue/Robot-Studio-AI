@@ -116,7 +116,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
     <table class="runs-table">
       <thead>
         <tr>
-          <th>RUN</th><th>TYPE</th><th>DATE</th><th>SUITE / NOM</th>
+          <th>RUN</th><th>TYPE</th><th>DATE</th><th>SUITE</th><th>NOM TEST</th>
           <th>RÉSULTATS</th><th>TAUX</th><th>DURÉE</th><th>STATUT</th>
         </tr>
       </thead>
@@ -131,11 +131,26 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 function fmt(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m'+Math.floor((ms%60000)/1000)+'s'}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
+// Combine qa_run_history (runs simples) + suite-reports depuis qa_code_cards
 const history = (() => {
-  try { return JSON.parse(localStorage.getItem('qa_run_history') || '[]'); }
+  try {
+    const simple = JSON.parse(localStorage.getItem('qa_run_history') || '[]');
+    const cards  = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
+    // Suites depuis suite-reports
+    const suiteRuns = cards
+      .filter(c => c.type === 'suite-report' && c.data)
+      .map(c => ({ ...c.data, blockNames: c.blockNames || [], suiteTitle: c.suiteTitle }))
+      .filter(d => !simple.some(r => r.runNumber === d.runNumber));
+    // Runs simples depuis report cards (non présents dans simple)
+    const reportRuns = cards
+      .filter(c => c.type === 'report' && c.data && !c.data.isSuite)
+      .map(c => c.data)
+      .filter(d => !simple.some(r => r.runNumber === d.runNumber));
+    return [...simple, ...reportRuns, ...suiteRuns]
+      .sort((a,b) => (b.runNumber||0) - (a.runNumber||0));
+  }
   catch(e) { return []; }
 })();
-
 if (history.length === 0) {
   document.querySelector('.main').insertAdjacentHTML('afterbegin',
     '<div style="text-align:center;padding:60px;color:var(--gray);font-size:14px">'+
@@ -259,9 +274,9 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
     if (env.includes('Database') || env.includes('SQL'))    return 'database';
     return 'web';
   }
-  const rt  = r.isSuite ? null : guessRunType(r);
-  const rtc = rt ? runTypeCfg[rt] || runTypeCfg.web : null;
-  const type = r.isSuite
+  const rt  = guessRunType(r);
+  const rtc = runTypeCfg[rt] || runTypeCfg.web;
+  const type = false && r.isSuite
     ? `<span class="badge suite">🧪 Suite</span>`
     : `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;border-radius:10px;white-space:nowrap;
         background:${rtc.bg};color:${rtc.color};border:1px solid ${rtc.border}">
@@ -271,12 +286,17 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
     ? `<span class="badge pass">✅ PASS</span>`
     : `<span class="badge fail">❌ FAIL</span>`;
   const suiteName = r.isSuite ? (r.suiteName||'—') : '—';
+  // Pour les suites : noms des blocs RF, pour les runs simples : pageTitle
+  const testName = r.isSuite
+    ? (r.blockNames||[]).join(', ') || r.suiteName || '—'
+    : (r.pageTitle || '—');
 
   return `<tr>
     <td style="font-family:'IBM Plex Mono',monospace;color:var(--teal);font-weight:700">#${r.runNumber||'?'}</td>
     <td>${type}</td>
-    <td style="font-size:12px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${esc(r.runDate||'—')}</td>
-    <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(suiteName)}">${esc(suiteName)}</td>
+    <td style="font-size:12px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${esc(r.runDate || (r.runNumber ? new Date(r.runNumber).toLocaleString('fr-FR') : '—'))}</td>
+    <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--warn)" title="${esc(suiteName)}">${esc(suiteName)}</td>
+    <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--teal)" title="${esc(testName)}">${esc(testName)}</td>
     <td>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${r.passed||0}/${r.total||0}</span>

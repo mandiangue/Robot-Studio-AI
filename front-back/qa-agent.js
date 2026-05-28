@@ -838,8 +838,8 @@ function mergeSelectedBlocks(targetCardId) {
   });
 
   // Clear saved code cards — will be regenerated
-  window._codeCards = (window._codeCards||[]).filter(c => false); // clear all
-  localStorage.removeItem('qa_code_cards');
+  // Ne supprimer que les cartes de code (multi) — garder les rapports et suite-reports
+  window._codeCards = (window._codeCards||[]).filter(c => c.type === 'report' || c.type === 'suite-report');
 
   document.getElementById('blockSelectorModal')?.remove();
   syncStoreToPending(targetCardId);
@@ -3615,6 +3615,8 @@ function openTestReport(data, suiteCtx) {
   data.runDate   = data.runDate || new Date().toLocaleString('fr-FR');
   // runType comes from server results or _lastRunType
   if (!data.runType) data.runType = window._lastRunType || 'web';
+  // Nom de la page/bloc testé
+  if (!data.pageTitle) data.pageTitle = window._lastGeneratedTitle || '';
   // Save environment string for dashboard detection
   const envMap = {
     mobile:   'Robot Framework + AppiumLibrary (Mobile)',
@@ -3657,20 +3659,23 @@ function openTestReport(data, suiteCtx) {
     window._currentRunMsg = null;
   }
 
-  // Keep last 10 runs
+  // Keep last 10 runs en mémoire uniquement (pas en localStorage — doublon de qa_code_cards)
   _reportHistory.push(JSON.parse(JSON.stringify(data)));
   if (_reportHistory.length > 10) _reportHistory.shift();
 
-  // Save to localStorage
-  try { localStorage.setItem('qa_run_history', JSON.stringify(_reportHistory)); } catch(e) {}
+  // qa_run_history supprimé — données dans qa_code_cards
 
   renderReportCard(data);
 }
 
-// Load history on startup
+// Load history from qa_code_cards (qa_run_history supprimé — doublon)
 try {
-  const saved = localStorage.getItem('qa_run_history');
-  if (saved) _reportHistory = JSON.parse(saved);
+  const cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
+  _reportHistory = cards
+    .filter(c => c.type === 'report' && c.data)
+    .map(c => c.data)
+    .sort((a,b) => (a.runNumber||0) - (b.runNumber||0))
+    .slice(-10);
 } catch(e) {}
 
 function renderReportCard(data, suiteCardId) {
@@ -3702,7 +3707,17 @@ function renderReportCard(data, suiteCardId) {
           </span>
           ${data.isSuite ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(245,158,11,0.15);color:var(--warn);border:1px solid rgba(245,158,11,0.3);padding:3px 10px;border-radius:10px">
             🧪 SUITE : ${escHtml(data.suiteName||'')}
-          </span>` : ''}
+          </span>${(() => {
+            const names = data.blockNames||[];
+            const max = 3;
+            const visible = names.slice(0, max);
+            const rest = names.slice(max);
+            const badges = visible.map(n => `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(0,212,170,0.12);color:var(--teal);border:1px solid rgba(0,212,170,0.3);padding:3px 10px;border-radius:10px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(n)}">${escHtml(n)}</span>`).join('');
+            const more = rest.length ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);padding:3px 10px;border-radius:10px;white-space:nowrap;cursor:default" title="${escHtml(rest.join(', '))}">+${rest.length} autres</span>` : '';
+            return badges + more;
+          })()}` : (data.pageTitle ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(0,212,170,0.12);color:var(--teal);border:1px solid rgba(0,212,170,0.3);padding:3px 10px;border-radius:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(data.pageTitle)}">
+            📄 ${escHtml(data.pageTitle)}
+          </span>` : '')}
           ${(()=>{
             const badges = { mobile:'📱 Run Mobile', api:'🔌 Run API', database:'🗄️ Run Database', web:'🔵 Run Web' };
             const colors = { mobile:'rgba(168,85,247,0.15)', api:'rgba(59,130,246,0.15)', database:'rgba(34,197,94,0.15)', web:'rgba(0,212,170,0.1)' };
@@ -6353,7 +6368,7 @@ function deleteReportCard(cardId, runNum) {
     // Persiste
     try {
       localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards));
-      localStorage.setItem('qa_run_history', JSON.stringify(_reportHistory));
+      // qa_run_history supprimé — données dans qa_code_cards
     } catch(e) {}
     updateStatsBar();
     showToast('🗑 Rapport supprimé');
@@ -6443,13 +6458,21 @@ function renderConsolidatedSuiteReport_inline() {
     failed:      suiteReports.reduce((s, r) => s + (r.failed  || 0), 0),
     duration:    suiteReports.reduce((s, r) => s + (r.duration|| 0), 0),
     tests:       suiteReports.flatMap(r => (r.tests || []).map(t => ({...t}))),
-    runType:     'suite',
+    runType:     suiteReports[0]?.runType || 'web',
     environment: 'RoboTest·AI — Robot Framework',
     reportTitle: 'Rapport de Tests Automatisés',
     runNumber:   Date.now(),
+    runDate:     new Date().toLocaleString('fr-FR'),
+    createdAt:   new Date().toISOString(),
     suiteName:   suiteTitle,
     isSuite:     true,
   };
+
+  // Calcul blockNames avant renderReportCard pour les badges
+  const _suite = (savedSuites||[]).find(s => s.title === suiteTitle);
+  merged.blockNames = _suite
+    ? ((_suite.testIds||[]).map(id => (suiteRegistry||[]).find(t => t.id === id)?.name).filter(Boolean))
+    : suiteReports.map(r => r.suiteName?.replace(/ \[\d+\/\d+\]$/, '')||'').filter(Boolean);
 
   // Use the exact same renderReportCard as individual reports
   renderReportCard(merged, 'suite-report-' + merged.runNumber);
@@ -6462,10 +6485,27 @@ function renderConsolidatedSuiteReport_inline() {
     total: merged.total, passed: merged.passed, failed: merged.failed,
     rate: merged.total > 0 ? Math.round(merged.passed/merged.total*100) : 0,
     blocs: suiteReports.map((r,i) => ({idx:i+1,name:r.suiteName||'',total:r.total||0,passed:r.passed||0,failed:r.failed||0,duration:r.duration||0})),
+    blockNames: [],
     tests: merged.tests,
     data: merged,
     createdAt: new Date().toISOString()
   });
+  // Calcul blockNames après création de l'objet
+  const _suiteCard = window._codeCards[window._codeCards.length - 1];
+  if (_suiteCard && _suiteCard.type === 'suite-report') {
+    const _suite = (savedSuites||[]).find(s => s.title === suiteTitle);
+    if (_suite) {
+      _suiteCard.blockNames = (_suite.testIds||[])
+        .map(id => (suiteRegistry||[]).find(t => t.id === id)?.name)
+        .filter(Boolean);
+    }
+    if (!_suiteCard.blockNames?.length) {
+      _suiteCard.blockNames = suiteReports
+        .map(r => r.suiteName?.replace(/ \[\d+\/\d+\]$/, '')||'')
+        .filter(Boolean);
+    }
+    console.log('[blockNames]', _suiteCard.blockNames);
+  }
   saveCodeCards();
 }
 
