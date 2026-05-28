@@ -1,0 +1,7 @@
+robotframework
+robotframework-seleniumlibrary
+robotframework-browser
+robotframework-requests
+robotframework-databaselibrary
+robotframework-appiumlibrary
+playwright
