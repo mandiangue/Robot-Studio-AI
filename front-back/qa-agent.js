@@ -32,7 +32,7 @@ const LS = {
       localStorage.setItem('qa_agent_mode',     'multi');
       const hl = document.getElementById('optHeadless'); if (hl) localStorage.setItem('qa_agent_headless', hl.value);
       localStorage.setItem('qa_agent_welcomed', '1');
-    } catch(e) { console.warn('localStorage unavailable — run via http://localhost', e); }
+    } catch(e) { console.warn('localStorage unavailable — run via https://robotstudioai.onrender.com', e); }
   },
   load() {
     // Always show welcome message first
@@ -122,7 +122,7 @@ const LS = {
       // ── Warn if running from file://
       if (window.location.protocol === 'file:') {
         setTimeout(() => {
-          renderAgentMsg('⚠️ **localStorage désactivé** en mode `file://`\n\nLes données ne sont pas persistées. Lance un serveur local :\n\n`node server.js` puis ouvre `http://localhost:3001/qa-agent.html`', false);
+          renderAgentMsg('⚠️ **localStorage désactivé** en mode `file://`\n\nLes données ne sont pas persistées. Lance un serveur local :\n\n`node server.js` puis ouvre `https://robotstudioai.onrender.com`', false);
         }, 500);
       }
 
@@ -1812,7 +1812,7 @@ function renderCodeMsg(code, filename) {
   // Fetch variables.robot asynchronously and update the card
   (async () => {
     try {
-      const vr = await fetch('http://localhost:3001/api/rf/read-file?path=resources/variables.robot');
+      const vr = await fetch('https://robotstudioai.onrender.com/api/rf/read-file?path=resources/variables.robot');
       if (vr.ok) {
         const vd = await vr.json();
         const card = window._codeCards.find(c => c.cardId === cardId4);
@@ -2880,7 +2880,7 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
 
     if (!issueKey) return;
 
-    const r  = await fetch(`http://localhost:3001/api/jira/issue/${issueKey}`);
+    const r  = await fetch(`https://robotstudioai.onrender.com/api/jira/issue/${issueKey}`);
     const data = await r.json();
     hideTyping();
 
@@ -3250,7 +3250,7 @@ async function uiConnectAzure() {
   btn.textContent = '⏳ Connexion...';
 
   try {
-    const r    = await fetch('http://localhost:3001/api/azure/connect', {
+    const r    = await fetch('https://robotstudioai.onrender.com/api/azure/connect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ azureUrl: url, token }),
@@ -3270,7 +3270,7 @@ async function uiConnectAzure() {
 
   } catch(err) {
     btn.textContent = '🔗 Connecter';
-    const msg = err.message.includes('fetch') ? '❌ Serveur proxy non démarré — lance node server.js' : '❌ ' + err.message;
+    const msg = err.message.includes('fetch') ? '❌ Impossible de contacter l'API Render.' : '❌ ' + err.message;
     showConnError('azure', msg);
   }
 }
@@ -3285,7 +3285,7 @@ async function uiFetchAzure() {
   if (btn) btn.textContent = '⏳';
 
   try {
-    const r    = await fetch(`http://localhost:3001/api/azure/workitem/${id}`);
+    const r    = await fetch(`https://robotstudioai.onrender.com/api/azure/workitem/${id}`);
     const data = await r.json();
     if (!r.ok) { showConnError('azure', '❌ ' + (data.error || `Erreur HTTP ${r.status}`)); return; }
     const apiKey = document.getElementById('apiKey').value.trim();
@@ -3328,7 +3328,7 @@ async function uiConnectJira() {
   btn.textContent = '⏳ Connexion...';
 
   try {
-    const r    = await fetch('http://localhost:3001/api/jira/connect', {
+    const r    = await fetch('https://robotstudioai.onrender.com/api/jira/connect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jiraUrl: url, email, token }),
@@ -3528,7 +3528,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
 
   try {
     const headless = document.getElementById('optHeadless')?.value === 'headless';
-    const r    = await fetch('http://localhost:3001/api/rf/run', {
+    const r    = await fetch('https://robotstudioai.onrender.com/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless }),
@@ -3553,7 +3553,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     if (!suiteCtx) {
       (async () => {
         try {
-          const vr = await fetch('http://localhost:3001/api/rf/read-file?path=resources/variables.robot');
+          const vr = await fetch('https://robotstudioai.onrender.com/api/rf/read-file?path=resources/variables.robot');
           if (vr.ok) {
             const vd = await vr.json();
             if (vd.content && window._lastCardId) {
@@ -4462,7 +4462,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Poll server every 3s to check if run completed
       const pollInterval = setInterval(async () => {
         try {
-          const resp = await fetch('http://localhost:3001/api/rf/status');
+          const resp = await fetch('https://robotstudioai.onrender.com/api/rf/status');
           if (!resp.ok) return;
           const data = await resp.json();
           if (data.status === 'idle' && data.results) {
@@ -4920,7 +4920,7 @@ function pauseTestRun(btn) {
   btn.onclick = () => resumeTestRun(btn);
 
   // Ask server to create a pause flag file
-  fetch('http://localhost:3001/api/rf/pause', { method: 'POST' }).catch(() => {});
+  fetch('https://robotstudioai.onrender.com/api/rf/pause', { method: 'POST' }).catch(() => {});
 
   const msg = btn.closest('.msg-bubble');
   const info = document.createElement('div');
@@ -4941,13 +4941,13 @@ function resumeTestRun(btn) {
   btn.style.color = 'var(--warn)';
   btn.onclick = () => pauseTestRun(btn);
   document.getElementById('pauseInfo')?.remove();
-  fetch('http://localhost:3001/api/rf/resume', { method: 'POST' }).catch(() => {});
+  fetch('https://robotstudioai.onrender.com/api/rf/resume', { method: 'POST' }).catch(() => {});
   showToast('▶️ Reprise');
 }
 
 function stopTestRun() {
   window._suiteStopped = true; // Stop suite loop
-  fetch('http://localhost:3001/api/rf/stop', { method: 'POST' })
+  fetch('https://robotstudioai.onrender.com/api/rf/stop', { method: 'POST' })
     .then(r => r.json())
     .then(d => {
       if (d.stopped) showToast('⏹ Run arrêté');
@@ -5551,7 +5551,7 @@ async function runSuiteGroup(idx) {
       setTimeout(() => {
         const check = setInterval(async () => {
           try {
-            const r = await fetch('http://localhost:3001/api/rf/status');
+            const r = await fetch('https://robotstudioai.onrender.com/api/rf/status');
             const d = await r.json();
             if (d.status === 'idle') { clearInterval(check); resolve(); }
           } catch(e) { clearInterval(check); resolve(); }
