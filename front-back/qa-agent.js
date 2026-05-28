@@ -122,7 +122,7 @@ const LS = {
       // ── Warn if running from file://
       if (window.location.protocol === 'file:') {
         setTimeout(() => {
-          renderAgentMsg('⚠️ **localStorage désactivé** en mode `file://`\n\nLes données ne sont pas persistées. Lance un serveur local :\n\n`node server.js` puis ouvre `https://robotstudioai.onrender.com`', false);
+          renderAgentMsg('⚠️ Ouvre directement l’application Render :\n\nhttps://robotstudioai.onrender.com', false);
         }, 500);
       }
 
@@ -288,7 +288,7 @@ async function processMessage(userText, apiKey) {
     const isConnectCmd  = /connect|connecte/i.test(lower);
     const isGenCmd      = /génère|genere|generate|crée|cree|cas\s+de\s+test|tests?\s+rf|robot\s+framework|test(er|s)?\s+\d+|\d+\s+(cas|test)/i.test(lower);
     const usNumMatch    = userText.match(/(?:us|user.?story|work.?item|ticket|issue|#)\s*[#n°]?\s*(\d+)/i);
-    const jiraKeyMatch  = userText.match(/([A-Z][A-Z0-9]+-\d+)/);
+    const jiraKeyMatch = userText.match(/\b([A-Z][A-Z0-9]+-\d+)\b/);
     const nbTestsMatch  = userText.match(/(\d+)\s*cas\s*de\s*tests?/i);
 
     // ── 1. Azure connect ──────────────────────────────────────────────────────
