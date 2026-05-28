@@ -1269,7 +1269,8 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg(`❌ Serveur proxy non démarré.\n\nLance **\`node server.js\`** dans ton terminal.`);
+      renderAgentMsg(`❌ Impossible de contacter l'API Render. Vérifie que le backend Render est démarré :
+     https://robotstudioai.onrender.com`);
     } else {
       renderAgentMsg(`❌ Erreur : ${err.message}`);
     }
@@ -3590,7 +3591,8 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg('❌ Serveur proxy non démarré.\n\nLance **`node server.js`** dans ton terminal puis réessaie.');
+      renderAgentMsg(`❌ Impossible de contacter le backend Render. Vérifie que le serveur est bien en ligne :
+         https://robotstudioai.onrender.com`);
     } else {
       renderAgentMsg(`❌ Erreur : ${err.message}`);
     }
