@@ -122,7 +122,10 @@ const LS = {
       // ── Warn if running from file://
       if (window.location.protocol === 'file:') {
         setTimeout(() => {
-          renderAgentMsg('⚠️ Ouvre directement l’application Render :\n\nhttps://robotstudioai.onrender.com', false);
+          renderAgentMsg(
+            '⚠️ localStorage désactivé en mode file://\n\nOuvre l’application depuis Render :\nhttps://robotstudioai.onrender.com',
+            false
+          );
         }, 500);
       }
 
@@ -1269,8 +1272,9 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg(`❌ Impossible de contacter l'API Render. Vérifie que le backend Render est démarré :
-     https://robotstudioai.onrender.com`);
+      renderAgentMsg(`❌ Impossible de contacter l'API Render. 
+        Vérifie que le backend Render est démarré :
+        https://robotstudioai.onrender.com`);
     } else {
       renderAgentMsg(`❌ Erreur : ${err.message}`);
     }
@@ -3292,7 +3296,7 @@ async function uiFetchAzure() {
     const apiKey = document.getElementById('apiKey').value.trim();
     await handleFetchAndGenerate(id, true, apiKey, '', data);  // true = génère les cas
   } catch(err) {
-    showConnError('azure', err.message.includes('fetch') ? '❌ Serveur proxy non démarré' : '❌ ' + err.message);
+    showConnError('azure', err.message.includes('fetch') ? '❌ Impossible de contacter l\'API Render.' : '❌ ' + err.message);
   } finally {
     if (btn) btn.textContent = 'Récupérer';
   }
@@ -3352,7 +3356,7 @@ async function uiConnectJira() {
 
   } catch(err) {
     btn.textContent = '🔗 Connecter';
-    const msg = err.message.includes('fetch') ? '❌ Serveur proxy non démarré — lance node server.js' : '❌ ' + err.message;
+    const msg = err.message.includes('fetch') ? '❌ Impossible de contacter l\'API Render.' : '❌ ' + err.message;
     showConnError('jira', msg);
   }
 }
@@ -3591,8 +3595,9 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg(`❌ Impossible de contacter le backend Render. Vérifie que le serveur est bien en ligne :
-         https://robotstudioai.onrender.com`);
+      renderAgentMsg(`❌ Impossible de contacter le backend Render. 
+        Vérifie que le serveur est bien en ligne :
+        https://robotstudioai.onrender.com`);
     } else {
       renderAgentMsg(`❌ Erreur : ${err.message}`);
     }
