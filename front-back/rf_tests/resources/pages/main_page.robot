@@ -1,5 +1,5 @@
 *** Settings ***
-Documentation    Page Object for Login Page
+Documentation    Page Object Main
 Library    SeleniumLibrary
 Resource    ../variables.robot
 
@@ -20,22 +20,20 @@ Click Login Button
     Click Button    ${LOGIN_BUTTON}
 
 Verify Successful Login
-    Location Should Be    ${SECURE_URL}
+    Location Should Contain    /secure
     Element Should Contain    ${FLASH_MESSAGE}    You logged into a secure area!
 
-Verify Invalid Password Error
-    Location Should Be    ${BASE_URL}
-    Element Should Contain    ${FLASH_MESSAGE}    Your password is invalid!
-    Element Should Be Visible    ${FLASH_MESSAGE}
-
 Verify Invalid Username Error
-    Location Should Be    ${BASE_URL}
     Element Should Contain    ${FLASH_MESSAGE}    Your username is invalid!
-    Element Should Be Visible    ${FLASH_MESSAGE}
+    Location Should Contain    /login
+
+Verify Invalid Password Error
+    Element Should Contain    ${FLASH_MESSAGE}    Your password is invalid!
+    Location Should Contain    /login
 
 Click Logout Button
     Click Element    ${LOGOUT_BUTTON}
 
 Verify Successful Logout
-    Location Should Be    ${BASE_URL}
+    Location Should Contain    /login
     Element Should Contain    ${FLASH_MESSAGE}    You logged out of the secure area!

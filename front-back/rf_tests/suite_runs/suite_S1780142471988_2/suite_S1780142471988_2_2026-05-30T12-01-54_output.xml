@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-30T14:01:55.175566" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1780142471988 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780142471988_2\tests\suite_S1780142471988_2.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T14:01:55.543115" level="INFO">Opening browser 'chrome' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:01:55.542760" elapsed="8.005131"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Login With Locked User Account" line="14">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T14:02:03.549090" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:02:03.548872" elapsed="0.203966"/>
+</kw>
+<kw name="Given Login With Locked User" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T14:02:03.755166" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:02:03.754972" elapsed="0.236225"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_FIELD}</arg>
+<arg>timeout=10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-05-30T14:02:03.991393" elapsed="0.024255"/>
+</kw>
+<status status="PASS" start="2026-05-30T14:02:03.754599" elapsed="0.261205"/>
+</kw>
+<kw name="Fill Login Form" owner="main_page">
+<msg time="2026-05-30T14:02:04.018183" level="FAIL">Variable '${LOCKED_USER}' not found.</msg>
+<arg>${LOCKED_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="FAIL" start="2026-05-30T14:02:04.016020" elapsed="0.002269">Variable '${LOCKED_USER}' not found.</status>
+</kw>
+<kw name="Submit Login Form" owner="main_page">
+<status status="NOT RUN" start="2026-05-30T14:02:04.018567" elapsed="0.000054"/>
+</kw>
+<kw name="Verify Locked User Error" owner="main_page">
+<status status="NOT RUN" start="2026-05-30T14:02:04.018799" elapsed="0.000046"/>
+</kw>
+<status status="FAIL" start="2026-05-30T14:02:03.753346" elapsed="0.265645">Variable '${LOCKED_USER}' not found.</status>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T14:02:04.308836" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2769.png"&gt;&lt;img src="selenium-screenshot-2769.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T14:02:04.019280" elapsed="0.289669"/>
+</kw>
+<doc>Attempt login with locked_out_user and verify error message is displayed.</doc>
+<status status="FAIL" start="2026-05-30T14:02:03.548162" elapsed="0.760876">Variable '${LOCKED_USER}' not found.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Add Product To Cart From Product Detail Page" line="18">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T14:02:04.310102" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:02:04.309933" elapsed="0.147018"/>
+</kw>
+<kw name="Given Login With Standard User" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T14:02:04.457852" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:02:04.457713" elapsed="0.147872"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_FIELD}</arg>
+<arg>timeout=10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-05-30T14:02:04.605791" elapsed="0.020319"/>
+</kw>
+<status status="PASS" start="2026-05-30T14:02:04.457510" elapsed="0.168732"/>
+</kw>
+<kw name="Fill Login Form" owner="main_page">
+<msg time="2026-05-30T14:02:04.627092" level="FAIL">Variable '${STANDARD_USER}' not found.</msg>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="FAIL" start="2026-05-30T14:02:04.626432" elapsed="0.000709">Variable '${STANDARD_USER}' not found.</status>
+</kw>
+<kw name="Submit Login Form" owner="main_page">
+<status status="NOT RUN" start="2026-05-30T14:02:04.627294" elapsed="0.000036"/>
+</kw>
+<status status="FAIL" start="2026-05-30T14:02:04.457239" elapsed="0.170305">Variable '${STANDARD_USER}' not found.</status>
+</kw>
+<kw name="When Add Backpack To Cart From Product Page" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T14:02:04.627723" elapsed="0.000037"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T14:02:04.958616" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2770.png"&gt;&lt;img src="selenium-screenshot-2770.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T14:02:04.628015" elapsed="0.330729"/>
+</kw>
+<doc>Login as standard_user, navigate to Sauce Labs Backpack detail page and add to cart.</doc>
+<status status="FAIL" start="2026-05-30T14:02:04.309387" elapsed="0.649446">Variable '${STANDARD_USER}' not found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Sort Products By Price Low To High" line="23">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T14:02:04.959834" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:02:04.959673" elapsed="0.146046"/>
+</kw>
+<kw name="Given Login With Standard User" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T14:02:05.107310" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T14:02:05.107146" elapsed="0.161442"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_FIELD}</arg>
+<arg>timeout=10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-05-30T14:02:05.269024" elapsed="0.018468"/>
+</kw>
+<status status="PASS" start="2026-05-30T14:02:05.106826" elapsed="0.180796"/>
+</kw>
+<kw name="Fill Login Form" owner="main_page">
+<msg time="2026-05-30T14:02:05.288441" level="FAIL">Variable '${STANDARD_USER}' not found.</msg>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="FAIL" start="2026-05-30T14:02:05.287804" elapsed="0.000687">Variable '${STANDARD_USER}' not found.</status>
+</kw>
+<kw name="Submit Login Form" owner="main_page">
+<status status="NOT RUN" start="2026-05-30T14:02:05.288640" elapsed="0.000036"/>
+</kw>
+<status status="FAIL" start="2026-05-30T14:02:05.106267" elapsed="0.182688">Variable '${STANDARD_USER}' not found.</status>
+</kw>
+<kw name="When Sort Products By Price Low To High" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T14:02:05.289130" elapsed="0.000037"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T14:02:05.604327" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2771.png"&gt;&lt;img src="selenium-screenshot-2771.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T14:02:05.289386" elapsed="0.315060"/>
+</kw>
+<doc>Login as standard_user and sort products by price ascending, verify order.</doc>
+<status status="FAIL" start="2026-05-30T14:02:04.959184" elapsed="0.645345">Variable '${STANDARD_USER}' not found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-30T14:02:05.605135" elapsed="2.340719"/>
+</kw>
+<doc>Tests SauceDemo — Keyword-Driven</doc>
+<status status="FAIL" start="2026-05-30T14:01:55.177867" elapsed="12.768306"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1780142471988 2" id="s1" pass="0" fail="3" skip="0">suite S1780142471988 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-30T14:01:55.530473" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780142471988_2\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-30T14:01:55.530613" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780142471988_2\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-30T14:01:55.530679" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780142471988_2\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-30T14:01:55.538973" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780142471988_2\resources\pages\main_page.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-30T14:01:55.539107" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780142471988_2\resources\pages\main_page.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

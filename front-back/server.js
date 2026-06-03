@@ -4,160 +4,32 @@
  * Lancement    : node server.js
  * URL          : http://localhost:3001
  */
-
+require('dotenv').config();
 const express = require('express');
-const https   = require('https');
 const path    = require('path');
-const { URL } = require('url');
+const app     = express();
+const PORT    = process.env.PORT || 3001;
 
-const app  = express();
-const PORT = 3001;
+const { connectDB } = require('./db');
+connectDB();
 
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
-
 app.use(express.static(path.join(__dirname)));
 
-// ── Helper HTTPS ───────────────────────────────────────────────────────────────
-function apiGet(urlStr, headers) {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(urlStr);
-    const opts   = {
-      hostname: parsed.hostname,
-      port:     443,
-      path:     parsed.pathname + parsed.search,
-      method:   'GET',
-      headers:  { 'Accept': 'application/json', ...headers },
-    };
-    https.request(opts, res => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-        catch(e) { resolve({ status: res.statusCode, body: data }); }
-      });
-    }).on('error', reject).end();
-  });
-}
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.use('/api/azure',   require('./routes/azure'));
+app.use('/api/jira',    require('./routes/jira'));
+app.use('/api/storage', require('./routes/storage'));
 
-// ══════════════════════════════════════════════════
-// AZURE DEVOPS
-// ══════════════════════════════════════════════════
-let AZURE = { token: null, org: null, project: null };
+// ── RF routes et autres restent dans ce fichier ───────────────────────────────
 
-app.post('/api/azure/connect', async (req, res) => {
-  const { azureUrl, token } = req.body;
-  if (!azureUrl || !token) return res.status(400).json({ error: 'azureUrl et token requis' });
-  try {
-    const parsed = new URL(azureUrl.trim());
-    const parts  = parsed.pathname.replace(/^\//, '').split('/').filter(Boolean);
-    const org    = parsed.hostname === 'dev.azure.com' ? parts[0] : parsed.hostname.split('.')[0];
-    const project = parsed.hostname === 'dev.azure.com' ? parts[1] : parts[0];
-    if (!org || !project) return res.status(400).json({ error: 'URL invalide' });
-
-    const b64 = Buffer.from(`:${token}`).toString('base64');
-    const r   = await apiGet(
-      `https://dev.azure.com/${org}/${project}/_apis/wit/workitems?$top=1&api-version=7.0`,
-      { 'Authorization': `Basic ${b64}` }
-    );
-    if (r.status === 401) return res.status(401).json({ error: 'Token invalide ou accès refusé' });
-    if (r.status === 404) return res.status(404).json({ error: `Projet "${project}" introuvable` });
-    if (r.status !== 200) return res.status(r.status).json({ error: `Erreur Azure HTTP ${r.status}` });
-
-    AZURE = { token, org, project };
-    res.json({ success: true, org, project });
-  } catch(err) { res.status(500).json({ error: err.message }); }
-});
-
-app.get('/api/azure/workitem/:id', async (req, res) => {
-  if (!AZURE.token) return res.status(401).json({ error: 'Non connecté à Azure' });
-  const fields = ['System.Id','System.Title','System.Description','System.WorkItemType',
-    'System.State','Microsoft.VSTS.Common.AcceptanceCriteria','System.Tags'].join(',');
-  try {
-    const b64 = Buffer.from(`:${AZURE.token}`).toString('base64');
-    const r   = await apiGet(
-      `https://dev.azure.com/${AZURE.org}/${AZURE.project}/_apis/wit/workitems/${req.params.id}?fields=${fields}&api-version=7.0`,
-      { 'Authorization': `Basic ${b64}` }
-    );
-    if (r.status === 404) return res.status(404).json({ error: `Work Item #${req.params.id} introuvable` });
-    if (r.status !== 200) return res.status(r.status).json({ error: `Erreur Azure HTTP ${r.status}` });
-    const f = r.body.fields;
-    res.json({
-      id: r.body.id, type: f['System.WorkItemType'], title: f['System.Title'],
-      description: f['System.Description'] || '', acceptance: f['Microsoft.VSTS.Common.AcceptanceCriteria'] || '',
-      state: f['System.State'], tags: f['System.Tags'] || '',
-    });
-  } catch(err) { res.status(500).json({ error: err.message }); }
-});
-
-app.get('/api/azure/status', (req, res) => {
-  res.json(AZURE.token ? { connected: true, org: AZURE.org, project: AZURE.project } : { connected: false });
-});
-
-// ══════════════════════════════════════════════════
-// JIRA CLOUD
-// ══════════════════════════════════════════════════
-let JIRA = { b64: null, host: null, email: null, displayName: null };
-
-app.post('/api/jira/connect', async (req, res) => {
-  const { jiraUrl, email, token } = req.body;
-  if (!jiraUrl || !email || !token) return res.status(400).json({ error: 'jiraUrl, email et token requis' });
-  try {
-    const host = new URL(jiraUrl.trim()).hostname;
-    const b64  = Buffer.from(`${email}:${token}`).toString('base64');
-    const r    = await apiGet(`https://${host}/rest/api/3/myself`, { 'Authorization': `Basic ${b64}` });
-    if (r.status === 401) return res.status(401).json({ error: 'Email ou token invalide' });
-    if (r.status === 403) return res.status(403).json({ error: 'Accès refusé — vérifie les permissions' });
-    if (r.status !== 200) return res.status(r.status).json({ error: `Erreur Jira HTTP ${r.status}` });
-    JIRA = { b64, host, email, displayName: r.body.displayName || email };
-    res.json({ success: true, host, displayName: JIRA.displayName });
-  } catch(err) { res.status(500).json({ error: err.message }); }
-});
-
-app.get('/api/jira/issue/:key', async (req, res) => {
-  if (!JIRA.b64) return res.status(401).json({ error: 'Non connecté à Jira' });
-  try {
-    const r = await apiGet(
-      `https://${JIRA.host}/rest/api/3/issue/${req.params.key}?fields=summary,description,issuetype,status,labels,customfield_10016`,
-      { 'Authorization': `Basic ${JIRA.b64}` }
-    );
-    if (r.status === 404) return res.status(404).json({ error: `Issue "${req.params.key}" introuvable` });
-    if (r.status !== 200) return res.status(r.status).json({ error: `Erreur Jira HTTP ${r.status}` });
-
-    const f = r.body.fields;
-    function extractAdf(node) {
-      if (!node) return '';
-      if (typeof node === 'string') return node;
-      const texts = [];
-      function walk(n) {
-        if (!n) return;
-        if (n.type === 'text') texts.push(n.text);
-        if (n.content) n.content.forEach(walk);
-      }
-      walk(node);
-      return texts.join(' ').trim();
-    }
-
-    res.json({
-      id: r.body.key, title: f.summary,
-      description: extractAdf(f.description),
-      acceptance:  extractAdf(f.customfield_10016) || '',
-      state: f.status?.name || '', type: f.issuetype?.name || 'Story',
-      labels: f.labels || [],
-      url: `https://${JIRA.host}/browse/${r.body.key}`,
-    });
-  } catch(err) { res.status(500).json({ error: err.message }); }
-});
-
-app.get('/api/jira/status', (req, res) => {
-  res.json(JIRA.b64 ? { connected: true, host: JIRA.host, displayName: JIRA.displayName } : { connected: false });
-});
 
 // ══════════════════════════════════════════════════
 // START
@@ -196,6 +68,61 @@ app.post('/api/rf/run', async (req, res) => {
   // Don't pre-copy from shared rf_tests/resources
 
   const outputXml = path.join(runBaseDir, safeBase + '_' + timestamp + '_output.xml');
+
+  // Live broadcast — démarrage du run
+  const isSuiteLive = isSuiteBloc;
+  const liveRunId = ++liveRunCounter;
+  const liveNow = new Date().toLocaleTimeString('fr-FR');
+
+  // Live broadcast — démarrage du run
+  const liveTitle = req.body.pageTitle || req.body.title || rawName.replace(/^test_|^suite_/,'').replace(/_/g,' ').trim();
+  if (!isSuiteLive) {
+    const liveRun = { id: liveRunId, title: liveTitle, status: 'running', tests: [], startedAt: liveNow, duration: 0 };
+    liveState.runs.push(liveRun);
+    rfBroadcast('run-start', liveRun);
+    // Polling live — parse output.xml toutes les 1.5s pendant le run
+    const livePoller = setInterval(() => {
+      if (!fs.existsSync(outputXml)) return;
+      try {
+        const xml = fs.readFileSync(outputXml, 'utf8');
+        const partial = parseRobotOutput(xml, '', '');
+        const run = liveState.runs.find(r => r.id === liveRunId);
+        if (!run || run.status !== 'running') { clearInterval(livePoller); return; }
+        run.tests = (partial.tests||[]).map(t => ({
+          name: t.name, status: (t.status||'pass').toLowerCase(), duration: t.duration, message: t.message
+        }));
+        rfBroadcast('run-update', { ...run });
+      } catch(e) {}
+    }, 1500);
+    setTimeout(() => clearInterval(livePoller), 180000);
+    req._livePoller = livePoller;
+  } else {
+    // Suite bloc — polling live aussi
+    const activeSuite = liveState.suites[liveState.suites.length - 1];
+    if (activeSuite) {
+      const blocName = liveTitle || rawName.replace(/suite_S[^_]+_\d+_?/g,'').replace(/_/g,' ').trim() || ('Bloc ' + (activeSuite.blocs.length + 1));
+      // Ajouter un bloc temporaire "en cours"
+      const tempBloc = { name: blocName, tests: [], duration: 0, status: 'running' };
+      activeSuite.blocs.push(tempBloc);
+      rfBroadcast('suite-update', activeSuite);
+      // Polling
+      const suitePoller = setInterval(() => {
+        if (!fs.existsSync(outputXml)) return;
+        try {
+          const xml = fs.readFileSync(outputXml, 'utf8');
+          const partial = parseRobotOutput(xml, '', '');
+          tempBloc.tests = (partial.tests||[]).map(t => ({
+            name: t.name, status: (t.status||'pass').toLowerCase(), duration: t.duration, message: t.message
+          }));
+          rfBroadcast('suite-update', activeSuite);
+        } catch(e) {}
+      }, 1500);
+      setTimeout(() => clearInterval(suitePoller), 180000);
+      req._suitePoller = suitePoller;
+      req._tempBloc    = tempBloc;
+      req._activeSuite = activeSuite;
+    }
+  }
 
   // Build robot file path
   const robotRelPath = safeName.replace(/\//g, path.sep) + '.robot';
@@ -289,7 +216,12 @@ app.post('/api/rf/run', async (req, res) => {
             fs.readdirSync(d).forEach(f => {
               const fp = path.join(d, f);
               if (fs.statSync(fp).isDirectory()) removeRobots(fp);
-              else if (f.endsWith('.robot')) fs.unlinkSync(fp);
+              else if (f.endsWith('.robot')) {
+                // Ne pas supprimer si modifié manuellement récemment
+                const editedAt = manuallyEditedFiles.get(fp);
+                const isProtected = editedAt && (Date.now() - editedAt) < 30 * 60 * 1000;
+                if (!isProtected) fs.unlinkSync(fp);
+              }
             });
           };
           removeRobots(dirPath);
@@ -320,9 +252,31 @@ app.post('/api/rf/run', async (req, res) => {
       injected = deduplicateRobotSettings(injected);
       if (relPath.includes('variables.robot')) {
         injected = deduplicateRobotVariables(injected);
+        // Supprimer les settings interdits dans un fichier resource
+        injected = injected.split('\n').filter(line => {
+          const l = line.trim().toLowerCase();
+          return !(l.startsWith('suite setup') ||
+                   l.startsWith('suite teardown') ||
+                   l.startsWith('test setup') ||
+                   l.startsWith('test teardown') ||
+                   l.startsWith('test template') ||
+                   l.startsWith('force tags') ||
+                   l.startsWith('default tags'));
+        }).join('\n');
       }
-      fs.writeFileSync(absPath, injected, 'utf8');
-      console.log('  POM: wrote', relPath, isSuiteBloc ? '(suite bloc)' : '');
+      // Ne pas écraser si modifié manuellement (< 30 min) et pas un bloc de suite
+      // MAIS toujours écrire si le fichier n'existe pas
+      const editedAt = manuallyEditedFiles.get(absPath);
+      const wasManuallyEdited = editedAt && (Date.now() - editedAt) < 30 * 60 * 1000;
+      const fileExists = fs.existsSync(absPath);
+      // Ne jamais protéger variables.robot — doit toujours être réécrit par le run
+      const isVarsFile = relPath.includes('variables.robot');
+      if (wasManuallyEdited && !isSuiteBloc && !relPath.startsWith('tests/') && fileExists && !isVarsFile) {
+        console.log('  POM: kept manual edit for', relPath);
+      } else {
+        fs.writeFileSync(absPath, injected, 'utf8');
+        console.log('  POM: wrote', relPath, isSuiteBloc ? '(suite bloc)' : '');
+      }
       if (relPath.startsWith('tests/')) execFile = absPath;
     });
 
@@ -330,11 +284,38 @@ app.post('/api/rf/run', async (req, res) => {
     const sharedRes = path.join(TESTS_DIR, 'resources').replace(/\\/g, '/');
     const targetRes  = isSuiteBloc ? path.join(runBaseDir, 'resources').replace(/\\/g, '/') : sharedRes;
     const noPopupPyPath = path.join(__dirname, 'no_popup').replace(/\\/g, '/');
+    // Utilise directement les options Chrome sans no_popup.py
+    const tmpProfile = require('os').tmpdir().replace(/\\/g,'/') + '/chrome_rf_' + Date.now();
+    const chromeArgs = [
+      'add_argument("--incognito")',
+      'add_argument("--disable-notifications")',
+      'add_argument("--disable-save-password-bubble")',
+      'add_argument("--disable-infobars")',
+      'add_argument("--disable-popup-blocking")',
+      'add_argument("--disable-features=PasswordManagerEnabled,TranslateUI,AutofillServerCommunication,PasswordLeakDetection,SavePasswordsBubble")',
+      'add_argument("--no-first-run")',
+      'add_argument("--no-default-browser-check")',
+      'add_argument("--password-store=basic")',
+      `add_argument("--user-data-dir=${tmpProfile}")`,
+      'add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.password_manager_leak_detection":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0,"autofill.profile_enabled":false,"autofill.credit_card_enabled":false})',
+      'add_experimental_option("excludeSwitches",["enable-automation","enable-logging"])',
+    ].join(';');
     const noPopupKw = [
       'Open Browser No Popup',
       '    [Arguments]    ${url}    ${browser}=chrome',
-      "    ${opts}=    Evaluate    __import__('sys').path.insert(0, '" + path.dirname(noPopupPyPath).replace(/\\/g,'/') + "') or __import__('no_popup').create_chrome_options()",
-      '    Open Browser    ${url}    ${browser}    options=${opts}',
+      '    Open Browser    ${url}    ${browser}    options=' + chromeArgs,
+      '',
+      'Dismiss Password Popup',
+      '    [Documentation]    Ferme le popup Chrome "modifier mot de passe" sil apparait',
+      '    ${present}=    Run Keyword And Return Status    Page Should Contain Element    xpath=//div[@role="dialog"]//button[contains(@jsname,"")]',
+      '    Run Keyword If    ${present}    Press Keys    None    ESCAPE',
+      '    Sleep    0.2s',
+      '    Execute Javascript    document.activeElement.blur()',
+      '',
+      'Input Password Field',
+      '    [Arguments]    ${locator}    ${value}',
+      '    Input Text    ${locator}    ${value}',
+      '    Dismiss Password Popup',
     ].join('\n');
 
     const walkAndFix = (dir) => {
@@ -446,6 +427,14 @@ app.post('/api/rf/run', async (req, res) => {
     }
 
     // If no tests/ file was generated, auto-create one from keywords
+    // Si plusieurs fichiers tests/feature_*.robot existent, lancer le dossier
+    const testsDir = path.join(TESTS_DIR, 'tests');
+    const testFiles = fs.existsSync(testsDir)
+      ? fs.readdirSync(testsDir).filter(f => f.endsWith('.robot') && f !== 'tests.robot')
+      : [];
+    if (testFiles.length > 1) {
+      execFile = testsDir; // Lancer robot tests/ (tout le dossier)
+    }
     if (!execFile) {
       const fallback = path.join(TESTS_DIR, 'tests', 'tests.robot');
       if (fs.existsSync(fallback)) {
@@ -538,7 +527,7 @@ def get_no_popup_options():
 
 
     // Final fix: ensure Suite Setup uses Open Browser, add Test Setup Go To
-    if (fs.existsSync(execFile)) {
+    if (fs.existsSync(execFile) && !fs.statSync(execFile).isDirectory()) {
       let execContent = fs.readFileSync(execFile, 'utf8');
 
       // Fix Suite Setup Go To → Open Browser
@@ -588,6 +577,56 @@ def get_no_popup_options():
           if (xmlFiles.length > 10) xmlFiles.slice(0, xmlFiles.length - 10).forEach(f => { try { fs.unlinkSync(path.join(TESTS_DIR, f)); } catch(e) {} });
         } catch(e) {}
         _lastResults = results;
+        // Après run : effacer la protection manuelle de variables.robot
+        // pour que le prochain run puisse écrire ses propres variables
+        const varPath = path.join(TESTS_DIR, 'resources', 'variables.robot');
+        manuallyEditedFiles.delete(varPath);
+        // Live broadcast résultats
+        if (!isSuiteLive) {
+          const liveRun = liveState.runs.find(r => r.id === liveRunId);
+          if (liveRun) {
+            liveRun.status   = (results.status||'fail').toLowerCase();
+            liveRun.tests    = (results.tests||[]).map(t => ({
+              name: t.name, status: (t.status||'fail').toLowerCase(), duration: t.duration, message: t.message
+            }));
+            liveRun.duration = results.duration;
+            rfBroadcast('run-update', liveRun);
+          }
+        } else {
+          // Suite bloc — cherche la suite active
+          const activeSuite = liveState.suites[liveState.suites.length - 1];
+          if (activeSuite) {
+            const blocName = rawName.replace(/suite_S[^_]+_\d+_?/, '').replace(/_/g,' ') || ('Bloc ' + (activeSuite.blocs.length + 1));
+            // Mettre à jour le bloc temporaire créé pendant le polling
+            if (req._tempBloc && req._activeSuite) {
+              req._tempBloc.tests = (results.tests||[]).map(t => ({
+                name: t.name, status: (t.status||'fail').toLowerCase(), duration: t.duration, message: t.message
+              }));
+              req._tempBloc.duration = results.duration;
+              req._tempBloc.status = (results.status||'fail').toLowerCase();
+              // Mettre à jour le statut global de la suite
+              const allBlocsDone = req._activeSuite.blocs.every(b => b.status === 'pass' || b.status === 'fail');
+              const anyBlocFail  = req._activeSuite.blocs.some(b => b.status === 'fail');
+              if (allBlocsDone) {
+                req._activeSuite.status = anyBlocFail ? 'fail' : 'pass';
+              }
+              rfBroadcast('suite-update', req._activeSuite);
+            } else {
+              // Fallback si pas de tempBloc
+              const activeSuite2 = liveState.suites[liveState.suites.length - 1];
+              if (activeSuite2) {
+                const blocName2 = liveTitle || rawName.replace(/suite_S[^_]+_[0-9]+_?/g,'').replace(/_/g,' ').trim() || ('Bloc ' + (activeSuite2.blocs.length + 1));
+                activeSuite2.blocs.push({
+                  name: blocName2,
+                  tests: (results.tests||[]).map(t => ({ name: t.name, status: (t.status||'fail').toLowerCase(), duration: t.duration, message: t.message })),
+                  duration: results.duration,
+                });
+                rfBroadcast('suite-update', activeSuite2);
+              }
+            }
+            rfBroadcast('suite-update', activeSuite);
+          }
+        }
         res.json(results);
       } catch(parseErr) {
         res.status(500).json({ error: 'Erreur parsing output.xml: ' + parseErr.message });
@@ -735,6 +774,8 @@ def get_no_popup_options():
           });
         }
       } catch(e) {}
+      // Effacer protection variables.robot après run
+      manuallyEditedFiles.delete(path.join(TESTS_DIR, 'resources', 'variables.robot'));
       res.json(results);
     } catch(parseErr) {
       res.status(500).json({ error: 'Erreur parsing output.xml: ' + parseErr.message });
@@ -1419,6 +1460,11 @@ function deduplicateKeywords(testsDir) {
 function cleanRobotCodeServer(code) {
   if (!code) return '';
 
+  // 0. Fix keywords inexistants
+  code = code.replace(/Location Should Not Be/g, 'Location Should Be');
+  code = code.replace(/Page Should Not Contain Element/g, 'Page Should Not Contain');
+  code = code.replace(/Element Should Not Be Visible/g, 'Element Should Not Be Visible');
+
   // 1. Fix missing *** Settings *** header
   const firstLine = code.split('\n')[0]?.trim();
   const startsWithDirective = /^(Documentation|Library|Resource|Suite Setup|Suite Teardown)[ \t]+/.test(firstLine);
@@ -1939,7 +1985,190 @@ app.get('/api/rf/list-files', (req, res) => {
 });
 
 
+// ── SSE Live ────────────────────────────────────────────────────────────────
+const liveClients = new Set();
+const liveState = { runs: [], suites: [] };
+// Nettoyer les runs orphelins au démarrage
+process.on('exit', () => { liveState.runs.forEach(r => { if (r.status === 'running') r.status = 'fail'; }); });
+let liveRunCounter = 0;
+let liveSuiteCounter = 0;
+
+function rfBroadcast(event, data) {
+  const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  liveClients.forEach(res => { try { res.write(msg); } catch(e) { liveClients.delete(res); } });
+}
+
+app.get('/api/rf/live-stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  liveClients.add(res);
+  res.write(`event: state\ndata: ${JSON.stringify(liveState)}\n\n`);
+  req.on('close', () => liveClients.delete(res));
+});
+
+app.get('/api/rf/live-state', (req, res) => res.json(liveState));
+
+app.post('/api/rf/live-suite-end', (req, res) => {
+  const { title, status } = req.body;
+  const suite = liveState.suites.slice().reverse().find(s => s.title === title);
+  if (suite) {
+    suite.status = status || 'fail';
+    rfBroadcast('suite-update', suite);
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/rf/live-suite-start', (req, res) => {
+  const { title, blocCount } = req.body;
+  const suite = {
+    id: ++liveSuiteCounter,
+    title: title || 'Suite',
+    status: 'running',
+    blocs: [],
+    startedAt: new Date().toLocaleTimeString('fr-FR'),
+    duration: 0,
+  };
+  liveState.suites.push(suite);
+  rfBroadcast('suite-start', suite);
+  res.json({ ok: true, id: suite.id });
+});
+
+app.post('/api/rf/live-suite-end', (req, res) => {
+  const { title, status } = req.body;
+  const suite = liveState.suites.slice().reverse().find(s => s.title === title);
+  if (suite) {
+    suite.status = status || 'fail';
+    rfBroadcast('suite-update', suite);
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/rf/live-suite-start', (req, res) => {
+  const { title, blocCount } = req.body;
+  const suite = {
+    id: ++liveSuiteCounter,
+    title: title || 'Suite',
+    status: 'running',
+    blocs: [],
+    startedAt: new Date().toLocaleTimeString('fr-FR'),
+    duration: 0,
+  };
+  liveState.suites.push(suite);
+  rfBroadcast('suite-start', suite);
+  res.json({ ok: true, id: suite.id });
+});
+
+app.post('/api/rf/live-reset', (req, res) => {
+  liveState.runs = [];
+  liveState.suites = [];
+  liveRunCounter = 0;
+  liveSuiteCounter = 0;
+  rfBroadcast('reset', {});
+  res.json({ ok: true });
+});
+
+// ── SSE Live ────────────────────────────────────────────────────────────────
+
+// ── API Key chiffrée ──────────────────────────────────────────────────────────
+const crypto = require('crypto');
+
+function decryptApiKey(encryptedWithIV, secret) {
+  try {
+    const [ivHex, encrypted] = encryptedWithIV.split(':');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(secret, 'hex'), Buffer.from(ivHex, 'hex'));
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch(e) {
+    return null;
+  }
+}
+
+// Token de session simple (renouvelé à chaque démarrage serveur)
+const SESSION_TOKEN = crypto.randomBytes(32).toString('hex');
+
+app.get('/api/config/token', (req, res) => {
+  // Retourne le token de session (accessible seulement en local)
+  res.json({ token: SESSION_TOKEN });
+});
+
+app.get('/api/config/apikey', (req, res) => {
+  const { token, provider } = req.query;
+  if (token !== SESSION_TOKEN) return res.status(401).json({ error: 'Token invalide' });
+
+  const providerMap = {
+    anthropic: { env: 'ANTHROPIC_KEY_ENC', plain: 'ANTHROPIC_KEY' },
+    openai:    { env: 'OPENAI_KEY_ENC',    plain: 'OPENAI_KEY' },
+    gemini:    { env: 'GEMINI_KEY_ENC',    plain: 'GEMINI_KEY' },
+    mistral:   { env: 'MISTRAL_KEY_ENC',   plain: 'MISTRAL_KEY' },
+  };
+
+  const p = providerMap[provider || 'anthropic'];
+  if (!p) return res.status(400).json({ error: 'Provider inconnu' });
+
+  const secret = process.env.ENCRYPTION_SECRET;
+  let key = null;
+
+  // Essaie la clé chiffrée en priorité
+  if (process.env[p.env] && secret) {
+    key = decryptApiKey(process.env[p.env], secret);
+  }
+  // Fallback: clé en clair
+  if (!key && process.env[p.plain]) {
+    key = process.env[p.plain];
+  }
+
+  if (!key) return res.status(404).json({ error: 'Clé non configurée' });
+
+  res.json({ key });
+});
+
+
+// ── Sync bidirectionnelle UI ↔ Disque ────────────────────────────────────────
+
+// Fichiers modifiés manuellement (ne pas écraser au run)
+const manuallyEditedFiles = new Map(); // filepath -> timestamp
+
+// POST /api/rf/write-file — écrit un fichier RF sur disque depuis l'UI
+app.post('/api/rf/write-file', (req, res) => {
+  try {
+    const { filepath, content } = req.body;
+    if (!filepath || content === undefined) return res.status(400).json({ ok: false, error: 'filepath et content requis' });
+    const safePath = path.join(TESTS_DIR, filepath.replace(/\.\./g, ''));
+    const dir = path.dirname(safePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(safePath, content, 'utf8');
+    // Marquer comme modifié manuellement (expire après 30 min)
+    manuallyEditedFiles.set(safePath, Date.now());
+    res.json({ ok: true, path: safePath });
+  } catch(e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+// Watcher fs.watch — broadcast les changements de fichiers RF via SSE
+const watchDirs = [
+  path.join(TESTS_DIR, 'resources'),
+  path.join(TESTS_DIR, 'tests'),
+];
+watchDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.watch(dir, { recursive: true }, (eventType, filename) => {
+    if (!filename || !filename.endsWith('.robot')) return;
+    const filepath = filename.replace(/\\/g, '/');
+    try {
+      const fullPath = path.join(dir, filename);
+      if (!fs.existsSync(fullPath)) return;
+      const content = fs.readFileSync(fullPath, 'utf8');
+      // Chemin relatif depuis rf_tests/
+      const relPath = path.relative(TESTS_DIR, fullPath).replace(/\\/g, '/');
+      rfBroadcast('file-changed', { filepath: relPath, content, eventType });
+    } catch(e) {}
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`\n🚀 RF × IA Server démarré sur http://localhost:${PORT}`);
-  console.log(`📂 Ouvre http://localhost:${PORT}/qa-agent.html\n`);
+  console.log(`📂 Ouvre http://localhost:${PORT}\n`);
 });

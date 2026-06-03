@@ -132,30 +132,46 @@ function fmt(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 // Combine qa_run_history (runs simples) + suite-reports depuis qa_code_cards
-const history = (() => {
+// Chargement async depuis MongoDB
+window.loadHistory = async function loadHistory() {
+  let cards = [];
   try {
-    const simple = JSON.parse(localStorage.getItem('qa_run_history') || '[]');
-    const cards  = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
-    // Suites depuis suite-reports
-    const suiteRuns = cards
-      .filter(c => c.type === 'suite-report' && c.data)
-      .map(c => ({ ...c.data, blockNames: c.blockNames || [], suiteTitle: c.suiteTitle }))
-      .filter(d => !simple.some(r => r.runNumber === d.runNumber));
-    // Runs simples depuis report cards (non présents dans simple)
-    const reportRuns = cards
-      .filter(c => c.type === 'report' && c.data && !c.data.isSuite)
-      .map(c => c.data)
-      .filter(d => !simple.some(r => r.runNumber === d.runNumber));
-    return [...simple, ...reportRuns, ...suiteRuns]
-      .sort((a,b) => (b.runNumber||0) - (a.runNumber||0));
+    const r = await fetch('http://localhost:3001/api/storage/all');
+    const d = await r.json();
+    if (d.ok && d.cards?.length > 0) {
+      cards = d.cards;
+    } else {
+      cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
+    }
+  } catch(e) {
+    cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
   }
-  catch(e) { return []; }
-})();
-if (history.length === 0) {
-  document.querySelector('.main').insertAdjacentHTML('afterbegin',
-    '<div style="text-align:center;padding:60px;color:var(--gray);font-size:14px">'+
-    'Aucun run dans l\'historique.<br><a href="qa-agent.html" style="color:var(--teal)">← Retour à l\'agent pour lancer des tests</a></div>');
+  const simple = JSON.parse(localStorage.getItem('qa_run_history') || '[]');
+  const suiteRuns = cards
+    .filter(c => c.type === 'suite-report' && c.data)
+    .map(c => ({ ...c.data, blockNames: c.blockNames || [], suiteTitle: c.suiteTitle }))
+    .filter(d => !simple.some(r => r.runNumber === d.runNumber));
+  const reportRuns = cards
+    .filter(c => c.type === 'report' && c.data && !c.data.isSuite)
+    .map(c => c.data)
+    .filter(d => !simple.some(r => r.runNumber === d.runNumber));
+  return [...simple, ...reportRuns, ...suiteRuns]
+    .sort((a,b) => (b.runNumber||0) - (a.runNumber||0));
 }
+let history = [];
+// Init async après DOM ready
+document.addEventListener('DOMContentLoaded', async () => {
+  history = await loadHistory();
+  if (history.length === 0) {
+    document.querySelector('.main')?.insertAdjacentHTML('afterbegin',
+      '<div style="text-align:center;padding:60px;color:var(--gray);font-size:14px">'+
+      'Aucun run dans l\'historique.<br><a href="qa-agent.html" style="color:var(--teal)">← Retour à l\'agent pour lancer des tests</a></div>');
+    return;
+  }
+  initDashboard();
+});
+
+window.initDashboard = function initDashboard() {
 
 // ── KPIs ──────────────────────────────────────────────────────────────────────
 const totalRuns   = history.length;
@@ -254,7 +270,6 @@ if (persistentFails.length > 0) {
       </div>
     </div>`;
   }).join('');
-}
 
 // ── Runs table ────────────────────────────────────────────────────────────────
 document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(r => {
@@ -308,6 +323,8 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
     <td>${status}</td>
   </tr>`;
 }).join('');
+}
+}
 </script>
 </body>
 </html>

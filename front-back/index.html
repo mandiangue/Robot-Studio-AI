@@ -37,15 +37,11 @@
       <option value="claude-opus-4-7">💎 Claude Opus 4.7</option>
     </select>
     <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px 8px;transition:border-color .2s" id="keyBox">
-      <input type="password" class="key-input" id="apiKey" placeholder="Clé API..."
-        style="border:none;background:transparent;width:190px;padding:3px 4px"
+      <!-- Champ API masqué — clé chargée depuis .env -->
+      <input type="password" class="key-input" id="apiKey" placeholder="🔒 Clé API (.env)"
+        style="border:none;background:transparent;width:180px;padding:3px 4px;display:none"
         onfocus="document.getElementById('keyBox').style.borderColor='var(--teal)'"
         onblur="document.getElementById('keyBox').style.borderColor='var(--border)'" />
-      <button title="Voir / masquer" onclick="toggleKeyVisibility()" id="keyToggle"
-        style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px;padding:2px 3px;line-height:1;transition:color .15s">👁</button>
-      <button title="Effacer et modifier la clé" onclick="clearApiKey()"
-        style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:12px;padding:2px 4px;line-height:1;font-family:'IBM Plex Mono',monospace;transition:color .15s"
-        onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'">✕</button>
     </div>
     <div class="key-status" id="keyStatus">⬤ no key</div>
     <div style="position:relative" id="langSelectorWrap">
@@ -109,6 +105,8 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title" data-i18n="generation">⚡ GÉNÉRATION</div>
       <button class="action-btn ghost" onclick="openDashboard()">📊 Dashboard & Analytics</button>
+      <button class="action-btn ghost" onclick="openLivePanel()">🔴 Live Tests</button>
+      <button class="action-btn ghost" onclick="openAnalysisPanel()">🔍 Analyse des tests</button>
       <button class="action-btn ghost" onclick="document.getElementById('userInput').focus()" data-i18n="genTestCases">
         📋 Générer des cas de tests
       </button>

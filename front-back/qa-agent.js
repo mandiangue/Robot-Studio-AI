@@ -12,7 +12,10 @@ let pendingBlocks     = [];   // [{ blockId, title, pageLabel, cases[] }] — mu
 const LS = {
   save() {
     try {
-      localStorage.setItem('qa_agent_key',      document.getElementById('apiKey').value);
+      // Ne sauvegarder la clé que si elle est saisie manuellement (pas depuis .env)
+      if (!window._serverApiKey) {
+        localStorage.setItem('qa_agent_key', document.getElementById('apiKey').value);
+      }
       localStorage.setItem('qa_agent_history', JSON.stringify(chatHistory));
       // Save TC_STORE — only cards still in DOM
       const tcStoreLight = {};
@@ -34,7 +37,7 @@ const LS = {
       localStorage.setItem('qa_agent_welcomed', '1');
     } catch(e) { console.warn('localStorage unavailable — run via http://localhost', e); }
   },
-  load() {
+  async load() {
     // Always show welcome message first
     showWelcome();
 
@@ -70,12 +73,20 @@ const LS = {
             if (m.role === 'user') renderUserMsg(m.content, false);
             else                   renderAgentMsg(m.content, false);
           });
-          // Re-render TC cards — clear store first to avoid duplicates
-          const tcStored = localStorage.getItem('qa_tc_store');
+          // Re-render TC cards — depuis MongoDB en priorité
+          let tcStored = localStorage.getItem('qa_tc_store');
+          try {
+            const r = await fetch('http://localhost:3001/api/storage/tcstore');
+            const d = await r.json();
+            if (d.ok && d.store && Object.keys(d.store).length > 0) {
+              tcStored = JSON.stringify(d.store);
+            }
+          } catch(e) {}
+          const tcStored2 = tcStored;
           Object.keys(TC_STORE).forEach(k => delete TC_STORE[k]);
-          if (tcStored) {
+          if (tcStored2) {
             try {
-              const stored = JSON.parse(tcStored);
+              const stored = JSON.parse(tcStored2);
               Object.keys(stored).forEach(cardId => {
                 const s = stored[cardId];
                 TC_STORE[cardId] = s;
@@ -89,11 +100,24 @@ const LS = {
             renderTestCasesCard(pendingTestCases.cases, pendingTestCases.url, false);
           }
 
-          // Re-render code cards
-          const codeStored = localStorage.getItem('qa_code_cards');
-          if (codeStored) {
+          // Re-render code cards — depuis MongoDB en priorité
+          const loadAndRenderCards = async () => {
+            let cards = [];
             try {
-              const cards = JSON.parse(codeStored);
+              const r = await fetch('http://localhost:3001/api/storage/all');
+              const d = await r.json();
+              if (d.ok && d.cards?.length > 0) {
+                cards = d.cards;
+              } else {
+                // Fallback localStorage
+                const stored = localStorage.getItem('qa_code_cards');
+                if (stored) cards = JSON.parse(stored);
+              }
+            } catch(e) {
+              const stored = localStorage.getItem('qa_code_cards');
+              if (stored) cards = JSON.parse(stored);
+            }
+            if (cards.length > 0) {
               window._codeCards = cards;
               cards.forEach(card => {
                 if (card.type === 'suite-report') {
@@ -113,8 +137,10 @@ const LS = {
                   renderResultCard(files, card.cardId);
                 }
               });
-            } catch(e) {}
-          }
+            }
+            updateStatsBar();
+          };
+          await loadAndRenderCards();
           scrollToBottom();
         }
       }
@@ -251,7 +277,8 @@ async function sendMessage() {
   const text  = input.value.trim();
   if (!text || isThinking) return;
 
-  const apiKey = document.getElementById('apiKey').value.trim();
+  // Utiliser la clé serveur si disponible, sinon celle saisie manuellement
+  const apiKey = window._serverApiKey || document.getElementById('apiKey').value.trim();
   const provider = getCurrentProvider();
   const keyPrefixes = {
     anthropic: 'sk-ant-',
@@ -323,7 +350,7 @@ async function processMessage(userText, apiKey) {
     const isCodeCmd = /génère\s+le\s+code|genere\s+le\s+code|generate\s+(the\s+)?code|convertis|robot\s+framework|\.robot/i.test(lower);
     if (isCodeCmd && pendingTestCases) {
       hideTyping();
-      await generateCodeFromCases(apiKey);
+      await generateCodeFromCases(window._serverApiKey || apiKey);
       return;
     }
 
@@ -462,6 +489,7 @@ function renderTestCasesCard(cases, url, save = true, blockId) {
   if (save) {
     chatHistory.push({ role: 'assistant', content: '[Test cases: ' + cases.map(c => c.name).join(', ') + ']' });
     LS.save();
+    saveTCStore();
   }
   scrollToBottom();
 }
@@ -489,7 +517,7 @@ function rebuildCard(cardId) {
         <input data-card="${cardId}" data-idx="${idx}" data-field="name" value="${safeName}" placeholder="Nom du cas"
           style="flex:1;background:transparent;border:none;color:var(--text);font-weight:700;font-size:16px;font-family:'Syne',sans-serif;outline:none;min-width:0" />
         <button data-card="${cardId}" data-idx="${idx}" data-action="delete" title="Supprimer"
-          style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:#DC2626;width:30px;height:30px;border-radius:5px;font-size:14px;cursor:pointer;flex-shrink:0" title="Fermer">✕</button>
+          style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:#DC2626;width:30px;height:30px;border-radius:5px;font-size:14px;cursor:pointer;flex-shrink:0" title="Supprimer">✕</button>
       </div>
       <div style="padding:12px 16px 8px">
         <div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:6px">DESCRIPTION</div>
@@ -530,7 +558,7 @@ function rebuildCard(cardId) {
         <input data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="name" value="${nm}" placeholder="Nom du cas"
           style="flex:1;background:transparent;border:none;color:var(--text);font-weight:700;font-size:14px;font-family:'Syne',sans-serif;outline:none;min-width:0" />
         <button data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-action="del-case"
-          style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:#DC2626;width:26px;height:26px;border-radius:4px;font-size:13px;cursor:pointer;flex-shrink:0" title="Fermer">✕</button>
+          style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:#DC2626;width:26px;height:26px;border-radius:4px;font-size:13px;cursor:pointer;flex-shrink:0" title="Supprimer">✕</button>
       </div>
       <div style="padding:8px 12px 4px">
         <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:4px">DESCRIPTION</div>
@@ -560,7 +588,7 @@ function rebuildCard(cardId) {
         <span style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${pg.cases.length} cas</span>
         ${canDel ? `<button data-card="${cardId}" data-pi="${pi}" data-action="del-page"
           style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:11px;padding:2px 5px"
-          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" title="Supprimer cette page" title="Fermer">✕</button>` : ''}
+          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" title="Supprimer cette page">✕</button>` : ''}
       </div>
       <div style="padding:10px 12px">
         ${pgCases}
@@ -642,7 +670,7 @@ function rebuildCard(cardId) {
       st.pages.push({ label: 'Page ' + (st.pages.length + 1), cases: [{ id: 1, testId: 'TC_001', name: 'Nouveau cas', description: '', expected: '' }] });
       syncStoreToPending(cid); rebuildCard(cid);
     } else if (action === 'copy')           tcCopy(cid);
-    else if (action === 'generate')         generateCodeFromCard(cid, document.getElementById('apiKey').value.trim());
+    else if (action === 'generate')         generateCodeFromCard(cid, window._serverApiKey || document.getElementById('apiKey').value.trim());
     else if (action === 'downloadcsv')      downloadCasesCSV(cid);
     else if (action === 'select-blocks')    { openBlockSelector(cid); return; }
     else if (action === 'merge-all')        { mergeAllCards(cid); return; }
@@ -846,7 +874,8 @@ function mergeSelectedBlocks(targetCardId) {
   rebuildCard(targetCardId);
   const inp = document.getElementById('userInput');
   if (inp) { inp.value = ''; inp.style.height = 'auto'; }
-  showToast('🔀 ' + merged + ' page(s) fusionnée(s) — prêt à générer le code RF');
+  showToast('🔀 ' + merged + ' page(s) fusionnée(s) — génération RF...');
+  setTimeout(() => { const k=window._serverApiKey||document.getElementById('apiKey')?.value?.trim(); if(k) generateCodeFromCases(k); else showToast('⚠️ Clé API requise'); }, 300);
 }
 
 // ── Merge all TC cards in the chat into one ───────────────────────────────────
@@ -934,19 +963,43 @@ function saveTCStore() {
   try {
     const light = {};
     Object.keys(TC_STORE).forEach(id => {
-      if (!document.getElementById(id)) return;
       const s = TC_STORE[id];
+      if (!s) return;
       light[id] = { cases: s.cases, url: s.url, pages: s.pages, pageLabel: s.pageLabel };
     });
     localStorage.setItem('qa_tc_store', JSON.stringify(light));
-    // Verify immediately
-    const verify = JSON.parse(localStorage.getItem('qa_tc_store'));
+    // Sauvegarde aussi dans MongoDB
+    fetch('http://localhost:3001/api/storage/tcstore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ store: light }),
+    }).catch(e => console.warn('MongoDB TCStore error:', e.message));
   } catch(e) { console.error('[saveTCStore] error', e); }
 }
 
 function tcUpdate(cardId, idx, field, value) {
+  const oldValue = TC_STORE[cardId]?.cases?.[idx]?.[field];
   if (TC_STORE[cardId]) TC_STORE[cardId].cases[idx][field] = value;
   if (pendingTestCases) pendingTestCases.cases[idx][field] = value;
+  // Si le locator change, mettre à jour le code RF dans _codeCards
+  if (field === 'locator' && oldValue && value && oldValue !== value) {
+    const card = (window._codeCards||[]).find(c => c.cardId === cardId);
+    if (card?.files) {
+      card.files.forEach(f => {
+        if (f.code) {
+          f.code = f.code.split(oldValue).join(value);
+        }
+      });
+      saveCodeCards();
+    }
+    // Mettre à jour aussi dans suiteRegistry
+    const regEntry = suiteRegistry.find(t => t.cardId === cardId);
+    if (regEntry?.code) {
+      regEntry.code = regEntry.code.split(oldValue).join(value);
+      saveSuiteRegistry();
+    }
+  }
+  saveTCStore();
   LS.save();
 }
 
@@ -976,7 +1029,10 @@ function tcCopy(cardId) {
 }
 
 function tcCancelAll(cardId) {
-  showConfirmDialog('🗑 Supprimer le bloc', 'Supprimer ce bloc de cas de tests ?', () => {
+  const _tcStore = TC_STORE[cardId];
+  const _tcLabel = _tcStore?.pageLabel || _tcStore?.pages?.[0]?.label || cardId;
+  const _tcCount = _tcStore?.pages ? _tcStore.pages.reduce((s,p) => s+(p.cases||[]).length, 0) : (_tcStore?.cases?.length || 0);
+  showConfirmDialog('🗑 Supprimer le bloc', 'Supprimer le bloc <b>' + escHtml(_tcLabel) + '</b> (' + _tcCount + ' cas de tests) ?', () => {
     pendingTestCases = null;
     pendingBlocks = [];
     delete TC_STORE[cardId];
@@ -1652,7 +1708,9 @@ function buildRfPromptPOM(description, library, style) {
   prompt += '- Exemple INTERDIT :\n';
   prompt += '  keywords.robot  → "Open Login Page"\n';
   prompt += '  tests.robot     → "Given User Opens The Login Page" (nom différent)\n';
-  prompt += '- Génère TOUJOURS keywords.robot AVANT tests.robot pour garantir la cohérence.\n\n';
+  prompt += '- Génère TOUJOURS keywords.robot AVANT tests.robot pour garantir la cohérence.\n';
+  prompt += '- INTERDIT dans variables.robot, keywords.robot et pages/*.robot : Suite Setup, Suite Teardown, Test Setup, Test Teardown, Test Template, Force Tags, Default Tags. Ces settings ne sont autorisés QUE dans tests.robot.\n';
+  prompt += '- variables.robot EST UN FICHIER RESOURCE — il ne contient QUE *** Settings *** (Documentation, Library, Resource) et *** Variables ***.\n\n';
   prompt += 'DESCRIPTION:\n' + description + '\n\n';
   prompt += 'FORMAT OBLIGATOIRE — commence chaque fichier par ***** FILE: chemin | label | desc\n\n';
 
@@ -1676,10 +1734,24 @@ function buildRfPromptPOM(description, library, style) {
   });
   prompt += '\n*** Keywords ***\n# ' + styleGuide + '\n\n';
 
-  // 4. tests/tests.robot — MANDATORY LAST FILE
-  prompt += '***** FILE: tests/tests.robot | tests | Tests\n';
-  prompt += '*** Settings ***\nDocumentation    Tests\nLibrary    ' + library + '\nResource    ../resources/variables.robot\nResource    ../resources/keywords.robot\n\n*** Test Cases ***\n# Tests basés sur les cas décrits\n\n';
-
+  // 4. fichiers tests — un par fonctionnalité si > 1 page
+  if (pages.length > 1) {
+    prompt += '\n⚠️ FICHIERS TESTS MULTIPLES — crée UN fichier par fonctionnalité :\n';
+    prompt += '- Format : tests/feature_<nom>.robot (ex: feature_login.robot, feature_cart.robot)\n';
+    prompt += '- Chaque fichier contient UNIQUEMENT les TC de sa fonctionnalité\n';
+    prompt += '- NE PAS créer tests/tests.robot dans ce cas\n\n';
+    pages.forEach(p => {
+      const fname = 'feature_' + p.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_') + '.robot';
+      prompt += '***** FILE: tests/' + fname + ' | tests | Tests ' + p + '\n';
+      prompt += '*** Settings ***\nDocumentation    Tests ' + p + '\nLibrary    ' + library + '\nResource    ../resources/variables.robot\nResource    ../resources/keywords.robot\n\n*** Test Cases ***\n# TC liés à ' + p + '\n\n';
+    });
+    prompt += 'RAPPEL: Génère ' + (pages.length + 3) + ' fichiers avec leur contenu RF complet.\n';
+  } else {
+    prompt += '***** FILE: tests/tests.robot | tests | Tests\n';
+    prompt += '*** Settings ***\nDocumentation    Tests\nLibrary    ' + library + '\nResource    ../resources/variables.robot\nResource    ../resources/keywords.robot\n\n*** Test Cases ***\n# Tests basés sur les cas décrits\n\n';
+    prompt += 'RAPPEL: Génère les ' + (pages.length + 3) + ' fichiers ci-dessus avec leur contenu Robot Framework complet.\n';
+    prompt += 'Le fichier tests/tests.robot EST OBLIGATOIRE — il contient les Test Cases.\n';
+  }
   prompt += 'RAPPEL: Génère les ' + (pages.length + 3) + ' fichiers ci-dessus avec leur contenu Robot Framework complet.\n';
   prompt += 'Le fichier tests/tests.robot EST OBLIGATOIRE — il contient les Test Cases.\n';
 
@@ -1809,20 +1881,8 @@ function renderCodeMsg(code, filename) {
   const cardId4 = 'result-' + Date.now();
   const title4 = window._lastGeneratedTitle || filename?.replace('.robot','') || 'Code RF';
   window._codeCards.push({ type: 'single', cardId: cardId4, title: title4, files: [{ filename: filename||'test_generated.robot', code: clean }] });
-  // Fetch variables.robot asynchronously and update the card
-  (async () => {
-    try {
-      const vr = await fetch('https://robotstudioai.onrender.com/api/rf/read-file?path=resources/variables.robot');
-      if (vr.ok) {
-        const vd = await vr.json();
-        const card = window._codeCards.find(c => c.cardId === cardId4);
-        if (card && vd.content) {
-          card.files.push({ filename: 'resources/variables.robot', code: vd.content });
-          saveCodeCards();
-        }
-      }
-    } catch(e) {}
-  })();
+  saveCodeCards();
+  // Note: variables.robot snapshot désactivé — les fichiers sont déjà dans card.files
   try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
   renderResultCard([{ filename, code: clean }], cardId4);
   setTimeout(() => injectRunButton(clean, filename), 120);
@@ -2050,7 +2110,7 @@ function renderMultiFileMsg(raw) {
   const cardId5 = 'result-' + Date.now();
   const title5 = window._lastGeneratedTitle || 'Code RF';
   window._codeCards.push({ type: 'multi', cardId: cardId5, title: title5, files: files.map(f => ({ ...f, code: f.code })) });
-  try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+  saveCodeCards();
 
   renderResultCard(files, cardId5);
 }
@@ -2340,6 +2400,7 @@ function treeDelete(e, idx, cardId) {
   showConfirmDialog('🗑 Supprimer', 'Supprimer <b>' + escHtml(card.files[idx].filename) + '</b> ?', () => {
     card.files.splice(idx, 1);
     saveCodeCards();
+    deleteFromDB(cardId); // re-sauvegarde la version mise à jour
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
     showToast('🗑 Fichier supprimé');
@@ -2427,6 +2488,17 @@ function showInputDialog(title, label, defaultVal, callback) {
   };
 }
 
+
+// ── Suppression unifiée MongoDB + localStorage ────────────────────────────────
+function deleteFromDB(cardId) {
+  if (!cardId) return;
+  fetch('http://localhost:3001/api/storage/card/' + cardId, { method: 'DELETE' })
+    .catch(e => console.warn('MongoDB delete error:', e.message));
+}
+function deleteTCFromDB() {
+  saveTCStore(); // re-sauvegarde sans les blocs supprimés
+}
+
 function showConfirmDialog(title, message, callback) {
   document.getElementById('_customDialog')?.remove();
   const d = document.createElement('div');
@@ -2456,7 +2528,20 @@ function showConfirmDialog(title, message, callback) {
 
 function saveCodeCards() {
   updateStatsBar();
-  try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards||[])); } catch(e){}
+  // Sauvegarde MongoDB (principal)
+  fetch('http://localhost:3001/api/storage/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cards: window._codeCards || [] }),
+  }).catch(e => console.warn('MongoDB save error:', e.message));
+  // localStorage fallback léger (sans code RF)
+  try {
+    const light = (window._codeCards||[]).map(c => {
+      if (c.type !== 'multi' && c.type !== 'single') return c;
+      return { ...c, files: (c.files||[]).map(f => ({ ...f, code: '' })) };
+    });
+    localStorage.setItem('qa_code_cards', JSON.stringify(light));
+  } catch(e) {}
 }
 
 function renderResultCard(files, existingCardId) {
@@ -2549,7 +2634,7 @@ function renderResultCard(files, existingCardId) {
               ${isMulti ? `<button data-card="${cardId}" data-raction="downloadall"
                 title="Télécharger tous les fichiers" style="background:rgba(59,130,246,0.08);border:1px solid #60a5fa;color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Télécharger tous les fichiers">⬇️ Tout</button>` : ''}
               <button data-card="${cardId}" data-raction="reset"
-                style="background:rgba(230,57,70,0.08);border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Fermer">✕</button>
+                style="background:rgba(230,57,70,0.08);border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Supprimer">✕</button>
             </div>
           </div>
 
@@ -2622,7 +2707,7 @@ function renderResultCard(files, existingCardId) {
       </div>`;
 
     // Event delegation
-    div.onclick = e => {
+    div.onclick = async e => {
       const btn = e.target.closest('[data-raction]');
       if (!btn) return;
       const action = btn.dataset.raction;
@@ -2662,13 +2747,25 @@ function renderResultCard(files, existingCardId) {
           return { ...c, files: newFiles };
         });
         window._lastGeneratedCode = ta.value;
-        try {
-          localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards));
-          localStorage.setItem('qa_last_code', ta.value);
-        } catch(e) {}
+        localStorage.setItem('qa_last_code', ta.value);
+        saveCodeCards(); // persiste dans MongoDB + localStorage
+        // Mettre à jour suiteRegistry si ce bloc est dans une suite
+        const regEntry = suiteRegistry.find(t => t.cardId === cardId);
+        if (regEntry) { regEntry.code = ta.value; saveSuiteRegistry(); }
+        // Écrire le fichier sur disque (sync UI → VS Code) — await pour garantir l'ordre
+        const editedFile = files[activeTab];
+        if (editedFile?.filename) {
+          try {
+            await fetch('http://localhost:3001/api/rf/write-file', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filepath: editedFile.filename, content: ta.value }),
+            });
+          } catch(e) {}
+        }
         // Re-render card to update syntax highlight
         buildCard(activeTab);
-        showToast('✅ Code mis à jour et sauvegardé');
+        showToast('✅ Code mis à jour — fichier synchronisé');
       } else if (action === 'canceledit') {
         const eid    = btn.dataset.editid;
         const view   = document.getElementById(eid + '-view');
@@ -2708,8 +2805,7 @@ function renderResultCard(files, existingCardId) {
       } else if (action === 'download') {
         dlFile(files[activeTab].filename, files[activeTab].code);
       } else if (action === 'downloadall') {
-        files.forEach(f => dlFile(f.filename, f.code));
-        showToast('⬇️ ' + files.length + ' fichiers téléchargés');
+        downloadAsZip(files, cardId);
       } else if (action === 'reset') {
         const card = (window._codeCards||[]).find(c => c.cardId === cardId);
         const blockTitle = card?.title || (files[0]?.filename || 'ce bloc');
@@ -2722,6 +2818,7 @@ function renderResultCard(files, existingCardId) {
           savedSuites.forEach(s => { s.testIds = (s.testIds||[]).filter(id => suiteRegistry.some(t => t.id === id)); });
           saveSuitesList();
           saveCodeCards();
+          deleteFromDB(cardId);
           div.remove();
         });
       }
@@ -2733,6 +2830,34 @@ function renderResultCard(files, existingCardId) {
   chatHistory.push({ role: 'assistant', content: '[RF code: ' + files.map(f => f.filename).join(', ') + ']' });
   LS.save();
   scrollToBottom();
+}
+
+
+// ── Télécharger tous les fichiers en ZIP ─────────────────────────────────────
+async function downloadAsZip(files, cardId) {
+  // Charger JSZip dynamiquement
+  if (!window.JSZip) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+  const zip = new JSZip();
+  files.forEach(f => {
+    if (f.filename.endsWith('.gitkeep')) return;
+    zip.file(f.filename, f.code || '');
+  });
+  const card = (window._codeCards||[]).find(c => c.cardId === cardId);
+  const zipName = (card?.title || 'rf_tests').replace(/[^a-z0-9_-]/gi, '_').toLowerCase() + '.zip';
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = zipName;
+  a.click();
+  showToast('⬇️ ' + files.filter(f => !f.filename.endsWith('.gitkeep')).length + ' fichiers téléchargés en ZIP');
 }
 
 function dlFile(filename, code) {
@@ -2798,20 +2923,30 @@ function copyText(btn, text) {
 }
 
 function clearChat() {
-  chatHistory = [];
-  azureSession = null;
-  try {
-    ['qa_agent_history','qa_agent_azure','qa_agent_jira','qa_agent_pending'].forEach(k => localStorage.removeItem(k));
-    pendingTestCases = null;
-    _rfPaused = false;
-    // Cancel all schedule timers
-    Object.values(scheduleTimers).forEach(t => clearTimeout(t));
-    scheduleTimers = {};
-    jiraSession = null;
-  } catch(e) {}
-  document.getElementById('messages').innerHTML = '';
-  showWelcome();
-  showToast('Chat réinitialisé');
+  showConfirmDialog('🗑 Reset complet', 'Supprimer la conversation, tous les rapports et blocs de code ?', async () => {
+    chatHistory = [];
+    azureSession = null;
+    try {
+      ['qa_agent_history','qa_agent_azure','qa_agent_jira','qa_agent_pending','qa_code_cards','qa_stats','qa_tc_store','qa_tc_store'].forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem('qa_tc_store');
+      pendingTestCases = null;
+      _rfPaused = false;
+      Object.values(scheduleTimers).forEach(t => clearTimeout(t));
+      scheduleTimers = {};
+      jiraSession = null;
+      window._codeCards = [];
+      _reportHistory = [];
+      Object.keys(TC_STORE).forEach(k => delete TC_STORE[k]);
+    } catch(e) {}
+    // Vide les collections MongoDB
+    try {
+      await fetch('http://localhost:3001/api/storage/clear', { method: 'DELETE' });
+    } catch(e) { console.warn('MongoDB clear error:', e.message); }
+    document.getElementById('messages').innerHTML = '';
+    showWelcome();
+    updateStatsBar();
+    showToast('🗑 Reset complet — conversation et données effacées');
+  });
 }
 
 function showToast(msg) {
@@ -3100,8 +3235,55 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.addEventListener('change', () => LS.save());
   });
 
+  // Charger la clé API depuis le serveur (chiffrée dans .env)
+  (async () => {
+    try {
+      const tokenR = await fetch('http://localhost:3001/api/config/token');
+      const tokenD = await tokenR.json();
+      const provider = localStorage.getItem('qa_provider') || 'anthropic';
+      const keyR = await fetch(`http://localhost:3001/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
+      if (keyR.ok) {
+        const keyD = await keyR.json();
+        if (keyD.key) {
+          window._serverApiKey = keyD.key;
+          document.getElementById('apiKey').value = '';
+          document.getElementById('apiKey').placeholder = '🔒 Clé API configurée dans .env';
+          document.getElementById('apiKey').disabled = true;
+          updateKeyStatus(keyD.key);
+        }
+      }
+    } catch(e) {
+      // Pas de serveur ou pas de clé — utiliser la clé saisie manuellement
+    }
+  })();
+
+  // Connexion SSE permanente pour sync VS Code → UI
+  (function connectSyncSSE() {
+    const es = new EventSource('http://localhost:3001/api/rf/live-stream');
+    es.addEventListener('file-changed', e => {
+      const { filepath, content } = JSON.parse(e.data);
+      let updated = false;
+      (window._codeCards||[]).forEach(card => {
+        if (!card.files) return;
+        const fname = filepath.split('/').pop();
+        const f = card.files.find(f => f.filename === filepath || (f.filename||'').split('/').pop() === fname);
+        if (f && f.code !== content) {
+          f.code = content;
+          updated = true;
+        }
+      });
+      if (updated) {
+        saveCodeCards();
+        // Pas de re-render complet — juste un toast discret
+        // Le code est mis à jour en mémoire, sera utilisé au prochain run
+        showToast('🔄 ' + filepath.split('/').pop() + ' synchronisé');
+      }
+    });
+    es.onerror = () => setTimeout(connectSyncSSE, 3000);
+  })();
+
   // Load all saved data
-  LS.load();
+  LS.load().catch(e => console.warn('LS.load error:', e));
 
   // Restore stats immediately
   restoreStatsBar();
@@ -3453,7 +3635,22 @@ async function runTests(btnOrCode, filename) {
     code  = decodeURIComponent(btnOrCode?.dataset?.code || '');
     fname = decodeURIComponent(btnOrCode?.dataset?.filename || 'test_generated.robot');
   }
+  // Sync les fichiers sur disque avant le run
+  if (window._lastCardId) await syncCardFilesToDisk(window._lastCardId);
   if (code) await runTestsFromCard(code, fname);
+}
+
+async function syncCardFilesToDisk(cardId) {
+  const card = (window._codeCards||[]).find(c => c.cardId === cardId);
+  if (!card?.files) return;
+  await Promise.all(card.files.map(f => {
+    if (!f.filename || !f.code) return Promise.resolve();
+    return fetch('http://localhost:3001/api/rf/write-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filepath: f.filename, content: f.code }),
+    }).catch(() => {});
+  }));
 }
 
 async function runTestsFromCard(code, filename, suiteCtx) {
@@ -3531,7 +3728,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     const r    = await fetch('http://localhost:3001/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless }),
+      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, pageTitle: window._lastGeneratedTitle || '' }),
     });
     const data = await r.json();
     hideTyping();
@@ -3549,27 +3746,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
       renderAgentMsg(summary + '\n\nLe rapport complet est disponible ci-dessous 👇');
     }
 
-    // After run: save variables.robot snapshot to current card for suite isolation
-    if (!suiteCtx) {
-      (async () => {
-        try {
-          const vr = await fetch('https://robotstudioai.onrender.com/api/rf/read-file?path=resources/variables.robot');
-          if (vr.ok) {
-            const vd = await vr.json();
-            if (vd.content && window._lastCardId) {
-              const card = (window._codeCards||[]).find(c => c.cardId === window._lastCardId);
-              if (card) {
-                const existing = card.files.find(f => f.filename.includes('variables.robot'));
-                if (existing) existing.code = vd.content;
-                else card.files.push({ filename: 'resources/variables.robot', code: vd.content });
-                saveCodeCards();
-                console.log('[run complete] saved variables.robot to card', window._lastCardId);
-              }
-            }
-          }
-        } catch(e) {}
-      })();
-    }
+    // Note: snapshot variables.robot désactivé après run — évite d'écraser les cartes de suite
 
     // Open full report — skip individual cards for suite blocs
     if (!suiteCtx?.isSuite) {
@@ -3781,7 +3958,7 @@ function renderReportCard(data, suiteCardId) {
   // Si c'est un rapport de suite, ne pas sauvegarder maintenant —
   // renderConsolidatedSuiteReport_inline appellera saveCodeCards() après avoir pushé le suite-report
   if (!suiteCardId) {
-    try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+    saveCodeCards(); // persiste dans MongoDB + localStorage
   }
   updateStatsBar();
 }
@@ -4545,6 +4722,12 @@ function registerSuiteTest(filename, code) {
 }
 
 function saveSuiteRegistry() {
+  // Sauvegarde aussi dans MongoDB via saveSuitesList
+  fetch('http://localhost:3001/api/storage/suites', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ savedSuites, registry: suiteRegistry }),
+  }).catch(e => console.warn('MongoDB registry error:', e.message));
   try {
     // Save registry with pomCode for offline use
     const light = suiteRegistry.map(t => ({
@@ -4687,7 +4870,7 @@ function openScheduler() {
       <button onclick="stopTestRun();deleteSchedule(${i})"
         style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="Stopper le run en cours">⏹ Stop</button>
       <button onclick="deleteSchedule(${i})"
-        style="background:transparent;border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="Fermer">✕</button>
+        style="background:transparent;border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="Supprimer">✕</button>
     </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:12px;font-style:italic">Aucun scheduling configuré</div>';
 
   const modal = document.createElement('div');
@@ -4698,7 +4881,7 @@ function openScheduler() {
 
       <!-- Header -->
       <div style="display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--card)">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">⏰ Scheduler de tests</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">⏰ Scheduler de suites</span>
         <button onclick="document.getElementById('schedulerModal').remove()"
           style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer" title="Fermer">✕</button>
       </div>
@@ -4915,8 +5098,14 @@ function deleteSchedule(idx) {
 document.addEventListener('DOMContentLoaded', () => {
   loadSuiteRegistry();
   loadSavedSuites();
-  renderSuiteTestList();
-  renderSavedSuites();
+  loadSuitesFromDB().then(() => {
+    // Ne nettoyer que si _codeCards est chargé et non vide
+    if ((window._codeCards||[]).filter(c => c.type === 'multi' || c.type === 'single').length > 0) {
+      cleanSuiteRegistry();
+    }
+    renderSuiteTestList();
+    renderSavedSuites();
+  });
   // Restart active schedules
   suiteSchedules.filter(s => s.active).forEach(startScheduleTimer);
 });
@@ -4974,6 +5163,36 @@ function stopTestRun() {
 }
 
 // ── Suite Panel ───────────────────────────────────────────────────────────────
+
+// ── Nettoyage du suiteRegistry ───────────────────────────────────────────────
+function cleanSuiteRegistry() {
+  const validCardIds = new Set((window._codeCards||[]).filter(c => c.type === 'multi' || c.type === 'single').map(c => c.cardId));
+  const before = suiteRegistry.length;
+  // Garder seulement les entrées dont le cardId existe dans _codeCards
+  suiteRegistry = suiteRegistry.filter(t => !t.cardId || validCardIds.has(t.cardId));
+  // Dédupliquer par cardId — garder la dernière entrée pour chaque cardId
+  const seenCardIds = new Map();
+  suiteRegistry.forEach(t => { if (t.cardId) seenCardIds.set(t.cardId, t); });
+  // Ne garder que les entrées uniques par cardId
+  const cleanedByCard = new Map();
+  suiteRegistry.forEach(t => {
+    if (!t.cardId) return;
+    if (!cleanedByCard.has(t.cardId)) cleanedByCard.set(t.cardId, t);
+  });
+  suiteRegistry = [...cleanedByCard.values()];
+  // Mettre à jour savedSuites pour retirer les testIds orphelins
+  const validIds = new Set(suiteRegistry.map(t => t.id));
+  savedSuites.forEach(s => {
+    s.testIds = (s.testIds||[]).filter(id => validIds.has(id));
+  });
+  const after = suiteRegistry.length;
+  if (before !== after) {
+    saveSuiteRegistry();
+    saveSuitesList();
+    console.log(`[cleanSuiteRegistry] ${before} → ${after} entrées`);
+  }
+}
+
 function openSuitePanel() {
   const panel = document.getElementById('suitePanel');
   if (!panel) { showToast('Panneau introuvable — recharge la page'); return; }
@@ -4991,8 +5210,14 @@ function openSuitePanel() {
   if (btn) btn.classList.add('active');
   loadSuiteRegistry();
   loadSavedSuites();
-  renderSuiteTestList();
-  renderSavedSuites();
+  loadSuitesFromDB().then(() => {
+    // Ne nettoyer que si _codeCards est chargé et non vide
+    if ((window._codeCards||[]).filter(c => c.type === 'multi' || c.type === 'single').length > 0) {
+      cleanSuiteRegistry();
+    }
+    renderSuiteTestList();
+    renderSavedSuites();
+  });
   try {
     const saved = localStorage.getItem('qa_suite_title');
     const input = document.getElementById('suiteTitleInput');
@@ -5161,9 +5386,24 @@ let savedSuites = [];
 function loadSavedSuites() {
   try { const s = localStorage.getItem('qa_named_suites'); if (s) savedSuites = JSON.parse(s); } catch(e) {}
 }
+async function loadSuitesFromDB() {
+  try {
+    const r = await fetch('http://localhost:3001/api/storage/suites');
+    const d = await r.json();
+    if (d.ok) {
+      if (d.savedSuites?.length > 0) savedSuites = d.savedSuites;
+      if (d.registry?.length > 0) suiteRegistry = d.registry;
+    }
+  } catch(e) { console.warn('loadSuitesFromDB error:', e.message); }
+}
 
 function saveSuitesList() {
   try { localStorage.setItem('qa_named_suites', JSON.stringify(savedSuites)); } catch(e) {}
+  fetch('http://localhost:3001/api/storage/suites', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ savedSuites, registry: suiteRegistry }),
+  }).catch(e => console.warn('MongoDB suites error:', e.message));
 }
 
 function saveCurrentSuite() {
@@ -5244,11 +5484,11 @@ function renderSavedSuites() {
           <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</span>
 
           <div style="display:flex;flex-direction:column;gap:1px">
-            <button onclick="event.stopPropagation();suiteMoveUp(${si},${ti})"
+            <button onclick="event.stopPropagation();suiteMoveUp('${s.id}',${ti})"
               style="background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);color:var(--teal);
                      cursor:pointer;font-size:9px;padding:1px 5px;border-radius:3px;line-height:1"
               title="Monter">▲</button>
-            <button onclick="event.stopPropagation();suiteMoveDown(${si},${ti})"
+            <button onclick="event.stopPropagation();suiteMoveDown('${s.id}',${ti})"
               style="background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);color:var(--teal);
                      cursor:pointer;font-size:9px;padding:1px 5px;border-radius:3px;line-height:1"
               title="Descendre">▼</button>
@@ -5293,9 +5533,14 @@ function renderSavedSuites() {
           <span style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;white-space:nowrap">
             ${suiteTests.length} test${suiteTests.length > 1 ? 's' : ''}
           </span>
-          <button onclick="runSuiteGroup(${si})"
+          <button onclick="runSuiteGroup(${si})" id="runBtn-${s.id}"
+            title="Lancer la suite"
             style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;
                    padding:4px 10px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">▶️</button>
+          <button onclick="stopSuiteGroup('${s.id}')" id="stopBtn-${s.id}"
+            title="Arrêter la suite"
+            style="display:none;background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);color:var(--red);
+                   padding:4px 10px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">⏹</button>
           <select onchange="setSuiteHeadless('${s.id}',this.value)" onclick="event.stopPropagation()"
             style="font-size:10px;background:var(--card);border:1px solid var(--border);color:var(--gray);border-radius:4px;padding:2px 4px;cursor:pointer"
             title="Mode navigateur pour cette suite">
@@ -5305,7 +5550,7 @@ function renderSavedSuites() {
           <button onclick="deleteSuiteGroup(${si})"
             style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:12px;padding:2px 4px;border-radius:3px"
             onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'"
-            title="Supprimer la suite" title="Fermer">✕</button>
+            title="Supprimer la suite">✕</button>
         </div>
 
         <!-- Tests list -->
@@ -5334,6 +5579,7 @@ function renderSavedSuites() {
 
 // ── Suite group management ────────────────────────────────────────────────────
 function addNewSuiteGroup() {
+  cleanSuiteRegistry(); // nettoie avant d'afficher
   const cards = (window._codeCards||[]).filter(c => c.type !== 'report' && c.type !== 'suite-report' && c.cardId);
   if (cards.length === 0) {
     showToast('⚠️ Génère d\'abord du code RF avant de créer une suite');
@@ -5438,9 +5684,19 @@ function updateSuiteGroupTitle(idx, val) {
 }
 
 function deleteSuiteGroup(idx) {
-  savedSuites.splice(idx, 1);
-  saveSuitesList();
-  renderSavedSuites();
+  const suite = savedSuites[idx];
+  if (!suite) return;
+  showConfirmDialog('🗑 Supprimer la suite', 'Supprimer la suite <b>' + escHtml(suite.title) + '</b> ?', () => {
+    savedSuites.splice(idx, 1);
+    saveSuitesList();
+    // Supprimer aussi les suite-reports liés dans MongoDB
+    const relatedCards = (window._codeCards||[]).filter(c => c.type === 'suite-report' && c.suiteTitle === suite.title);
+    relatedCards.forEach(c => deleteFromDB(c.cardId));
+    window._codeCards = (window._codeCards||[]).filter(c => !(c.type === 'suite-report' && c.suiteTitle === suite.title));
+    saveCodeCards();
+    renderSavedSuites();
+    showToast('🗑 Suite supprimée');
+  });
 }
 
 function addTestToSuite(suiteIdx) {
@@ -5463,6 +5719,18 @@ function removeTestFromSuite(suiteIdx, tid) {
   renderSavedSuites();
 }
 
+
+function stopSuiteGroup(suiteId) {
+  window._suiteStopped = true;
+  stopTestRun();
+  // Remettre le bouton run
+  const runBtn  = document.getElementById('runBtn-' + suiteId);
+  const stopBtn = document.getElementById('stopBtn-' + suiteId);
+  if (runBtn)  runBtn.style.display  = 'inline-flex';
+  if (stopBtn) stopBtn.style.display = 'none';
+  const _stoppedSuite = savedSuites.find(s => s.id === suiteId);
+  showToast('⏹ Suite "' + (_stoppedSuite?.title || suiteId) + '" arrêtée');
+}
 async function runSuiteGroup(idx) {
   if (window._suiteRunning) {
     // Ask user if they want to force restart
@@ -5491,6 +5759,17 @@ async function runSuiteGroup(idx) {
   window._suiteTotal = tests.length;
   window._suiteStopped = false;
   window._currentSuiteTitle = suite.title;
+  // Live broadcast suite-start
+  fetch('http://localhost:3001/api/rf/live-suite-start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: suite.title, blocCount: tests.length }),
+  }).catch(() => {});
+  // Afficher bouton stop, cacher bouton run
+  const _runBtn  = document.getElementById('runBtn-' + suite.id);
+  const _stopBtn = document.getElementById('stopBtn-' + suite.id);
+  if (_runBtn)  _runBtn.style.display  = 'none';
+  if (_stopBtn) _stopBtn.style.display = 'inline-flex';
 
   // Create ONE progress message for the whole suite
   const suiteProgressDiv = document.createElement('div');
@@ -5596,6 +5875,11 @@ async function runSuiteGroup(idx) {
   const suiteReports = (window._suiteBloc_reports || []);
   window._suiteBloc_reports = []; // reset for next suite run
 
+  // Remettre bouton run, cacher stop
+  const _runBtnEnd  = document.getElementById('runBtn-' + suite.id);
+  const _stopBtnEnd = document.getElementById('stopBtn-' + suite.id);
+  if (_runBtnEnd)  _runBtnEnd.style.display  = 'inline-flex';
+  if (_stopBtnEnd) _stopBtnEnd.style.display = 'none';
   showToast('✅ Suite ' + suite.title + ' terminée — ' + tests.length + ' bloc(s)');
 }
 
@@ -5627,20 +5911,29 @@ function toggleSuiteTest(suiteIdx, tid) {
 
 function suiteMoveUp(si, ti) {
   if (ti === 0) return;
-  const ids = savedSuites[si]?.testIds;
+  // si peut être un index numérique ou un suiteId string
+  const realIdx = typeof si === 'string'
+    ? savedSuites.findIndex(s => s.id === si)
+    : si;
+  const suite = savedSuites[realIdx];
+  if (!suite) return;
+  const ids = savedSuites[realIdx]?.testIds;
   if (!ids) return;
   [ids[ti-1], ids[ti]] = [ids[ti], ids[ti-1]];
-  renumberSuiteTests(si);
-  savedSuites[si].updatedAt = new Date().toISOString();
+  savedSuites[realIdx].updatedAt = new Date().toISOString();
   saveSuitesList(); saveSuiteRegistry(); renderSavedSuites();
 }
-
 function suiteMoveDown(si, ti) {
-  const ids = savedSuites[si]?.testIds;
+  const realIdx = typeof si === 'string'
+    ? savedSuites.findIndex(s => s.id === si)
+    : si;
+  const suite = savedSuites[realIdx];
+  if (!suite) return;
+  const ids = savedSuites[realIdx]?.testIds;
   if (!ids || ti >= ids.length - 1) return;
   [ids[ti], ids[ti+1]] = [ids[ti+1], ids[ti]];
-  renumberSuiteTests(si);
-  savedSuites[si].updatedAt = new Date().toISOString();
+  // renumberSuiteTests supprimé — garde les IDs stables
+  savedSuites[realIdx].updatedAt = new Date().toISOString();
   saveSuitesList(); saveSuiteRegistry(); renderSavedSuites();
 }
 
@@ -6236,13 +6529,22 @@ function mergeCodeCards(targetCardId) {
     const srcCard = allCards[idx];
     if (!srcCard || !srcCard.files?.length) return;
 
-    // Merge files
+    // Merge files — tests.robot → feature_<titre>.robot séparé
     const existingFiles = new Set(targetCard.files.map(f => f.filename));
     srcCard.files.forEach(f => {
-      if (!existingFiles.has(f.filename)) {
+      if (f.filename === 'tests/tests.robot') {
+        // Créer un fichier feature_*.robot séparé pour ce bloc source
+        const featureName = 'tests/feature_' + (srcCard.title||'tests').toLowerCase()
+          .replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').slice(0,30) + '.robot';
+        if (!existingFiles.has(featureName)) {
+          targetCard.files.push({ ...f, filename: featureName, label: srcCard.title });
+          existingFiles.add(featureName);
+        }
+      } else if (!existingFiles.has(f.filename)) {
         targetCard.files.push({ ...f });
         existingFiles.add(f.filename);
       } else {
+        // Merger les ressources (keywords, pages) — pas les tests
         const existing = targetCard.files.find(ef => ef.filename === f.filename);
         if (existing) existing.code = mergeRobotFiles(existing.code, f.code);
       }
@@ -6260,9 +6562,16 @@ function mergeCodeCards(targetCardId) {
     window._lastGeneratedTitle = targetCard.title;
   }
 
-  // Renumber TC_XXX sequentially in tests.robot
+  // Renommer tests.robot de la cible en feature_<titre>.robot
+  const targetTestsFile = targetCard.files.find(f => f.filename === 'tests/tests.robot');
+  if (targetTestsFile && checked.length > 0) {
+    const featureName = 'tests/feature_' + (targetCard.title||'tests').toLowerCase()
+      .replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').slice(0,30) + '.robot';
+    targetTestsFile.filename = featureName;
+  }
+  // Renumber TC_XXX sequentially in all feature_*.robot files
   targetCard.files = targetCard.files.map(f => {
-    if (!f.filename.includes('tests.robot')) return f;
+    if (!f.filename.startsWith('tests/feature_') && !f.filename.includes('tests.robot')) return f;
     let counter = 1;
     const code = f.code.replace(/^(TC_\d+)( .+)$/gm, (m, tc, name) => {
       const newId = 'TC_' + String(counter++).padStart(3, '0');
@@ -6366,10 +6675,9 @@ function deleteReportCard(cardId, runNum) {
     // Remove from _reportHistory
     _reportHistory = (_reportHistory||[]).filter(r => r.runNumber !== runNum);
     // Persiste
-    try {
-      localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards));
-      // qa_run_history supprimé — données dans qa_code_cards
-    } catch(e) {}
+    saveCodeCards();
+    deleteFromDB(cardId);
+    deleteFromDB('suite-report-' + runNum);
     updateStatsBar();
     showToast('🗑 Rapport supprimé');
   });
@@ -6429,8 +6737,8 @@ function deleteConsolidatedReport(cardId) {
     document.querySelectorAll('[id^="reportCard-"]').forEach(el => {
       if (el.dataset.suiteCardId === cardId) el.remove();
     });
-    // Persiste directement sans passer par saveCodeCards (évite reset des stats)
-    try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
+    saveCodeCards();
+    deleteFromDB(cardId);
     updateStatsBar();
     showToast('🗑 Rapport supprimé');
   });
@@ -6468,6 +6776,16 @@ function renderConsolidatedSuiteReport_inline() {
     isSuite:     true,
   };
 
+  // Broadcaster la fin de suite dans le live panel
+  fetch('http://localhost:3001/api/rf/live-suite-end', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: suiteTitle,
+      status: merged.status?.toLowerCase() || 'fail',
+      passed: merged.passed, failed: merged.failed, total: merged.total,
+    }),
+  }).catch(() => {});
   // Calcul blockNames avant renderReportCard pour les badges
   const _suite = (savedSuites||[]).find(s => s.title === suiteTitle);
   merged.blockNames = _suite
@@ -6544,27 +6862,32 @@ function openDatePicker() {
 // ── Multi-provider support ────────────────────────────────────────────────────
 const PROVIDER_MODELS = {
   anthropic: [
-    { value: 'claude-haiku-4-5-20251001', label: '⚡ Claude Haiku 4.5' },
-    { value: 'claude-sonnet-4-6',          label: '🧠 Claude Sonnet 4.6' },
+    { value: 'claude-opus-4-8',            label: '🌟 Claude Opus 4.8' },
     { value: 'claude-opus-4-7',            label: '💎 Claude Opus 4.7' },
+    { value: 'claude-opus-4-6',            label: '💎 Claude Opus 4.6' },
+    { value: 'claude-sonnet-4-6',          label: '🧠 Claude Sonnet 4.6' },
+    { value: 'claude-haiku-4-5-20251001',  label: '⚡ Claude Haiku 4.5' },
   ],
   openai: [
-    { value: 'gpt-4o-mini',   label: '⚡ GPT-4o mini' },
-    { value: 'gpt-4o',        label: '🧠 GPT-4o' },
-    { value: 'gpt-4.1',       label: '💎 GPT-4.1' },
-    { value: 'o4-mini',       label: '🔬 o4-mini' },
+    { value: 'gpt-4.1',           label: '🧠 GPT-4.1' },
+    { value: 'gpt-4.1-mini',      label: '⚡ GPT-4.1 Mini' },
+    { value: 'gpt-4.1-nano',      label: '🚀 GPT-4.1 Nano' },
+    { value: 'gpt-4o',            label: '🔵 GPT-4o' },
+    { value: 'gpt-4o-mini',       label: '💨 GPT-4o Mini' },
   ],
   gemini: [
-    { value: 'gemini-2.0-flash-lite',          label: '⚡ Gemini 2.0 Flash Lite' },
-    { value: 'gemini-2.0-flash',               label: '🧠 Gemini 2.0 Flash' },
-    { value: 'gemini-2.5-flash-preview-05-20', label: '✨ Gemini 2.5 Flash Preview' },
-    { value: 'gemini-2.5-pro-preview-05-06',   label: '💎 Gemini 2.5 Pro Preview' },
+    { value: 'gemini-3.1-pro-preview',       label: '🌟 Gemini 3.1 Pro Preview' },
+    { value: 'gemini-3-flash-preview',       label: '⚡ Gemini 3 Flash Preview' },
+    { value: 'gemini-2.5-pro',               label: '💎 Gemini 2.5 Pro' },
+    { value: 'gemini-2.5-flash',             label: '✨ Gemini 2.5 Flash' },
+    { value: 'gemini-2.5-flash-lite-preview-06-17', label: '🚀 Gemini 2.5 Flash Lite' },
+    { value: 'gemini-2.0-flash',             label: '💨 Gemini 2.0 Flash' },
   ],
   mistral: [
-    { value: 'mistral-small-latest',   label: '⚡ Mistral Small' },
+    { value: 'mistral-large-latest',   label: '💎 Mistral Large 3' },
+    { value: 'mistral-small-latest',   label: '⚡ Mistral Small 4' },
     { value: 'mistral-medium-latest',  label: '🧠 Mistral Medium' },
-    { value: 'mistral-large-latest',   label: '💎 Mistral Large' },
-    { value: 'codestral-latest',       label: '💻 Codestral' },
+    { value: 'open-mistral-nemo',      label: '🌐 Mistral Nemo' },
   ],
 };
 
@@ -6575,8 +6898,33 @@ const PROVIDER_PLACEHOLDER = {
   mistral:   'Clé API Mistral...',
 };
 
+async function loadApiKeyForProvider(provider) {
+  try {
+    const tokenR = await fetch('http://localhost:3001/api/config/token');
+    const tokenD = await tokenR.json();
+    const keyR = await fetch(`http://localhost:3001/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
+    if (keyR.ok) {
+      const keyD = await keyR.json();
+      if (keyD.key) {
+        window._serverApiKey = keyD.key;
+        const keyEl = document.getElementById('apiKey');
+        if (keyEl) { keyEl.value = ''; keyEl.disabled = true; keyEl.placeholder = '🔒 Clé API configurée dans .env'; }
+        updateKeyStatus(keyD.key);
+        return true;
+      }
+    }
+  } catch(e) {}
+  // Pas de clé en .env
+  window._serverApiKey = null;
+  const keyEl = document.getElementById('apiKey');
+  if (keyEl) { keyEl.disabled = false; keyEl.placeholder = 'Clé API...'; keyEl.value = localStorage.getItem('qa_agent_key') || ''; }
+  updateKeyStatus(keyEl?.value || '');
+  return false;
+}
+
 function onProviderChange(provider) {
   localStorage.setItem('qa_provider', provider);
+  loadApiKeyForProvider(provider);
   // Update model list
   const sel = document.getElementById('modelSelect');
   if (!sel) return;
@@ -6687,6 +7035,687 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
 
 
 // ── Stats bar update ─────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LIVE PANEL — Workflow en temps réel
+// ══════════════════════════════════════════════════════════════════════════════
+const LIVE_SERVER = 'http://localhost:3001';
+let _liveEvtSource = null;
+let _liveState = { runs: [], suites: [] };
+let _livePanelOpen = false;
+
+function fmtLive(ms) {
+  if (!ms || ms < 0) return '—';
+  if (ms < 1000) return ms + 'ms';
+  if (ms < 60000) return (ms/1000).toFixed(1) + 's';
+  return Math.floor(ms/60000) + 'm ' + Math.floor((ms%60000)/1000) + 's';
+}
+
+function shortTC(name) {
+  if (!name) return '?';
+  return name.length <= 28 ? name : name.slice(0, 26) + '…';
+}
+
+function renderLiveTimeline(tests) {
+  if (!tests || tests.length === 0) {
+    return '<div style="padding:10px 16px;font-size:12px;color:var(--gray);font-style:italic">En attente...</div>';
+  }
+  let html = '<div style="overflow-x:auto;padding:14px 16px 16px"><div style="display:flex;align-items:center;min-width:max-content">';
+  tests.forEach((t, i) => {
+    const s = (t.status||'pending').toLowerCase();
+    const icon = s==='pass'?'✓':s==='fail'?'✗':s==='running'?'⋯':s==='skip'?'⏭':'○';
+    const circleColor = s==='pass'?'var(--green)':s==='fail'?'var(--red)':s==='running'?'var(--teal)':s==='skip'?'var(--warn)':'var(--gray)';
+    const bg = s==='pass'?'rgba(34,197,94,0.12)':s==='fail'?'rgba(220,38,38,0.12)':s==='running'?'rgba(0,212,170,0.08)':s==='skip'?'rgba(245,158,11,0.10)':'var(--card)';
+    const anim = s==='running'?'animation:lp-pulse 1s infinite;':'';
+    const scale = (s==='pass'||s==='fail')?'transform:scale(1.1);':'';
+    const shadow = s==='pass'?'box-shadow:0 0 8px rgba(34,197,94,0.3);':s==='fail'?'box-shadow:0 0 8px rgba(220,38,38,0.3);':s==='running'?'box-shadow:0 0 8px rgba(0,212,170,0.3);':'';
+    const tooltip = t.message ? ' title="'+escHtml(t.message.slice(0,100))+'"' : '';
+    html += `<div style="display:flex;flex-direction:column;align-items:center;gap:5px"${tooltip}>
+      <div style="width:38px;height:38px;border-radius:50%;border:2px solid ${circleColor};background:${bg};
+                  display:flex;align-items:center;justify-content:center;font-size:14px;color:${circleColor};
+                  ${scale}${shadow}${anim}transition:all .4s;cursor:default">${icon}</div>
+      <div style="font-size:12px;color:${circleColor};text-align:center;max-width:90px;word-break:break-word;line-height:1.3">${escHtml(shortTC(t.name))}</div>
+    </div>`;
+    if (i < tests.length - 1) {
+      const nextS = (tests[i+1]?.status||'pending').toLowerCase();
+      // Trait : rouge si l'un fail, orange si l'un skip, vert si les deux pass
+      const lineColor = (s==='fail' || nextS==='fail') ? 'var(--red)' : (s==='skip' || nextS==='skip') ? 'var(--warn)' : (s==='pass' && nextS==='pass') ? 'var(--green)' : 'var(--border)';
+      html += `<div style="width:32px;height:2px;background:${lineColor};flex-shrink:0;margin-bottom:22px;transition:background .4s"></div>`;
+    }
+  });
+  // End node
+  const allDone = tests.every(t => ['pass','fail','skip'].includes((t.status||'').toLowerCase()));
+  const anyFail = tests.some(t => (t.status||'').toLowerCase()==='fail');
+  const lastTestStatus = (tests[tests.length-1]?.status||'pending').toLowerCase();
+  const lastLineColor = lastTestStatus==='pass'?'var(--green)':lastTestStatus==='fail'?'var(--red)':lastTestStatus==='skip'?'var(--warn)':lastTestStatus==='running'?'var(--teal)':'var(--border)';
+  const endColor = !allDone?'var(--gray)':anyFail?'var(--red)':'var(--green)';
+  const endIcon  = !allDone?'⋯':anyFail?'✗':'✓';
+  html += `<div style="width:24px;height:2px;background:${lastLineColor};flex-shrink:0;margin-bottom:22px;transition:background .4s"></div>`;
+  html += `<div style="width:28px;height:28px;border-radius:50%;border:2px solid ${endColor};background:var(--card);
+              display:flex;align-items:center;justify-content:center;font-size:12px;color:${endColor};
+              margin-bottom:22px;transition:all .4s">${endIcon}</div>`;
+  html += '</div></div>';
+  return html;
+}
+
+function renderLivePanel() {
+  const panel = document.getElementById('livePanel');
+  if (!panel) return;
+
+  const runs   = _liveState.runs || [];
+  const suites = _liveState.suites || [];
+
+  let html = `<style>
+    @keyframes lp-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  </style>`;
+
+  // Runs simples
+  html += `<div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;padding:10px 14px 6px;border-bottom:1px solid var(--border)">
+    🔵 RUNS SIMPLES <span style="background:var(--card);border:1px solid var(--border);color:var(--teal);padding:1px 7px;border-radius:8px;font-size:9px">${runs.length}</span>
+  </div>`;
+
+  if (runs.length === 0) {
+    html += '<div style="padding:16px 14px;font-size:12px;color:var(--gray);font-style:italic">Aucun run lancé...</div>';
+  } else {
+    [...runs].reverse().forEach(run => {
+      const done = run.status==='pass'||run.status==='fail';
+      const sc = !done?'var(--teal)':run.status==='pass'?'var(--green)':'var(--red)';
+      const badge = !done?'⋯ EN COURS':run.status==='pass'?'✅ PASS':'❌ FAIL';
+      const passed = (run.tests||[]).filter(t=>t.status==='pass').length;
+      const failed = (run.tests||[]).filter(t=>t.status==='fail').length;
+      html += `<div style="border-left:3px solid ${sc};margin:8px 10px;background:var(--card);border-radius:0 8px 8px 0">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;flex-wrap:wrap">
+          <span style="font-size:10px;color:var(--blue);font-family:'IBM Plex Mono',monospace">#${run.id}</span>
+          ${run.title?`<span style="font-size:13px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;font-weight:600">${escHtml(run.title)}</span>`:''}
+          <span style="font-size:9px;color:${sc};margin-left:auto">${badge}</span>
+          ${passed>0?`<span style="font-size:9px;color:var(--green)">✓${passed}</span>`:''}
+          ${failed>0?`<span style="font-size:12px;color:#DC2626">✗${failed}</span>`:''}
+        </div>
+        ${renderLiveTimeline(run.tests||[])}
+      </div>`;
+    });
+  }
+
+  // Suites
+  html += `<div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;padding:10px 14px 6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:6px">
+    🧪 SUITES <span style="background:var(--card);border:1px solid var(--border);color:var(--teal);padding:1px 7px;border-radius:8px;font-size:9px">${suites.length}</span>
+  </div>`;
+
+  if (suites.length === 0) {
+    html += '<div style="padding:16px 14px;font-size:12px;color:var(--gray);font-style:italic">Aucune suite lancée...</div>';
+  } else {
+    [...suites].reverse().forEach(suite => {
+      const done = suite.status==='pass'||suite.status==='fail';
+      const sc = !done?'var(--teal)':suite.status==='pass'?'var(--green)':'var(--red)';
+      const badge = !done?'⋯ EN COURS':suite.status==='pass'?'✅ PASS':'❌ FAIL';
+      html += `<div style="border-left:3px solid ${sc};margin:8px 10px;background:var(--card);border-radius:0 8px 8px 0">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px">
+          <span style="font-size:13px;color:var(--warn);font-weight:700">${escHtml(suite.title)}</span>
+          <span style="font-size:9px;color:${sc};margin-left:auto">${badge}</span>
+        </div>`;
+      (suite.blocs||[]).forEach((bloc, bi) => {
+        html += `<div style="padding:2px 12px 0">
+          <div style="font-size:9px;color:#c084fc;padding:3px 0">📁 ${escHtml(bloc.name||('Bloc '+(bi+1)))}</div>
+          ${renderLiveTimeline(bloc.tests||[])}
+        </div>`;
+      });
+      html += '</div>';
+    });
+  }
+
+  panel.innerHTML = html;
+}
+
+function connectLive() {
+  if (_liveEvtSource) _liveEvtSource.close();
+  _liveEvtSource = new EventSource(LIVE_SERVER + '/api/rf/live-stream');
+
+  _liveEvtSource.addEventListener('state', e => {
+    _liveState = JSON.parse(e.data);
+    if (_livePanelOpen) renderLivePanel();
+  });
+  _liveEvtSource.addEventListener('run-start', e => {
+    const r = JSON.parse(e.data);
+    _liveState.runs.push(r);
+    if (_livePanelOpen) renderLivePanel();
+  });
+  _liveEvtSource.addEventListener('run-update', e => {
+    const upd = JSON.parse(e.data);
+    const r = _liveState.runs.find(x => x.id === upd.id);
+    if (r) Object.assign(r, upd);
+    if (_livePanelOpen) renderLivePanel();
+  });
+  _liveEvtSource.addEventListener('suite-start', e => {
+    const s = JSON.parse(e.data);
+    _liveState.suites.push(s);
+    if (_livePanelOpen) renderLivePanel();
+  });
+  _liveEvtSource.addEventListener('suite-update', e => {
+    const upd = JSON.parse(e.data);
+    const s = _liveState.suites.find(x => x.id === upd.id);
+    if (s) Object.assign(s, upd);
+    if (_livePanelOpen) renderLivePanel();
+  });
+  _liveEvtSource.addEventListener('reset', () => {
+    _liveState = { runs: [], suites: [] };
+    if (_livePanelOpen) renderLivePanel();
+  });
+
+  // Sync disque → UI : mise à jour depuis VS Code
+  _liveEvtSource.addEventListener('file-changed', e => {
+    const { filepath, content } = JSON.parse(e.data);
+    // Mettre à jour toutes les cartes qui contiennent ce fichier
+    let updated = false;
+    (window._codeCards||[]).forEach(card => {
+      if (!card.files) return;
+      const f = card.files.find(f => f.filename === filepath || f.filename.endsWith('/' + filepath.split('/').pop()));
+      if (f && f.code !== content) {
+        f.code = content;
+        updated = true;
+      }
+    });
+    if (updated) {
+      saveCodeCards();
+      showToast('🔄 Fichier mis à jour depuis VS Code : ' + filepath.split('/').pop());
+    }
+  });
+
+  _liveEvtSource.onerror = () => setTimeout(connectLive, 3000);
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PANEL ANALYSE — Filtres + Diff côte à côte
+// ══════════════════════════════════════════════════════════════════════════════
+function _apFilter(s) { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),status:s};renderAnalysisPanel();} }
+function _apSearch(v) { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),search:v};_apRenderList(c);} }
+function _apPage(p)   { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),page:p};_apRenderList(c);} }
+let _analysisPanelOpen = false;
+
+function openAnalysisPanel() {
+  let overlay = document.getElementById('analysisPanelOverlay');
+  if (overlay) {
+    overlay.style.display = overlay.style.display === 'none' ? 'flex' : 'none';
+    _analysisPanelOpen = overlay.style.display !== 'none';
+    if (_analysisPanelOpen) renderAnalysisPanel();
+    return;
+  }
+
+  _analysisPanelOpen = true;
+
+  overlay = document.createElement('div');
+  overlay.id = 'analysisPanelOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:800;display:flex;justify-content:flex-end;pointer-events:none';
+
+  const panel = document.createElement('div');
+  panel.style.cssText = 'width:680px;min-width:400px;max-width:95vw;height:100vh;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;pointer-events:all;box-shadow:-4px 0 24px rgba(0,0,0,0.4);position:relative;';
+
+  // Resize handle
+  const handle = document.createElement('div');
+  handle.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:5px;cursor:ew-resize;z-index:10';
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    const startX = e.clientX, startW = panel.offsetWidth;
+    const onMove = mv => { panel.style.width = Math.min(Math.max(startW + (startX - mv.clientX), 400), window.innerWidth * 0.95) + 'px'; };
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0';
+  header.innerHTML = `
+    <span style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🔍 ANALYSE</span>
+    <button onclick="document.getElementById('analysisPanelOverlay').style.display='none';_analysisPanelOpen=false;"
+      style="background:transparent;border:none;color:var(--gray);font-size:16px;cursor:pointer;margin-left:auto">✕</button>
+  `;
+
+  // Tabs
+  const tabs = document.createElement('div');
+  tabs.style.cssText = 'display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card)';
+  tabs.innerHTML = `
+    <button id="aTabFilter" onclick="switchAnalysisTab('filter')"
+      style="flex:1;padding:10px;font-size:13px;font-family:monospace;cursor:pointer;border:none;border-bottom:2px solid var(--teal);background:transparent;color:var(--teal)">
+      🔎 FILTRES
+    </button>
+    <button id="aTabDiff" onclick="switchAnalysisTab('diff')"
+      style="flex:1;padding:10px;font-size:13px;font-family:monospace;cursor:pointer;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--gray)">
+      ⚖️ COMPARAISON
+    </button>
+  `;
+
+  const content = document.createElement('div');
+  content.id = 'analysisPanelContent';
+  content.style.cssText = 'flex:1;overflow-y:auto;display:flex;flex-direction:column;';
+
+  panel.appendChild(handle);
+  panel.appendChild(header);
+  panel.appendChild(tabs);
+  panel.appendChild(content);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.style.display='none'; _analysisPanelOpen=false; } });
+
+  renderAnalysisPanel();
+}
+
+function switchAnalysisTab(tab) {
+  const filterBtn = document.getElementById('aTabFilter');
+  const diffBtn   = document.getElementById('aTabDiff');
+  if (!filterBtn || !diffBtn) return;
+  if (tab === 'filter') {
+    filterBtn.style.borderBottomColor = 'var(--teal)'; filterBtn.style.color = 'var(--teal)';
+    diffBtn.style.borderBottomColor   = 'transparent';  diffBtn.style.color   = 'var(--gray)';
+  } else {
+    diffBtn.style.borderBottomColor   = 'var(--teal)'; diffBtn.style.color   = 'var(--teal)';
+    filterBtn.style.borderBottomColor = 'transparent';  filterBtn.style.color = 'var(--gray)';
+  }
+  document.getElementById('analysisPanelContent').dataset.tab = tab;
+  renderAnalysisPanel();
+}
+
+function getAllTestResults() {
+  const results = [];
+  (window._codeCards||[]).forEach(card => {
+    if (card.type === 'report' && card.data) {
+      const run = card.data;
+      (run.tests||[]).forEach(t => {
+        results.push({
+          runId:    run.runNumber || card.cardId,
+          date:     run.runDate || '',
+          suite:    run.suiteTitle || run.pageTitle || run.suiteName || '',
+          name:     t.name,
+          status:   (t.status||'').toLowerCase(),
+          duration: t.duration || 0,
+          message:  t.message || '',
+          steps:    t.steps || [],
+        });
+      });
+    }
+    if (card.type === 'suite-report' && card.data) {
+      const suite = card.data;
+      (suite.tests||[]).forEach(t => {
+        results.push({
+          runId:    suite.runNumber || card.cardId,
+          date:     suite.runDate || '',
+          suite:    suite.suiteTitle || card.suiteTitle || '',
+          name:     t.name,
+          status:   (t.status||'').toLowerCase(),
+          duration: t.duration || 0,
+          message:  t.message || '',
+          steps:    t.steps || [],
+        });
+      });
+    }
+  });
+  return results;
+}
+
+function getUniqueRuns() {
+  const runs = new Map();
+  (window._codeCards||[]).forEach(card => {
+    if ((card.type === 'report' || card.type === 'suite-report') && card.data) {
+      const d = card.data;
+      const id = d.runNumber || card.cardId;
+      if (!runs.has(id)) runs.set(id, { id, date: d.runDate || '', suite: d.suiteTitle || card.suiteTitle || '', title: d.pageTitle || card.title || d.suiteName || '', tests: d.tests || [], cardId: card.cardId });
+    }
+  });
+  return [...runs.values()].sort((a,b) => (b.id||0) - (a.id||0));
+}
+
+function _apRenderList(content) {
+  if (!content) return;
+  const filters = content._filters || { status: 'all', search: '', page: 'all' };
+  const all = getAllTestResults();
+
+  const filtered = all.filter(t => {
+    if (filters.status !== 'all' && t.status !== filters.status) return false;
+    if (filters.search && !t.name.toLowerCase().includes(filters.search.toLowerCase()) && !(t.suite||'').toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.page && filters.page !== 'all' && t.suite !== filters.page) return false;
+    return true;
+  });
+
+  // Grouper par page (suite)
+  const grouped = new Map();
+  filtered.forEach(t => {
+    const key = t.suite || (t.runId ? 'Run #' + t.runId : '—');
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(t);
+  });
+
+  let html = `<div style="padding:6px 14px;font-size:12px;color:var(--gray);letter-spacing:1px;border-bottom:1px solid var(--border)">${filtered.length} résultat${filtered.length>1?'s':''}</div>`;
+
+  if (filtered.length === 0) {
+    html += '<div style="padding:32px;text-align:center;font-size:12px;color:var(--gray)">Aucun résultat</div>';
+  } else {
+    grouped.forEach((tests, pageName) => {
+      const passCount = tests.filter(t=>t.status==='pass').length;
+      const failCount = tests.filter(t=>t.status==='fail').length;
+      const skipCount = tests.filter(t=>t.status==='skip').length;
+      const collapseId = 'apGroup_' + btoa(unescape(encodeURIComponent(pageName))).replace(/[^a-zA-Z0-9]/g,'');
+      html += `
+        <div style="border-bottom:1px solid var(--border)">
+          <div onclick="document.getElementById('${collapseId}').style.display=document.getElementById('${collapseId}').style.display==='none'?'block':'none';this.querySelector('.apArrow').textContent=document.getElementById('${collapseId}').style.display==='none'?'▶':'▼'"
+            style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;background:var(--card);user-select:none">
+            <span class="apArrow" style="font-size:10px;color:var(--gray)">▼</span>
+            <span style="font-size:12px;font-weight:700;color:#c084fc;flex:1">📁 ${escHtml(pageName)}</span>
+            <span style="font-size:12px;color:#22c55e">✓${passCount}</span>
+            <span style="font-size:12px;color:#DC2626;margin-left:4px">✗${failCount}</span>
+            ${skipCount?`<span style="font-size:12px;color:#f59e0b;margin-left:4px">⏭${skipCount}</span>`:''}
+            <span style="font-size:11px;color:var(--gray);margin-left:6px">${tests.length} TC</span>
+          </div>
+          <div id="${collapseId}">`;
+
+      tests.forEach(t => {
+        const sc  = t.status==='pass'?'#22c55e':t.status==='fail'?'#DC2626':'#f59e0b';
+        const bg  = t.status==='pass'?'rgba(34,197,94,0.08)':t.status==='fail'?'rgba(220,38,38,0.08)':'rgba(245,158,11,0.08)';
+        const icon = t.status==='pass'?'✓':t.status==='fail'?'✗':'⏭';
+        const dur  = t.duration?(t.duration<1000?t.duration+'ms':(t.duration/1000).toFixed(1)+'s'):'—';
+        const tcId = (t.name.match(/^(TC[_A-Z0-9]+)/)||[''])[0];
+        const tcName = t.name.match(/^TC[_A-Z0-9]+\s+(.*)$/) ? t.name.match(/^TC[_A-Z0-9]+\s+(.*)$/)[1].trim().replace(/^[-–—]\s*/,'') : t.name;
+        html += `
+          <div style="border-top:1px solid var(--border);padding:9px 14px 9px 28px;background:${bg}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+              <span style="font-size:14px;color:${sc};font-weight:700;flex-shrink:0">${icon}</span>
+              ${tcId?`<span style="font-size:12px;font-weight:700;color:var(--teal);flex-shrink:0">${escHtml(tcId)}:</span>`:''}
+              <span style="font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(tcName)}</span>
+              <span style="font-size:12px;color:var(--gray);flex-shrink:0">${dur}</span>
+            </div>
+            ${t.date||t.runId?`<div style="display:flex;gap:10px;font-size:12px;color:var(--gray)">
+              ${t.date?`<span>📅 ${t.date}</span>`:''}
+              ${t.runId?`<span>Run #${t.runId}</span>`:''}
+            </div>`:''}
+            ${t.message?`<div style="margin-top:5px;font-size:12px;color:#DC2626;background:rgba(220,38,38,0.06);border-radius:4px;padding:4px 8px;font-family:monospace;word-break:break-all">${escHtml(t.message.slice(0,200))}</div>`:''}
+          </div>`;
+      });
+      html += `</div></div>`;
+    });
+  }
+
+  let listEl = document.getElementById('apResultList');
+  if (!listEl) {
+    listEl = document.createElement('div');
+    listEl.id = 'apResultList';
+    content.appendChild(listEl);
+  }
+  listEl.innerHTML = html;
+}
+
+function renderAnalysisPanel() {
+  const content = document.getElementById('analysisPanelContent');
+  if (!content) return;
+  const tab = content.dataset.tab || 'filter';
+  if (tab === 'filter') renderFilterTab(content);
+  else renderDiffTab(content);
+}
+
+function renderFilterTab(content) {
+  const filters = content._filters || { status: 'all', search: '', page: 'all' };
+  content._filters = filters;
+  const all  = getAllTestResults();
+  const pass = all.filter(t => t.status === 'pass').length;
+  const fail = all.filter(t => t.status === 'fail').length;
+  const skip = all.filter(t => t.status === 'skip').length;
+  const pages = ['all', ...[...new Set(all.map(t => t.suite).filter(Boolean))]];
+
+  content.innerHTML = '';
+
+  const hdrDiv = document.createElement('div');
+  const activeBtn = (s, label, count, color) => {
+    const active = filters.status === s;
+    const b = document.createElement('button');
+    b.style.cssText = `flex:1;padding:7px 4px;font-size:12px;font-family:monospace;border-radius:6px;cursor:pointer;border:1px solid ${active?color:'var(--border)'};background:${active?'rgba(0,0,0,0.06)':'transparent'};color:${active?color:'var(--gray)'}`;
+    b.innerHTML = `${label}<br><span style="font-size:13px;font-weight:700">${count}</span>`;
+    b.onclick = () => _apFilter(s);
+    return b;
+  };
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:6px;margin-bottom:10px';
+  btnRow.appendChild(activeBtn('all',  'TOUS',   all.length, 'var(--teal)'));
+  btnRow.appendChild(activeBtn('pass', '✓ PASS', pass,       '#22c55e'));
+  btnRow.appendChild(activeBtn('fail', '✗ FAIL', fail,       '#DC2626'));
+  btnRow.appendChild(activeBtn('skip', '⏭ SKIP', skip,       '#f59e0b'));
+
+  const searchInput = document.createElement('input');
+  searchInput.id = 'apSearch';
+  searchInput.type = 'text';
+  searchInput.placeholder = '🔍 Rechercher...';
+  searchInput.value = filters.search || '';
+  searchInput.style.cssText = 'width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-family:monospace;color:var(--text);box-sizing:border-box';
+  searchInput.oninput = () => _apSearch(searchInput.value);
+
+  const filterBox = document.createElement('div');
+  filterBox.style.cssText = 'padding:12px 14px;border-bottom:1px solid var(--border)';
+  filterBox.appendChild(btnRow);
+  filterBox.appendChild(searchInput);
+  hdrDiv.appendChild(filterBox);
+
+  if (pages.length > 2) {
+    const pageRow = document.createElement('div');
+    pageRow.style.cssText = 'padding:6px 14px 8px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap';
+    pages.forEach(p => {
+      const active = (filters.page||'all') === p;
+      const pb = document.createElement('button');
+      pb.style.cssText = `padding:3px 10px;font-size:11px;font-family:monospace;border-radius:12px;cursor:pointer;border:1px solid ${active?'#c084fc':'var(--border)'};background:${active?'rgba(192,132,252,0.12)':'transparent'};color:${active?'#c084fc':'var(--gray)'}`;
+      pb.textContent = p === 'all' ? 'Toutes' : p;
+      pb.onclick = () => _apPage(p);
+      pageRow.appendChild(pb);
+    });
+    hdrDiv.appendChild(pageRow);
+  }
+
+  content.appendChild(hdrDiv);
+
+  const listDiv = document.createElement('div');
+  listDiv.id = 'apResultList';
+  listDiv.style.cssText = 'flex:1;overflow-y:auto;';
+  content.appendChild(listDiv);
+
+  // events définis globalement
+
+  _apRenderList(content);
+
+  if (filters.search) { searchInput.focus(); searchInput.setSelectionRange(searchInput.value.length,searchInput.value.length); }
+}
+
+
+function renderDiffTab(content) {
+  const runs = getUniqueRuns();
+  const sel  = content._diffSel || { a: null, b: null };
+  content._diffSel = sel;
+
+  const runOptions = runs.map(r => {
+    const label = r.title || r.suite || '';
+    return `<option value="${r.id}" style="font-size:12px">Run #${r.id}${label?' — '+label:''}${r.date?' | '+r.date:''}</option>`;
+  }).join('');
+
+  let html = `
+    <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px">RUN A</div>
+          <select id="diffSelA" onchange="document.getElementById('analysisPanelContent')._diffSel.a=this.value;renderAnalysisPanel()"
+            style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;color:var(--text)">
+            <option value="">— Sélectionner —</option>${runOptions}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px">RUN B</div>
+          <select id="diffSelB" onchange="document.getElementById('analysisPanelContent')._diffSel.b=this.value;renderAnalysisPanel()"
+            style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;color:var(--text)">
+            <option value="">— Sélectionner —</option>${runOptions}
+          </select>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (!sel.a || !sel.b) {
+    html += '<div style="padding:32px;text-align:center;font-size:12px;color:var(--gray)">Sélectionne deux runs pour les comparer</div>';
+    content.innerHTML = html;
+    return;
+  }
+
+  const runA = runs.find(r => String(r.id) === String(sel.a));
+  const runB = runs.find(r => String(r.id) === String(sel.b));
+  if (!runA || !runB) { content.innerHTML = html; return; }
+
+  const testsA = runA.tests || [];
+  const testsB = runB.tests || [];
+  const allNames = [...new Set([...testsA.map(t=>t.name), ...testsB.map(t=>t.name)])];
+
+  const passA = testsA.filter(t=>(t.status||'').toLowerCase()==='pass').length;
+  const passB = testsB.filter(t=>(t.status||'').toLowerCase()==='pass').length;
+  const failA = testsA.filter(t=>(t.status||'').toLowerCase()==='fail').length;
+  const failB = testsB.filter(t=>(t.status||'').toLowerCase()==='fail').length;
+
+  html += `
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+      <div style="padding:10px 14px;border-right:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:4px">Run #${runA.id}</div>
+        <div style="font-size:12px;color:var(--gray)">${runA.date||''} ${runA.suite||''}</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <span style="font-size:12px;font-weight:600;color:#22c55e">✓ ${passA}</span>
+          <span style="font-size:12px;font-weight:600;color:#DC2626">✗ ${failA}</span>
+        </div>
+      </div>
+      <div style="padding:10px 14px">
+        <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">Run #${runB.id}</div>
+        <div style="font-size:12px;color:var(--gray)">${runB.date||''} ${runB.suite||''}</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <span style="font-size:12px;font-weight:600;color:#22c55e">✓ ${passB}</span>
+          <span style="font-size:12px;font-weight:600;color:#DC2626">✗ ${failB}</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:6px 14px;font-size:12px;color:var(--gray);letter-spacing:1px;border-bottom:1px solid var(--border)">${allNames.length} test(s)</div>
+  `;
+
+  allNames.forEach(name => {
+    const tA = testsA.find(t=>t.name===name);
+    const tB = testsB.find(t=>t.name===name);
+    const sA = (tA?.status||'missing').toLowerCase();
+    const sB = (tB?.status||'missing').toLowerCase();
+    const changed = sA !== sB;
+
+    const statusCell = (s, msg) => {
+      const color = s==='pass'?'#22c55e':s==='fail'?'#DC2626':s==='skip'?'#f59e0b':'var(--gray)';
+      const bg    = s==='pass'?'rgba(34,197,94,0.10)':s==='fail'?'rgba(220,38,38,0.10)':s==='skip'?'rgba(245,158,11,0.10)':'transparent';
+      const icon  = s==='pass'?'✓':s==='fail'?'✗':s==='skip'?'⏭':'—';
+      return `<div style="padding:8px 10px;border-right:1px solid var(--border);background:${bg}">
+        <span style="font-size:15px;color:${color};font-weight:700">${icon}</span>
+        <span style="font-size:12px;color:${color};margin-left:5px;text-transform:uppercase;font-weight:600">${s}</span>
+        ${msg?`<div style="font-size:12px;color:#DC2626;margin-top:4px;word-break:break-all;font-family:monospace">${escHtml((msg||'').slice(0,100))}</div>`:''}
+      </div>`;
+    };
+
+    html += `
+      <div style="border-bottom:1px solid var(--border);background:${changed?'rgba(245,158,11,0.04)':'transparent'}">
+        <div style="padding:6px 14px;font-size:12px;color:var(--text);${changed?'font-weight:600':''}border-bottom:1px solid rgba(255,255,255,0.05)">
+          ${changed?'<span style="color:var(--warn);margin-right:6px">⚠</span>':''}${escHtml(name)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+          ${statusCell(sA, tA?.message)}
+          ${statusCell(sB, tB?.message)}
+        </div>
+      </div>
+    `;
+  });
+
+  content.innerHTML = html;
+  // Restaurer les selects
+  const selA = document.getElementById('diffSelA');
+  const selB = document.getElementById('diffSelB');
+  if (selA) selA.value = sel.a;
+  if (selB) selB.value = sel.b;
+}
+
+function openLivePanel() {
+  let panel = document.getElementById('livePanelOverlay');
+  if (panel) {
+    panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    _livePanelOpen = panel.style.display !== 'none';
+    if (_livePanelOpen) renderLivePanel();
+    return;
+  }
+
+  _livePanelOpen = true;
+
+  // Overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'livePanelOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:800;display:flex;justify-content:flex-end;pointer-events:none';
+
+  // Panel
+  const panelEl = document.createElement('div');
+  panelEl.style.cssText = `
+    width:480px;min-width:320px;max-width:90vw;height:100vh;
+    background:var(--surface);border-left:1px solid var(--border);
+    display:flex;flex-direction:column;pointer-events:all;
+    box-shadow:-4px 0 24px rgba(0,0,0,0.4);position:relative;
+    transition:width .2s;
+  `;
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0';
+  header.innerHTML = `
+    <span id="liveDot" style="width:9px;height:9px;border-radius:50%;background:var(--gray);transition:background .3s"></span>
+    <span style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🤖 LIVE</span>
+    <button onclick="fetch('http://localhost:3001/api/rf/live-reset',{method:'POST'}).then(()=>{_liveState={runs:[],suites:[]};renderLivePanel()})"
+      style="background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:3px 9px;border-radius:5px;font-size:10px;font-family:monospace;cursor:pointer;margin-left:auto">🗑 Reset</button>
+    <button onclick="document.getElementById('livePanelOverlay').style.display='none';_livePanelOpen=false"
+      style="background:transparent;border:none;color:var(--gray);font-size:16px;cursor:pointer;padding:2px 4px" title="Fermer">✕</button>
+  `;
+
+  // Resize handle
+  const handle = document.createElement('div');
+  handle.id = 'livePanelHandle';
+  handle.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:5px;cursor:ew-resize;background:transparent;z-index:10';
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = panelEl.offsetWidth;
+    const onMove = mv => {
+      const newW = Math.min(Math.max(startW + (startX - mv.clientX), 320), window.innerWidth * 0.9);
+      panelEl.style.width = newW + 'px';
+    };
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Content
+  const content = document.createElement('div');
+  content.id = 'livePanel';
+  content.style.cssText = 'flex:1;overflow-y:auto;';
+
+  panelEl.appendChild(handle);
+  panelEl.appendChild(header);
+  panelEl.appendChild(content);
+  overlay.appendChild(panelEl);
+  document.body.appendChild(overlay);
+
+  // Click outside to close
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) { overlay.style.display='none'; _livePanelOpen=false; }
+  });
+
+  connectLive();
+  renderLivePanel();
+
+  // Update live dot
+  setInterval(() => {
+    const dot = document.getElementById('liveDot');
+    if (!dot) return;
+    const anyRunning = [...(_liveState.runs||[]),...(_liveState.suites||[])].some(r=>r.status==='running');
+    dot.style.background = anyRunning ? 'var(--green)' : _liveState.runs.length>0||_liveState.suites.length>0 ? 'var(--teal)' : 'var(--gray)';
+    dot.style.animation = anyRunning ? 'liveDotPulse 1s infinite' : 'none';
+  }, 500);
+}
+
 function updateStatsBar() {
   try {
     const allCards = window._codeCards || [];

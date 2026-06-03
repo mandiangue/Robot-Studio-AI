@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-30T18:27:16.292327" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1780158379508 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780158379508_2\tests\suite_S1780158379508_2.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T18:27:16.634118" level="INFO">Opening browser 'chrome' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic");</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-30T18:27:16.633765" elapsed="28.260247"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="14">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T18:27:44.895128" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T18:27:44.894930" elapsed="0.537845"/>
+</kw>
+<kw name="When Enter Valid Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<msg time="2026-05-30T18:27:45.435370" level="FAIL">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-30T18:27:45.433830" elapsed="0.001639">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-30T18:27:45.435769" elapsed="0.000084"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:45.433200" elapsed="0.003051">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</kw>
+<kw name="And Click On Login Button">
+<status status="NOT RUN" start="2026-05-30T18:27:45.437020" elapsed="0.000113"/>
+</kw>
+<kw name="Then User Should See Success Message" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T18:27:45.437420" elapsed="0.000098"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T18:27:45.877767" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2924.png"&gt;&lt;img src="selenium-screenshot-2924.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T18:27:45.437942" elapsed="0.439953"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:44.894284" elapsed="0.983740">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Wrong Password" line="20">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T18:27:45.879040" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T18:27:45.878855" elapsed="0.288964"/>
+</kw>
+<kw name="When Enter Invalid Password Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<msg time="2026-05-30T18:27:46.169330" level="FAIL">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-30T18:27:46.168440" elapsed="0.000948">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<arg>${WRONG_PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-30T18:27:46.169564" elapsed="0.000044"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:46.168127" elapsed="0.001692">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</kw>
+<kw name="And Click On Login Button">
+<status status="NOT RUN" start="2026-05-30T18:27:46.170044" elapsed="0.000040"/>
+</kw>
+<kw name="Then User Should See Invalid Password Error" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T18:27:46.170247" elapsed="0.000036"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T18:27:46.471551" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2925.png"&gt;&lt;img src="selenium-screenshot-2925.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T18:27:46.170518" elapsed="0.301150"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:45.878394" elapsed="0.593366">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Wrong Username" line="26">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T18:27:46.472864" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T18:27:46.472633" elapsed="0.290486"/>
+</kw>
+<kw name="When Enter Invalid Username Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<msg time="2026-05-30T18:27:46.764588" level="FAIL">Variable '${WRONG_USERNAME}' not found.</msg>
+<arg>${WRONG_USERNAME}</arg>
+<status status="FAIL" start="2026-05-30T18:27:46.763886" elapsed="0.000761">Variable '${WRONG_USERNAME}' not found.</status>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-30T18:27:46.764830" elapsed="0.002255"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:46.763562" elapsed="0.003681">Variable '${WRONG_USERNAME}' not found.</status>
+</kw>
+<kw name="And Click On Login Button">
+<status status="NOT RUN" start="2026-05-30T18:27:46.767446" elapsed="0.000037"/>
+</kw>
+<kw name="Then User Should See Invalid Username Error" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T18:27:46.767660" elapsed="0.000036"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T18:27:47.070598" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2926.png"&gt;&lt;img src="selenium-screenshot-2926.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T18:27:46.767908" elapsed="0.302808"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:46.472095" elapsed="0.598714">Variable '${WRONG_USERNAME}' not found.</status>
+</test>
+<test id="s1-t4" name="TC_004 — Logout After Successful Login" line="32">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T18:27:47.071734" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T18:27:47.071533" elapsed="0.292754"/>
+</kw>
+<kw name="When Enter Valid Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<msg time="2026-05-30T18:27:47.366312" level="FAIL">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</msg>
+<arg>${USERNAME}</arg>
+<status status="FAIL" start="2026-05-30T18:27:47.365353" elapsed="0.001012">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<arg>${PASSWORD}</arg>
+<status status="NOT RUN" start="2026-05-30T18:27:47.366520" elapsed="0.000037"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:47.365060" elapsed="0.001600">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</kw>
+<kw name="And Click On Login Button">
+<status status="NOT RUN" start="2026-05-30T18:27:47.366858" elapsed="0.000094"/>
+</kw>
+<kw name="And Click On Logout Button">
+<status status="NOT RUN" start="2026-05-30T18:27:47.367095" elapsed="0.000030"/>
+</kw>
+<kw name="Then User Should Be Redirected To Login Page" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T18:27:47.367275" elapsed="0.000035"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T18:27:54.797526" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2927.png"&gt;&lt;img src="selenium-screenshot-2927.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T18:27:47.367509" elapsed="7.430487"/>
+</kw>
+<status status="FAIL" start="2026-05-30T18:27:47.071130" elapsed="7.727228">Variable '${USERNAME}' not found. Did you mean:
+    ${USERNAME_WRONG}
+    ${USERNAME_VALID}
+    ${USERNAME_FIELD}</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-30T18:27:54.800803" elapsed="7.084243"/>
+</kw>
+<doc>Tests Login - The Internet Herokuapp</doc>
+<status status="FAIL" start="2026-05-30T18:27:16.294924" elapsed="45.590279"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1780158379508 2" id="s1" pass="0" fail="4" skip="0">suite S1780158379508 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-30T18:27:16.624187" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780158379508_2\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-30T18:27:16.624332" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780158379508_2\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-30T18:27:16.624397" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780158379508_2\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-30T18:27:16.630309" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780158379508_2\resources\pages\main_page.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-30T18:27:16.630409" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780158379508_2\resources\pages\main_page.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

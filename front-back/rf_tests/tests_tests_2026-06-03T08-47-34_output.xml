@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-03T10:47:36.011451" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-06-03T10:47:36.361827" level="INFO">Opening browser 'chrome' to base url 'https://www.saucedemo.com/'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-06-03T10:47:36.361345" elapsed="8.914224"/>
+</kw>
+<test id="s1-t1" name="Valid User Can Login" line="14">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-06-03T10:47:45.277710" level="INFO">Opening url 'https://www.saucedemo.com/'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-06-03T10:47:45.277464" elapsed="2.404094"/>
+</kw>
+<kw name="When Input Username" owner="keywords">
+<msg time="2026-06-03T10:47:47.682834" level="FAIL">Variable '${username}' not found.</msg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-03T10:47:47.681916" elapsed="0.000978">Variable '${username}' not found.</status>
+</kw>
+<kw name="And Input Password Field" owner="keywords">
+<arg>${locator}</arg>
+<arg>${SORT_OPTION}</arg>
+<status status="NOT RUN" start="2026-06-03T10:47:47.683125" elapsed="0.000045"/>
+</kw>
+<kw name="And Click Login Button" owner="keywords">
+<status status="NOT RUN" start="2026-06-03T10:47:47.683408" elapsed="0.000070"/>
+</kw>
+<kw name="Then Inventory Page Is Opened" owner="keywords">
+<status status="NOT RUN" start="2026-06-03T10:47:47.683662" elapsed="0.000070"/>
+</kw>
+<kw name="And Welcome Message Is Visible" owner="keywords">
+<arg>${expected_message}</arg>
+<status status="NOT RUN" start="2026-06-03T10:47:47.684000" elapsed="0.000042"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-06-03T10:47:48.251556" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-3367.png"&gt;&lt;img src="selenium-screenshot-3367.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-06-03T10:47:47.684346" elapsed="0.567605"/>
+</kw>
+<status status="FAIL" start="2026-06-03T10:47:45.276456" elapsed="2.975807">Variable '${username}' not found.</status>
+</test>
+<test id="s1-t2" name="Add Product To Cart From Inventory" line="22">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-06-03T10:47:48.255503" level="INFO">Opening url 'https://www.saucedemo.com/'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-06-03T10:47:48.254886" elapsed="0.090853"/>
+</kw>
+<kw name="When Input Username" owner="keywords">
+<msg time="2026-06-03T10:47:48.347018" level="FAIL">Variable '${username}' not found.</msg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-03T10:47:48.346132" elapsed="0.000971">Variable '${username}' not found.</status>
+</kw>
+<kw name="And Input Password Field" owner="keywords">
+<arg>${locator}</arg>
+<arg>${SORT_OPTION}</arg>
+<status status="NOT RUN" start="2026-06-03T10:47:48.347353" elapsed="0.000047"/>
+</kw>
+<kw name="And Click Login Button" owner="keywords">
+<status status="NOT RUN" start="2026-06-03T10:47:48.347571" elapsed="0.000035"/>
+</kw>
+<kw name="Then Inventory Page Is Opened" owner="keywords">
+<status status="NOT RUN" start="2026-06-03T10:47:48.347751" elapsed="0.000033"/>
+</kw>
+<kw name="When Add First Product To Cart" owner="keywords">
+<status status="NOT RUN" start="2026-06-03T10:47:48.347928" elapsed="0.000033"/>
+</kw>
+<kw name="Then Shopping Cart Badge Shows Number" owner="keywords">
+<arg>${expected_number}</arg>
+<status status="NOT RUN" start="2026-06-03T10:47:48.348106" elapsed="0.000034"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-06-03T10:47:48.738547" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-3368.png"&gt;&lt;img src="selenium-screenshot-3368.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-06-03T10:47:48.348391" elapsed="0.390350"/>
+</kw>
+<status status="FAIL" start="2026-06-03T10:47:48.253518" elapsed="0.485377">Variable '${username}' not found.</status>
+</test>
+<test id="s1-t3" name="Invalid Login Shows Error Message" line="31">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-06-03T10:47:48.740523" level="INFO">Opening url 'https://www.saucedemo.com/'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-06-03T10:47:48.740215" elapsed="0.052280"/>
+</kw>
+<kw name="When Input Username" owner="keywords">
+<msg time="2026-06-03T10:47:48.793781" level="FAIL">Variable '${username}' not found.</msg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-03T10:47:48.792872" elapsed="0.001014">Variable '${username}' not found.</status>
+</kw>
+<kw name="And Input Password Field" owner="keywords">
+<arg>${locator}</arg>
+<arg>${SORT_OPTION}</arg>
+<status status="NOT RUN" start="2026-06-03T10:47:48.794258" elapsed="0.000047"/>
+</kw>
+<kw name="And Click Login Button" owner="keywords">
+<status status="NOT RUN" start="2026-06-03T10:47:48.794474" elapsed="0.000035"/>
+</kw>
+<kw name="Then Error Message Is Visible" owner="keywords">
+<arg>Epic sadface: Username and password do not match any user in this service</arg>
+<status status="NOT RUN" start="2026-06-03T10:47:48.794707" elapsed="0.000063"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-06-03T10:47:49.102912" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-3369.png"&gt;&lt;img src="selenium-screenshot-3369.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-06-03T10:47:48.795068" elapsed="0.307972"/>
+</kw>
+<status status="FAIL" start="2026-06-03T10:47:48.739566" elapsed="0.363557">Variable '${username}' not found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-03T10:47:49.103744" elapsed="37.541288"/>
+</kw>
+<doc>Tests</doc>
+<status status="FAIL" start="2026-06-03T10:47:36.013581" elapsed="50.631641"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="0" fail="3" skip="0">Tests</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-06-03T10:47:36.351037" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-06-03T10:47:36.351174" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-06-03T10:47:36.351245" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>

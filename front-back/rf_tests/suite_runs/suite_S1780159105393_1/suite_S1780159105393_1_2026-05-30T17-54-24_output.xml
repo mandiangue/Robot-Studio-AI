@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-05-30T19:54:33.282456" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1780159105393 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780159105393_1\tests\suite_S1780159105393_1.robot">
+<kw name="Open Browser" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T19:54:37.180732" level="INFO">Opening browser 'chrome' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic");</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:54:37.180331" elapsed="31.204546"/>
+</kw>
+<test id="s1-t1" name="TC_001 — Successful Login With Valid Credentials" line="14">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T19:55:08.909557" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:08.908756" elapsed="0.193488"/>
+</kw>
+<kw name="Given The User Is On The Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:09.103868" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:09.103655" elapsed="0.357048"/>
+</kw>
+<kw name="Title Should Be" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:09.800355" level="INFO">Page title is 'The Internet'.</msg>
+<arg>The Internet</arg>
+<doc>Verifies that the current page title equals ``title``.</doc>
+<status status="PASS" start="2026-05-30T19:55:09.460925" elapsed="0.339696"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:09.103355" elapsed="0.697594"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:09.102854" elapsed="0.698351"/>
+</kw>
+<kw name="When The User Enters Valid Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:09.804733" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${USERNAME_FIELD}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:09.803606" elapsed="1.017472"/>
+</kw>
+<arg>${USERNAME}</arg>
+<status status="PASS" start="2026-05-30T19:55:09.802739" elapsed="1.018614"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:10.823108" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${PASSWORD_FIELD}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:10.822539" elapsed="0.108453"/>
+</kw>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-05-30T19:55:10.821778" elapsed="0.109353"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:09.801865" elapsed="1.129344"/>
+</kw>
+<kw name="And The User Clicks The Login Button">
+<msg time="2026-05-30T19:55:11.007441" level="FAIL">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</msg>
+<status status="FAIL" start="2026-05-30T19:55:11.007271" elapsed="0.000343">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</kw>
+<kw name="Then The User Should See The Success Message" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T19:55:11.008002" elapsed="0.000071"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T19:55:11.362300" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2956.png"&gt;&lt;img src="selenium-screenshot-2956.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.008434" elapsed="0.354005"/>
+</kw>
+<status status="FAIL" start="2026-05-30T19:55:08.647248" elapsed="2.715308">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</test>
+<test id="s1-t2" name="TC_002 — Failed Login With Incorrect Password" line="20">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T19:55:11.363742" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.363525" elapsed="0.140733"/>
+</kw>
+<kw name="Given The User Is On The Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:11.505343" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.505186" elapsed="0.146524"/>
+</kw>
+<kw name="Title Should Be" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:11.657682" level="INFO">Page title is 'The Internet'.</msg>
+<arg>The Internet</arg>
+<doc>Verifies that the current page title equals ``title``.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.651952" elapsed="0.005838"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:11.504955" elapsed="0.152944"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:11.504594" elapsed="0.153371"/>
+</kw>
+<kw name="When The User Enters Wrong Password Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:11.659351" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${USERNAME_FIELD}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.659081" elapsed="0.075654"/>
+</kw>
+<arg>${USERNAME}</arg>
+<status status="PASS" start="2026-05-30T19:55:11.658660" elapsed="0.076214"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:11.735666" level="INFO">Typing text 'WrongPassword123' into text field 'id=password'.</msg>
+<arg>${PASSWORD_FIELD}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.735424" elapsed="0.082149"/>
+</kw>
+<arg>${WRONG_PASSWORD}</arg>
+<status status="PASS" start="2026-05-30T19:55:11.735080" elapsed="0.082635"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:11.658239" elapsed="0.159558"/>
+</kw>
+<kw name="And The User Clicks The Login Button">
+<msg time="2026-05-30T19:55:11.819329" level="FAIL">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</msg>
+<status status="FAIL" start="2026-05-30T19:55:11.819268" elapsed="0.000117">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</kw>
+<kw name="Then The User Should Remain On The Login Page" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T19:55:11.819844" elapsed="0.000050"/>
+</kw>
+<kw name="And The User Should See The Wrong Password Error Message">
+<status status="NOT RUN" start="2026-05-30T19:55:11.820058" elapsed="0.000034"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T19:55:12.196247" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2957.png"&gt;&lt;img src="selenium-screenshot-2957.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T19:55:11.820339" elapsed="0.376060"/>
+</kw>
+<status status="FAIL" start="2026-05-30T19:55:11.362989" elapsed="0.833542">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</test>
+<test id="s1-t3" name="TC_003 — Failed Login With Incorrect Username" line="27">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T19:55:12.197888" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:12.197642" elapsed="0.150351"/>
+</kw>
+<kw name="Given The User Is On The Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:12.349444" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:12.349274" elapsed="0.150265"/>
+</kw>
+<kw name="Title Should Be" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:12.505718" level="INFO">Page title is 'The Internet'.</msg>
+<arg>The Internet</arg>
+<doc>Verifies that the current page title equals ``title``.</doc>
+<status status="PASS" start="2026-05-30T19:55:12.499763" elapsed="0.006058"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:12.349006" elapsed="0.156924"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:12.348543" elapsed="0.157456"/>
+</kw>
+<kw name="When The User Enters Wrong Username Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:12.507033" level="INFO">Typing text 'wronguser' into text field 'id=username'.</msg>
+<arg>${USERNAME_FIELD}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:12.506797" elapsed="0.082209"/>
+</kw>
+<arg>${WRONG_USERNAME}</arg>
+<status status="PASS" start="2026-05-30T19:55:12.506521" elapsed="0.082639"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:12.589958" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${PASSWORD_FIELD}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:12.589710" elapsed="0.095225"/>
+</kw>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-05-30T19:55:12.589360" elapsed="0.095709"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:12.506224" elapsed="0.178919"/>
+</kw>
+<kw name="And The User Clicks The Login Button">
+<msg time="2026-05-30T19:55:12.686591" level="FAIL">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</msg>
+<status status="FAIL" start="2026-05-30T19:55:12.686541" elapsed="0.000098">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</kw>
+<kw name="Then The User Should Remain On The Login Page" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T19:55:12.686835" elapsed="0.000039"/>
+</kw>
+<kw name="And The User Should See The Wrong Username Error Message">
+<status status="NOT RUN" start="2026-05-30T19:55:12.687010" elapsed="0.000029"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T19:55:13.179796" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2958.png"&gt;&lt;img src="selenium-screenshot-2958.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T19:55:12.687245" elapsed="0.492934"/>
+</kw>
+<status status="FAIL" start="2026-05-30T19:55:12.197010" elapsed="0.983465">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</test>
+<test id="s1-t4" name="TC_004 — Logout After Successful Login" line="34">
+<kw name="Go To" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-05-30T19:55:13.183623" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:13.183018" elapsed="0.175529"/>
+</kw>
+<kw name="Given The User Is On The Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:13.359712" level="INFO">Opening url 'https://the-internet.herokuapp.com/login'</msg>
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="PASS" start="2026-05-30T19:55:13.359504" elapsed="0.144213"/>
+</kw>
+<kw name="Title Should Be" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:13.515379" level="INFO">Page title is 'The Internet'.</msg>
+<arg>The Internet</arg>
+<doc>Verifies that the current page title equals ``title``.</doc>
+<status status="PASS" start="2026-05-30T19:55:13.504007" elapsed="0.011519"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:13.359252" elapsed="0.156418"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:13.358901" elapsed="0.156868"/>
+</kw>
+<kw name="When The User Enters Valid Credentials" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:13.517158" level="INFO">Typing text 'tomsmith' into text field 'id=username'.</msg>
+<arg>${USERNAME_FIELD}</arg>
+<arg>${username}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:13.516859" elapsed="0.111219"/>
+</kw>
+<arg>${USERNAME}</arg>
+<status status="PASS" start="2026-05-30T19:55:13.516484" elapsed="0.111779"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-05-30T19:55:13.629248" level="INFO">Typing text 'SuperSecretPassword!' into text field 'id=password'.</msg>
+<arg>${PASSWORD_FIELD}</arg>
+<arg>${password}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-05-30T19:55:13.628955" elapsed="0.110305"/>
+</kw>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-05-30T19:55:13.628534" elapsed="0.110857"/>
+</kw>
+<status status="PASS" start="2026-05-30T19:55:13.516076" elapsed="0.223386"/>
+</kw>
+<kw name="And The User Clicks The Login Button">
+<msg time="2026-05-30T19:55:13.741118" level="FAIL">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</msg>
+<status status="FAIL" start="2026-05-30T19:55:13.741047" elapsed="0.000127">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</kw>
+<kw name="And The User Should See The Success Flash Message" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T19:55:13.742051" elapsed="0.000089"/>
+</kw>
+<kw name="When The User Clicks The Logout Button" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T19:55:13.742385" elapsed="0.000051"/>
+</kw>
+<kw name="Then The User Should Be Redirected To The Login Page" owner="keywords">
+<status status="NOT RUN" start="2026-05-30T19:55:13.742653" elapsed="0.000048"/>
+</kw>
+<kw name="And The User Should See The Logout Confirmation Message">
+<status status="NOT RUN" start="2026-05-30T19:55:13.742917" elapsed="0.000042"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary" type="TEARDOWN">
+<msg time="2026-05-30T19:55:14.110497" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-2959.png"&gt;&lt;img src="selenium-screenshot-2959.png" width="800px"&gt;&lt;/a&gt;</msg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-05-30T19:55:13.743375" elapsed="0.367244"/>
+</kw>
+<status status="FAIL" start="2026-05-30T19:55:13.181530" elapsed="0.929178">No keyword with name 'And The User Clicks The Login Button' found. Did you mean:
+    keywords.When The User Clicks The Login Button</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-05-30T19:55:14.111324" elapsed="5.770591"/>
+</kw>
+<doc>Tests Login Page - the-internet.herokuapp.com</doc>
+<status status="FAIL" start="2026-05-30T19:54:33.304596" elapsed="46.577425"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1780159105393 1" id="s1" pass="0" fail="4" skip="0">suite S1780159105393 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-05-30T19:54:37.167939" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780159105393_1\resources\variables.robot' on line 2: Setting 'Test Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-30T19:54:37.168070" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780159105393_1\resources\variables.robot' on line 3: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-30T19:54:37.168133" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780159105393_1\resources\variables.robot' on line 4: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+<msg time="2026-05-30T19:54:37.175015" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780159105393_1\resources\pages\main_page.robot' on line 2: Setting 'Suite Setup' is not allowed in resource file.</msg>
+<msg time="2026-05-30T19:54:37.175135" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780159105393_1\resources\pages\main_page.robot' on line 3: Setting 'Suite Teardown' is not allowed in resource file.</msg>
+</errors>
+</robot>
