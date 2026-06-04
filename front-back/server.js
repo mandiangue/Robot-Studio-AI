@@ -26,7 +26,7 @@ app.use(express.static(path.join(__dirname)));
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/azure',   require('./routes/azure'));
 app.use('/api/jira',    require('./routes/jira'));
-app.use('/api/storage', require('./routes/storage'));
+app.use('/api/storage', require('./routes/Storage'));
 
 // ── RF routes et autres restent dans ce fichier ───────────────────────────────
 
