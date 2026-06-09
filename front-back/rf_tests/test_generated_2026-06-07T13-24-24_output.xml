@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-07T15:24:25.001379" rpa="false" schemaversion="5">
+<suite id="s1" name="Test Generated" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot">
+<test id="s1-t1" name="TC_001 Login With Performance Glitch User" line="176">
+<kw name="Given I am on the login page">
+<kw name="Wait For Elements State">
+<msg time="2026-06-07T15:24:25.060666" level="FAIL">No keyword with name 'Wait For Elements State' found.</msg>
+<arg>css=#login-button</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<status status="FAIL" start="2026-06-07T15:24:25.060606" elapsed="0.000128">No keyword with name 'Wait For Elements State' found.</status>
+</kw>
+<doc>Ensures the login page is displayed</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.058988" elapsed="0.001918">No keyword with name 'Wait For Elements State' found.</status>
+</kw>
+<kw name="When I login with the performance glitch user">
+<doc>Logs in with performance_glitch_user</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.061113" elapsed="0.000034"/>
+</kw>
+<kw name="Then I should be redirected to the products page">
+<doc>Verifies the products page is loaded</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.061268" elapsed="0.000022"/>
+</kw>
+<doc>Verifies login with performance_glitch_user redirects to products page</doc>
+<tag>login</tag>
+<tag>smoke</tag>
+<status status="FAIL" start="2026-06-07T15:24:25.056637" elapsed="0.004802">No keyword with name 'Wait For Elements State' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 Sort Products By Price High To Low" line="183">
+<kw name="Given I am logged in as a standard user">
+<kw name="Login With User">
+<kw name="Enter Username">
+<kw name="Fill Text">
+<msg time="2026-06-07T15:24:25.064188" level="FAIL">No keyword with name 'Fill Text' found.</msg>
+<arg>css=#user-name</arg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-07T15:24:25.064157" elapsed="0.000071">No keyword with name 'Fill Text' found.</status>
+</kw>
+<arg>${username}</arg>
+<doc>Fills the username field</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.063187" elapsed="0.001146">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Enter Password">
+<arg>${password}</arg>
+<doc>Fills the password field</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.064469" elapsed="0.000022"/>
+</kw>
+<kw name="Click Login Button">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.064589" elapsed="0.000020"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<doc>Logs in with the provided username and password</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.062844" elapsed="0.001857">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Verify On Products Page">
+<doc>Verifies the products page is loaded</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.064826" elapsed="0.000021"/>
+</kw>
+<doc>Logs in as standard user and verifies products page</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.062527" elapsed="0.002391">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="When I sort products by price high to low">
+<doc>Sorts the products by price high to low</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.065058" elapsed="0.000021"/>
+</kw>
+<kw name="Then the products should be ordered from highest to lowest price">
+<doc>Verifies the prices are in descending order</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.065196" elapsed="0.000021"/>
+</kw>
+<doc>Verifies products are sorted from highest to lowest price</doc>
+<tag>regression</tag>
+<tag>sorting</tag>
+<status status="FAIL" start="2026-06-07T15:24:25.061716" elapsed="0.003657">No keyword with name 'Fill Text' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 Add Multiple Products To Cart" line="190">
+<kw name="Given I am logged in as a standard user">
+<kw name="Login With User">
+<kw name="Enter Username">
+<kw name="Fill Text">
+<msg time="2026-06-07T15:24:25.067343" level="FAIL">No keyword with name 'Fill Text' found.</msg>
+<arg>css=#user-name</arg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-07T15:24:25.067311" elapsed="0.000071">No keyword with name 'Fill Text' found.</status>
+</kw>
+<arg>${username}</arg>
+<doc>Fills the username field</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.066474" elapsed="0.001009">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Enter Password">
+<arg>${password}</arg>
+<doc>Fills the password field</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.067614" elapsed="0.000024"/>
+</kw>
+<kw name="Click Login Button">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.067745" elapsed="0.000022"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<doc>Logs in with the provided username and password</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.066203" elapsed="0.001654">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Verify On Products Page">
+<doc>Verifies the products page is loaded</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.068039" elapsed="0.000025"/>
+</kw>
+<doc>Logs in as standard user and verifies products page</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.065973" elapsed="0.002183">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="When I add three different products to the cart">
+<doc>Adds three products to the cart</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.068298" elapsed="0.000024"/>
+</kw>
+<kw name="Then the cart badge should display three items">
+<doc>Verifies the cart badge shows three</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.068431" elapsed="0.000022"/>
+</kw>
+<doc>Verifies that three products can be added to the cart</doc>
+<tag>cart</tag>
+<tag>regression</tag>
+<status status="FAIL" start="2026-06-07T15:24:25.065596" elapsed="0.002968">No keyword with name 'Fill Text' found.</status>
+</test>
+<test id="s1-t4" name="TC_004 Remove Product From Cart" line="197">
+<kw name="Given I am logged in as a standard user">
+<kw name="Login With User">
+<kw name="Enter Username">
+<kw name="Fill Text">
+<msg time="2026-06-07T15:24:25.071664" level="FAIL">No keyword with name 'Fill Text' found.</msg>
+<arg>css=#user-name</arg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-07T15:24:25.071424" elapsed="0.000359">No keyword with name 'Fill Text' found.</status>
+</kw>
+<arg>${username}</arg>
+<doc>Fills the username field</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.070072" elapsed="0.002092">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Enter Password">
+<arg>${password}</arg>
+<doc>Fills the password field</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.072557" elapsed="0.000061"/>
+</kw>
+<kw name="Click Login Button">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.072821" elapsed="0.000035"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<doc>Logs in with the provided username and password</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.069759" elapsed="0.003246">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Verify On Products Page">
+<doc>Verifies the products page is loaded</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.073199" elapsed="0.000040"/>
+</kw>
+<doc>Logs in as standard user and verifies products page</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.069396" elapsed="0.003968">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="And I have added a product to the cart">
+<doc>Adds a single product to the cart</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.073576" elapsed="0.000028"/>
+</kw>
+<kw name="When I open the cart and remove the product">
+<doc>Opens the cart and removes the product</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.073741" elapsed="0.000034"/>
+</kw>
+<kw name="Then the cart should be empty">
+<doc>Verifies the cart has no items</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.074422" elapsed="0.000276"/>
+</kw>
+<doc>Verifies that a product can be removed from the cart</doc>
+<tag>cart</tag>
+<tag>regression</tag>
+<status status="FAIL" start="2026-06-07T15:24:25.068786" elapsed="0.006128">No keyword with name 'Fill Text' found.</status>
+</test>
+<test id="s1-t5" name="TC_005 Validate Required Checkout Fields" line="205">
+<kw name="Given I am logged in as a standard user">
+<kw name="Login With User">
+<kw name="Enter Username">
+<kw name="Fill Text">
+<msg time="2026-06-07T15:24:25.077275" level="FAIL">No keyword with name 'Fill Text' found.</msg>
+<arg>css=#user-name</arg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-07T15:24:25.077246" elapsed="0.000068">No keyword with name 'Fill Text' found.</status>
+</kw>
+<arg>${username}</arg>
+<doc>Fills the username field</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.076370" elapsed="0.001046">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Enter Password">
+<arg>${password}</arg>
+<doc>Fills the password field</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.077530" elapsed="0.000021"/>
+</kw>
+<kw name="Click Login Button">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.077645" elapsed="0.000019"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<doc>Logs in with the provided username and password</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.076102" elapsed="0.001634">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Verify On Products Page">
+<doc>Verifies the products page is loaded</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.077856" elapsed="0.000021"/>
+</kw>
+<doc>Logs in as standard user and verifies products page</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.075827" elapsed="0.002117">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="And I have added a product to the cart">
+<doc>Adds a single product to the cart</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.078093" elapsed="0.000024"/>
+</kw>
+<kw name="When I proceed to checkout and continue without filling fields">
+<doc>Opens cart, checkout and continues without data</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.078232" elapsed="0.000020"/>
+</kw>
+<kw name="Then a required field error should be displayed">
+<doc>Verifies the checkout error message</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.078347" elapsed="0.000019"/>
+</kw>
+<doc>Verifies error message when checkout fields are empty</doc>
+<tag>checkout</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-06-07T15:24:25.075227" elapsed="0.003246">No keyword with name 'Fill Text' found.</status>
+</test>
+<test id="s1-t6" name="TC_006 Complete Order Successfully" line="213">
+<kw name="Given I am logged in as a standard user">
+<kw name="Login With User">
+<kw name="Enter Username">
+<kw name="Fill Text">
+<msg time="2026-06-07T15:24:25.080337" level="FAIL">No keyword with name 'Fill Text' found.</msg>
+<arg>css=#user-name</arg>
+<arg>${username}</arg>
+<status status="FAIL" start="2026-06-07T15:24:25.080310" elapsed="0.000059">No keyword with name 'Fill Text' found.</status>
+</kw>
+<arg>${username}</arg>
+<doc>Fills the username field</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.079510" elapsed="0.000946">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Enter Password">
+<arg>${password}</arg>
+<doc>Fills the password field</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.080568" elapsed="0.000031"/>
+</kw>
+<kw name="Click Login Button">
+<doc>Clicks the login button</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.080704" elapsed="0.000020"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<doc>Logs in with the provided username and password</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.079257" elapsed="0.001541">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="Verify On Products Page">
+<doc>Verifies the products page is loaded</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.080917" elapsed="0.000022"/>
+</kw>
+<doc>Logs in as standard user and verifies products page</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.079050" elapsed="0.001958">No keyword with name 'Fill Text' found.</status>
+</kw>
+<kw name="And I have added a product to the cart">
+<doc>Adds a single product to the cart</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.081128" elapsed="0.000020"/>
+</kw>
+<kw name="When I complete the checkout with valid information">
+<doc>Completes the checkout flow with valid data</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.081260" elapsed="0.000020"/>
+</kw>
+<kw name="Then the order confirmation message should be displayed">
+<doc>Verifies the order completion message</doc>
+<status status="NOT RUN" start="2026-06-07T15:24:25.081375" elapsed="0.000020"/>
+</kw>
+<doc>Verifies a complete order flow finishes successfully</doc>
+<tag>checkout</tag>
+<tag>e2e</tag>
+<status status="FAIL" start="2026-06-07T15:24:25.078684" elapsed="0.002815">No keyword with name 'Fill Text' found.</status>
+</test>
+<doc>Variables for SauceDemo test suite</doc>
+<status status="FAIL" start="2026-06-07T15:24:25.004494" elapsed="0.077394"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="6" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="2" skip="0">cart</stat>
+<stat pass="0" fail="2" skip="0">checkout</stat>
+<stat pass="0" fail="1" skip="0">e2e</stat>
+<stat pass="0" fail="1" skip="0">login</stat>
+<stat pass="0" fail="1" skip="0">negative</stat>
+<stat pass="0" fail="3" skip="0">regression</stat>
+<stat pass="0" fail="1" skip="0">smoke</stat>
+<stat pass="0" fail="1" skip="0">sorting</stat>
+</tag>
+<suite>
+<stat name="Test Generated" id="s1" pass="0" fail="6" skip="0">Test Generated</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-06-07T15:24:24.992663" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 69: Creating keyword 'Library' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.992871" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 70: Creating keyword 'Resource' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.993604" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 110: Creating keyword 'Library' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.993721" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 111: Creating keyword 'Resource' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.994096" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 139: Creating keyword 'Library' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.994203" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 140: Creating keyword 'Resource' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.994647" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 171: Creating keyword 'Library' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.994743" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 172: Creating keyword 'Resource' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:24.994833" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 173: Creating keyword 'Resource' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T15:24:25.005126" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 19: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-06-07T15:24:25.005309" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 20: Setting variable 'Library' failed: Invalid variable name 'Library'.</msg>
+<msg time="2026-06-07T15:24:25.005935" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 21: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+<msg time="2026-06-07T15:24:25.006268" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 22: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+<msg time="2026-06-07T15:24:25.006454" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 23: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+<msg time="2026-06-07T15:24:25.006565" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 24: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+<msg time="2026-06-07T15:24:25.006693" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\test_generated.robot' on line 25: Setting variable 'Resource' failed: Invalid variable name 'Resource'.</msg>
+</errors>
+</robot>

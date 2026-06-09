@@ -1,102 +1,60 @@
 *** Settings ***
-Resource    pages/login_page.robot
-Resource    pages/main_page.robot
+Suite Setup       Open Browser    ${url}    ${BROWSER}
+Suite Teardown    Close Browser
+Library      Browser
+Library      Collections
+Resource     variables.robot
+Resource     pages/login_page.robot
+Resource     pages/inventory_page.robot
+Resource     pages/cart_page.robot
+Resource     pages/checkout_page.robot
+Resource     pages/product_detail_page.robot
 
 *** Keywords ***
-Open Browser No Popup
-    [Arguments]    ${url}    ${browser}=chrome
-    Open Browser    ${url}    ${browser}    options=add_argument("--incognito");add_argument("--disable-notifications");add_argument("--disable-save-password-bubble");add_argument("--disable-infobars");add_argument("--disable-popup-blocking");add_argument("--disable-features=PasswordManagerEnabled,TranslateUI,AutofillServerCommunication,PasswordLeakDetection,SavePasswordsBubble");add_argument("--no-first-run");add_argument("--no-default-browser-check");add_argument("--password-store=basic");add_argument("--user-data-dir=C:/Users/Landing/AppData/Local/Temp/chrome_rf_1780500839675");add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.password_manager_leak_detection":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0,"autofill.profile_enabled":false,"autofill.credit_card_enabled":false});add_experimental_option("excludeSwitches",["enable-automation","enable-logging"])
+Open Browser Session
+    [Arguments]    ${url}=${BASE_URL}    ${browser}=${BROWSER}
+    New Browser    ${browser}    headless=${HEADLESS}
+    New Context    acceptDownloads=True
+    New Page       ${url}
 
-Dismiss Password Popup
-    [Documentation]    Ferme le popup Chrome "modifier mot de passe" sil apparait
-    ${present}=    Run Keyword And Return Status    Page Should Contain Element    xpath=//div[@role="dialog"]//button[contains(@jsname,"")]
-    Run Keyword If    ${present}    Press Keys    None    ESCAPE
-    Sleep    0.2s
-    Execute Javascript    document.activeElement.blur()
-
-Input Password Field
-    [Arguments]    ${locator}    ${value}
-    Input Text    ${locator}    ${value}
-    Dismiss Password Popup
-
-
-
-Given User Is On The Login Page
+Login As User
+    [Arguments]    ${username}    ${password}
     Go To    ${BASE_URL}
-
-When User Enters Valid Credentials
-    Enter Username    ${USERNAME}
-    Enter Password    ${PASSWORD}
-
-When User Enters Invalid Password
-    Enter Username    ${USERNAME}
-    Enter Password    ${WRONG_PASSWORD}
-
-When User Enters Invalid Username
-    Enter Username    ${WRONG_USERNAME}
-    Enter Password    ${PASSWORD}
-
-When User Clicks The Login Button
+    Fill Username    ${username}
+    Fill Password    ${password}
     Click Login Button
 
-Then User Should See Success Message
-    ${text}=    Get Flash Message Text
-    Should Contain    ${text}    ${SUCCESS_MSG}
+Login Should Fail With Locked Error
+    Login Error Message Should Be Visible
+    Login Error Should Contain Locked Message
 
-Then User Should See Invalid Password Error
-    ${text}=    Get Flash Message Text
-    Should Contain    ${text}    ${WRONG_PASS_MSG}
-    ${color}=    Get Flash Message Color
-    Should Be Equal As Strings    ${color}    ${FLASH_ERROR_COLOR}
+Products Are Sorted By Price Low To High
+    First Product Price Should Be Lower Than Last
 
-Then User Should See Invalid Username Error
-    ${text}=    Get Flash Message Text
-    Should Contain    ${text}    ${WRONG_USER_MSG}
-    ${color}=    Get Flash Message Color
-    Should Be Equal As Strings    ${color}    ${FLASH_ERROR_COLOR}
+Product Is Added To Cart
+    Add First Product To Cart
+    Cart Badge Should Show One
 
-Then User Should Remain On Login Page
-    Verify Still On Login Page
+Product Is Removed From Cart
+    Remove First Item From Cart
+    Cart Should Be Empty
 
-When User Clicks The Logout Button
-    Click Logout Button
+Checkout Info Is Filled
+    [Arguments]    ${first_name}    ${last_name}    ${postal_code}
+    Fill First Name    ${first_name}
+    Fill Last Name    ${last_name}
+    Fill Postal Code    ${postal_code}
+    Click Continue Button
 
-Then User Should See Logout Confirmation Message
-    ${text}=    Get Flash Message Text
-    Should Contain    ${text}    ${LOGOUT_MSG}
+Order Is Confirmed
+    Order Confirmation Should Be Visible
+    Order Confirmation Text Should Match
 
-Then User Should Be Redirected To Login Page
-    Location Should Contain    /login
-    Wait Until Element Is Visible    ${USERNAME_FIELD}    timeout=10s
-Given Open Login Page
-    Open Login Page
+User Is On Login Page
+    Wait For Elements State    css=[data-test="login-button"]    visible    timeout=10s
 
-When Enter Valid Credentials
-    Enter Username    ${VALID_USER}
-    Enter Password    ${VALID_PASS}
-
-When Enter Invalid Username Credentials
-    Enter Username    ${WRONG_USER}
-    Enter Password    ${VALID_PASS}
-
-When Enter Invalid Password Credentials
-    Enter Username    ${VALID_USER}
-    Enter Password    ${WRONG_PASS}
-
-When Click On Login Button
-    Click Login Button
-
-Then User Should Be Redirected To Secure Page
-    Verify Successful Login
-
-Then Invalid Username Error Should Be Displayed
-    Verify Invalid Username Error
-
-Then Invalid Password Error Should Be Displayed
-    Verify Invalid Password Error
-
-When Click On Logout Button
-    Click Logout Button
-
-Then User Should Be Redirected To Login Page After Logout
-    Verify Successful Logout
+Product Detail Is Fully Displayed
+    Product Name Should Be Visible
+    Product Description Should Be Visible
+    Product Price Should Be Visible
+    Add To Cart Button Should Be Visible

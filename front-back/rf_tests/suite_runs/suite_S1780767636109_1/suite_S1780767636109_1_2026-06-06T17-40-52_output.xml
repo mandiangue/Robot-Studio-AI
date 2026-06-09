@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-06T19:40:53.690047" rpa="false" schemaversion="5">
+<suite id="s1" name="suite S1780767636109 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1780767636109_1\tests\suite_S1780767636109_1.robot">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="options=add_argument(&quot;--disable-notifications&quot;);add_argument(&quot;--disable-popup-blocking&quot;);add_argument(&quot;--disable-infobars&quot;);add_argument(&quot;--disable-save-password-bubble&quot;);add_argument(&quot;--disable-features=PasswordManagerEnabled,PasswordLeakDetection&quot;);add_argument(&quot;--disable-features=TranslateUI&quot;);add_argument(&quot;--no-first-run&quot;);add_argument(&quot;--password-store=basic&quot;)">
+<msg time="2026-06-06T19:40:54.011155" level="FAIL">No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</msg>
+<status status="FAIL" start="2026-06-06T19:40:54.011095" elapsed="0.000123">No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</kw>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>options=add_argument("--incognito");add_argument("--disable-notifications");add_argument("--disable-save-password-bubble");add_argument("--disable-infobars");add_argument("--disable-popup-blocking");add_argument("--disable-features=PasswordManagerEnabled,TranslateUI,AutofillServerCommunication,PasswordLeakDetection,SavePasswordsBubble");add_argument("--no-first-run");add_argument("--no-default-browser-check");add_argument("--password-store=basic");add_argument("--user-data-dir=C:/Users/Landing/AppData/Local/Temp/chrome_rf_1780767552864");add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.password_manager_leak_detection":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0,"autofill.profile_enabled":false,"autofill.credit_card_enabled":false});add_experimental_option("excludeSwitches",["enable-automation","enable-logging"])</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-06T19:40:54.011396" elapsed="0.000038"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-06T19:40:54.009089" elapsed="0.002500">No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</kw>
+<test id="s1-t1" name="TC_001 — Login With Performance Glitch User" line="14">
+<status status="FAIL" start="2026-06-06T19:40:54.011686" elapsed="0.000438">Parent suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</test>
+<test id="s1-t2" name="TC_002 — Sort Products By Price High To Low" line="19">
+<status status="FAIL" start="2026-06-06T19:40:54.012395" elapsed="0.000355">Parent suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</test>
+<test id="s1-t3" name="TC_003 — Add Multiple Products To Cart" line="24">
+<status status="FAIL" start="2026-06-06T19:40:54.012999" elapsed="0.000309">Parent suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</test>
+<test id="s1-t4" name="TC_004 — Remove A Product From Cart" line="30">
+<status status="FAIL" start="2026-06-06T19:40:54.013527" elapsed="0.000301">Parent suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</test>
+<test id="s1-t5" name="TC_005 — Complete Order With Valid Information" line="38">
+<status status="FAIL" start="2026-06-06T19:40:54.014042" elapsed="0.000453">Parent suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</test>
+<test id="s1-t6" name="TC_006 — Logout Via Hamburger Menu" line="46">
+<status status="FAIL" start="2026-06-06T19:40:54.014881" elapsed="0.000358">Parent suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</test>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-06T19:40:54.015769" elapsed="0.000180"/>
+</kw>
+<doc>SauceDemo test suite — 6 test cases</doc>
+<status status="FAIL" start="2026-06-06T19:40:53.692330" elapsed="0.323676">Suite setup failed:
+No keyword with name 'options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")' found.</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="6" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="suite S1780767636109 1" id="s1" pass="0" fail="6" skip="0">suite S1780767636109 1</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

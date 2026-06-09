@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-07T18:50:25.376721" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot">
+<kw name="Open Browser" owner="Browser" type="SETUP">
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Opens a new browser instance. Use this keyword for quick experiments or debugging sessions.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:25.776759" elapsed="0.001139"/>
+</kw>
+<test id="s1-t1" name="TC_001 Successful Login With Valid Credentials" line="282">
+<kw name="Go To" owner="Browser" type="SETUP">
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:25.778676" elapsed="0.000992"/>
+</kw>
+<kw name="Given I Am On The Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:25.780519" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.780327" elapsed="0.000265">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Ensures the login page is loaded</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.779925" elapsed="0.000807">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="When I Login With Credentials">
+<kw name="Login With Credentials">
+<msg time="2026-06-07T18:50:25.781460" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${username}</arg>
+<arg>${password}</arg>
+<doc>Performs a full login with username and password</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.781296" elapsed="0.000213">Keyword with same name defined multiple times.</status>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<arg>${VALID_PASSWORD}</arg>
+<doc>Logs in using the given credentials</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.780904" elapsed="0.000705">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Then The User Is Redirected To Secure Area">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:25.782219" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/secure</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.782063" elapsed="0.000200">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies redirection to the secure area</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.781749" elapsed="0.000601">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="And The Success Message Is Displayed">
+<kw name="Verify Flash Message Contains">
+<msg time="2026-06-07T18:50:25.782962" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${SUCCESS_MESSAGE}</arg>
+<doc>Verifies the flash message contains the expected text</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.782806" elapsed="0.000199">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies the success message</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.782481" elapsed="0.000613">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Take Screenshot" owner="Browser" type="TEARDOWN">
+<tag>PageContent</tag>
+<doc>Takes a screenshot of the current window or element and saves it to disk.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:25.783318" elapsed="0.000882"/>
+</kw>
+<msg time="2026-06-07T18:50:25.839644" level="INFO">Starting Browser process C:\Users\Landing\AppData\Local\Programs\Python\Python313\Lib\site-packages\Browser\wrapper\index.js using at 127.0.0.1:59503</msg>
+<doc>Verify successful login redirects to secure area with success message</doc>
+<tag>login</tag>
+<tag>positive</tag>
+<tag>smoke</tag>
+<status status="FAIL" start="2026-06-07T18:50:25.778095" elapsed="0.006190">Several failures occurred:
+
+1) Keyword with same name defined multiple times.
+
+2) Keyword with same name defined multiple times.
+
+3) Keyword with same name defined multiple times.
+
+4) Keyword with same name defined multiple times.</status>
+</test>
+<test id="s1-t2" name="TC_002 Failed Login With Invalid Password" line="290">
+<kw name="Go To" owner="Browser" type="SETUP">
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:30.978727" elapsed="0.001402"/>
+</kw>
+<kw name="Given I Am On The Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:30.980934" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.980746" elapsed="0.000249">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Ensures the login page is loaded</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.980351" elapsed="0.000760">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="When I Login With Credentials">
+<kw name="Login With Credentials">
+<msg time="2026-06-07T18:50:30.981805" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${username}</arg>
+<arg>${password}</arg>
+<doc>Performs a full login with username and password</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.981647" elapsed="0.000202">Keyword with same name defined multiple times.</status>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<arg>${INVALID_PASSWORD}</arg>
+<doc>Logs in using the given credentials</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.981264" elapsed="0.000676">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Then The User Stays On The Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:30.982543" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.982387" elapsed="0.000199">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies the user remains on the login page</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.982077" elapsed="0.000597">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="And The Invalid Password Message Is Displayed">
+<kw name="Verify Flash Message Contains">
+<msg time="2026-06-07T18:50:30.983284" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${INVALID_PASS_MSG}</arg>
+<doc>Verifies the flash message contains the expected text</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.983125" elapsed="0.000202">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies the invalid password error message</doc>
+<status status="FAIL" start="2026-06-07T18:50:30.982806" elapsed="0.000608">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Take Screenshot" owner="Browser" type="TEARDOWN">
+<tag>PageContent</tag>
+<doc>Takes a screenshot of the current window or element and saves it to disk.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:30.983641" elapsed="0.000854"/>
+</kw>
+<doc>Verify login fails with incorrect password and shows error message</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-06-07T18:50:30.972346" elapsed="0.012222">Several failures occurred:
+
+1) Keyword with same name defined multiple times.
+
+2) Keyword with same name defined multiple times.
+
+3) Keyword with same name defined multiple times.
+
+4) Keyword with same name defined multiple times.</status>
+</test>
+<test id="s1-t3" name="TC_003 Failed Login With Invalid Username" line="298">
+<kw name="Go To" owner="Browser" type="SETUP">
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:30.998622" elapsed="0.001258"/>
+</kw>
+<kw name="Given I Am On The Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:31.000908" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.000716" elapsed="0.000247">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Ensures the login page is loaded</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.000296" elapsed="0.000768">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="When I Login With Credentials">
+<kw name="Login With Credentials">
+<msg time="2026-06-07T18:50:31.001715" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${username}</arg>
+<arg>${password}</arg>
+<doc>Performs a full login with username and password</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.001538" elapsed="0.000222">Keyword with same name defined multiple times.</status>
+</kw>
+<arg>${INVALID_USERNAME}</arg>
+<arg>${VALID_PASSWORD}</arg>
+<doc>Logs in using the given credentials</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.001200" elapsed="0.000650">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Then The User Stays On The Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:31.002458" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.002302" elapsed="0.000200">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies the user remains on the login page</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.001991" elapsed="0.000600">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="And The Invalid Username Message Is Displayed">
+<kw name="Verify Flash Message Contains">
+<msg time="2026-06-07T18:50:31.003525" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${INVALID_USER_MSG}</arg>
+<doc>Verifies the flash message contains the expected text</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.003133" elapsed="0.000451">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies the invalid username error message</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.002723" elapsed="0.000980">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Take Screenshot" owner="Browser" type="TEARDOWN">
+<tag>PageContent</tag>
+<doc>Takes a screenshot of the current window or element and saves it to disk.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:31.004072" elapsed="0.001327"/>
+</kw>
+<doc>Verify login fails with unknown username and shows error message</doc>
+<tag>login</tag>
+<tag>negative</tag>
+<status status="FAIL" start="2026-06-07T18:50:30.993530" elapsed="0.011976">Several failures occurred:
+
+1) Keyword with same name defined multiple times.
+
+2) Keyword with same name defined multiple times.
+
+3) Keyword with same name defined multiple times.
+
+4) Keyword with same name defined multiple times.</status>
+</test>
+<test id="s1-t4" name="TC_004 Logout After Successful Login" line="306">
+<kw name="Go To" owner="Browser" type="SETUP">
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:31.017724" elapsed="0.001206"/>
+</kw>
+<kw name="Given I Am On The Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:31.019810" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.019587" elapsed="0.000285">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Ensures the login page is loaded</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.019162" elapsed="0.000820">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="When I Login With Credentials">
+<kw name="Login With Credentials">
+<msg time="2026-06-07T18:50:31.021047" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${username}</arg>
+<arg>${password}</arg>
+<doc>Performs a full login with username and password</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.020776" elapsed="0.000332">Keyword with same name defined multiple times.</status>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<arg>${VALID_PASSWORD}</arg>
+<doc>Logs in using the given credentials</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.020218" elapsed="0.001016">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="And The User Is Redirected To Secure Area">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:31.022044" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/secure</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.021877" elapsed="0.000214">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies redirection to the secure area</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.021494" elapsed="0.000689">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="And I Click The Logout Button">
+<kw name="Click Logout Button">
+<msg time="2026-06-07T18:50:31.022814" level="FAIL">Keyword with same name defined multiple times.</msg>
+<doc>Clicks the logout button on the secure page</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.022652" elapsed="0.000207">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Clicks the logout button</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.022319" elapsed="0.000627">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Then The User Is Redirected To Login Page">
+<kw name="Verify Current Url">
+<msg time="2026-06-07T18:50:31.023554" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>/login</arg>
+<doc>Verifies the current url contains expected value</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.023397" elapsed="0.000201">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies redirection back to the login page</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.023089" elapsed="0.000597">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="And The Logout Message Is Displayed">
+<kw name="Verify Flash Message Contains">
+<msg time="2026-06-07T18:50:31.024312" level="FAIL">Keyword with same name defined multiple times.</msg>
+<arg>${LOGOUT_MESSAGE}</arg>
+<doc>Verifies the flash message contains the expected text</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.024155" elapsed="0.000201">Keyword with same name defined multiple times.</status>
+</kw>
+<doc>Verifies the logout confirmation message</doc>
+<status status="FAIL" start="2026-06-07T18:50:31.023819" elapsed="0.000624">Keyword with same name defined multiple times.</status>
+</kw>
+<kw name="Take Screenshot" owner="Browser" type="TEARDOWN">
+<tag>PageContent</tag>
+<doc>Takes a screenshot of the current window or element and saves it to disk.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:31.024741" elapsed="0.001641"/>
+</kw>
+<doc>Verify the user can log out after a successful login</doc>
+<tag>logout</tag>
+<tag>positive</tag>
+<status status="FAIL" start="2026-06-07T18:50:31.013396" elapsed="0.013213">Several failures occurred:
+
+1) Keyword with same name defined multiple times.
+
+2) Keyword with same name defined multiple times.
+
+3) Keyword with same name defined multiple times.
+
+4) Keyword with same name defined multiple times.
+
+5) Keyword with same name defined multiple times.
+
+6) Keyword with same name defined multiple times.</status>
+</test>
+<kw name="Close Browser" owner="Browser" type="TEARDOWN">
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-07T18:50:31.033237" elapsed="0.001178"/>
+</kw>
+<doc>Variables for login test suite</doc>
+<status status="FAIL" start="2026-06-07T18:50:25.379356" elapsed="5.655260"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="3" skip="0">login</stat>
+<stat pass="0" fail="1" skip="0">logout</stat>
+<stat pass="0" fail="2" skip="0">negative</stat>
+<stat pass="0" fail="2" skip="0">positive</stat>
+<stat pass="0" fail="1" skip="0">smoke</stat>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="0" fail="4" skip="0">Tests</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-06-07T18:50:25.364713" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 1: Unrecognized section header '***** FILE: resources/variables.robot | variables | Variables'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.364889" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 20: Unrecognized section header '***** FILE: resources/keywords.robot | keywords | Keywords'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.364954" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 22: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365000" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 23: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365066" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 36: Unrecognized section header '***** FILE: resources/pages/login_page.robot | page | Login Page'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365114" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 38: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365165" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 39: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365222" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 89: Unrecognized section header '***** FILE: tests/tests.robot | tests | Test Cases'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365269" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 90: Unrecognized section header '***** FILE: resources/variables.robot | variables | Variables'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365316" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 92: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365358" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 93: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365399" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 94: Setting 'Documentation' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365450" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 109: Unrecognized section header '***** FILE: resources/keywords.robot | keywords | Keywords'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365499" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 111: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365540" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 112: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365587" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 125: Unrecognized section header '***** FILE: resources/pages/login_page.robot | page | Login Page'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365634" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 127: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365675" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 128: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365729" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 178: Unrecognized section header '***** FILE: tests/tests.robot | tests | Test Cases'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365775" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 179: Unrecognized section header '***** FILE: resources/variables.robot | variables | Variables'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.365821" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 181: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365862" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 182: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365902" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 183: Setting 'Documentation' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.365953" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 198: Unrecognized section header '***** FILE: resources/keywords.robot | keywords | Keywords'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.366000" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 200: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.366041" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 201: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.366090" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 214: Unrecognized section header '***** FILE: resources/pages/login_page.robot | page | Login Page'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.366137" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 216: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.366185" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 217: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.366233" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 267: Unrecognized section header '***** FILE: tests/tests.robot | tests | Test Cases'. Valid sections: 'Settings', 'Variables', 'Test Cases', 'Tasks', 'Keywords' and 'Comments'.</msg>
+<msg time="2026-06-07T18:50:25.366274" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 269: Setting 'Suite Setup' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.366310" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 270: Setting 'Suite Teardown' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.366346" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 271: Setting 'Documentation' is allowed only once. Only the first value is used.</msg>
+<msg time="2026-06-07T18:50:25.367771" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 119: Creating keyword 'Open Browser Session' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.367945" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 140: Creating keyword 'Enter Username' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368078" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 146: Creating keyword 'Enter Password' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368182" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 152: Creating keyword 'Click Login Button' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368321" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 156: Creating keyword 'Login With Credentials' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368424" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 163: Creating keyword 'Click Logout Button' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368553" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 168: Creating keyword 'Verify Flash Message Contains' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368672" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 174: Creating keyword 'Verify Current Url' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.368903" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 208: Creating keyword 'Open Browser Session' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369064" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 229: Creating keyword 'Enter Username' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369190" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 235: Creating keyword 'Enter Password' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369288" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 241: Creating keyword 'Click Login Button' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369428" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 245: Creating keyword 'Login With Credentials' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369530" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 252: Creating keyword 'Click Logout Button' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369727" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 257: Creating keyword 'Verify Flash Message Contains' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.369909" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 263: Creating keyword 'Verify Current Url' failed: Keyword with same name defined multiple times.</msg>
+<msg time="2026-06-07T18:50:25.747301" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 26: Resource file 'variables.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.748624" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 27: Resource file 'pages\login_page.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.750865" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 41: Resource file '..\variables.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.753516" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 115: Resource file 'variables.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.754888" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 116: Resource file 'pages\login_page.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.757611" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 130: Resource file '..\variables.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.760243" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 204: Resource file 'variables.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.761486" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 205: Resource file 'pages\login_page.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.763588" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\tests\tests.robot' on line 219: Resource file '..\variables.robot' does not exist.</msg>
+<msg time="2026-06-07T18:50:25.770731" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\login_page.robot' on line 10: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-06-07T18:50:25.770888" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\login_page.robot' on line 16: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-06-07T18:50:25.771010" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\login_page.robot' on line 22: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-06-07T18:50:25.771151" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\login_page.robot' on line 28: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+<msg time="2026-06-07T18:50:25.771389" level="WARN">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\resources\pages\login_page.robot' on line 34: The '[Return]' setting is deprecated. Use the 'RETURN' statement instead.</msg>
+</errors>
+</robot>

@@ -132,19 +132,30 @@ function fmt(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 // Combine qa_run_history (runs simples) + suite-reports depuis qa_code_cards
-// Chargement async depuis MongoDB
+// Chargement async depuis MongoDB avec retry
 window.loadHistory = async function loadHistory() {
   let cards = [];
-  try {
-    const r = await fetch('http://localhost:3001/api/storage/all');
-    const d = await r.json();
-    if (d.ok && d.cards?.length > 0) {
-      cards = d.cards;
-    } else {
-      cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
+  // Retry 3 fois si MongoDB repond lentement
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 5000);
+      const r = await fetch('http://localhost:3001/api/storage/all', { signal: ctrl.signal });
+      clearTimeout(timeout);
+      const d = await r.json();
+      if (d.ok && d.cards?.length > 0) {
+        cards = d.cards;
+        break;
+      } else if (attempt < 2) {
+        await new Promise(function(res){ setTimeout(res, 2000); });
+      }
+    } catch(e) {
+      if (attempt < 2) {
+        await new Promise(function(res){ setTimeout(res, 2000); });
+      } else {
+        cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
+      }
     }
-  } catch(e) {
-    cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
   }
   const simple = JSON.parse(localStorage.getItem('qa_run_history') || '[]');
   const suiteRuns = cards
@@ -161,7 +172,18 @@ window.loadHistory = async function loadHistory() {
 let history = [];
 // Init async après DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
+  // Indicateur de chargement
+  const loadingEl = document.createElement('div');
+  loadingEl.id = '_dashLoading';
+  loadingEl.style.cssText = 'text-align:center;padding:30px;color:var(--gray);font-size:13px;font-family:monospace';
+  loadingEl.textContent = "⏳ Chargement de l historique...";
+  document.querySelector('.main')?.prepend(loadingEl);
+
   history = await loadHistory();
+
+  const li = document.getElementById('_dashLoading');
+  if (li) li.remove();
+
   if (history.length === 0) {
     document.querySelector('.main')?.insertAdjacentHTML('afterbegin',
       '<div style="text-align:center;padding:60px;color:var(--gray);font-size:14px">'+

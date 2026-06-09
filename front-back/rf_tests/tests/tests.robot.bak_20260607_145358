@@ -1,0 +1,40 @@
+*** Settings ***
+Test Setup        Go To    ${BASE_URL}
+Test Teardown    Capture Page Screenshot
+Suite Setup       New Browser    chromium
+New Page    ${BASE_URL}    options=add_argument("--disable-notifications");add_argument("--disable-popup-blocking");add_argument("--disable-infobars");add_argument("--disable-save-password-bubble");add_argument("--disable-features=PasswordManagerEnabled,PasswordLeakDetection");add_argument("--disable-features=TranslateUI");add_argument("--no-first-run");add_argument("--password-store=basic")
+Suite Teardown    Close Browser
+Documentation       Tests for the-internet.herokuapp.com login functionality
+Library             Browser
+Resource    C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/resources/variables.robot
+Resource    C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/resources/keywords.robot
+
+
+
+*** Test Cases ***
+TC_001 — Successful Login With Valid Credentials
+    Given User Is On The Login Page
+    When User Is On The Login Page
+    Then User Is Redirected To The Login Page
+    And Order Confirmation Message Is Displayed
+    And Click Logout Button
+
+TC_002 — Login Failure With Invalid Password
+    Given User Is On The Login Page
+    When User Is On The Login Page
+    Then User Is On The Login Page
+    And Error Message For Locked User Is Displayed
+
+TC_003 — Login Failure With Invalid Username
+    Given User Is On The Login Page
+    When User Is On The Login Page
+    Then User Is On The Login Page
+    And Error Message For Locked User Is Displayed
+
+TC_004 — Logout After Successful Login
+    Given User Is On The Login Page
+    When User Is On The Login Page
+    And User Is Redirected To The Login Page
+    When User Is On The Login Page
+    Then User Is Redirected To The Login Page
+    And Order Confirmation Message Is Displayed

@@ -17,10 +17,32 @@ router.get('/all', async (req, res) => {
     // Reconstruit le format _codeCards attendu par le front
     const cards = [
       ...codeCards.map(c => ({ type: c.type||'multi', cardId: c.cardId, title: c.title, files: c.files||[] })),
-      ...reports.map(r => ({ type: 'report', cardId: r.cardId, suiteCardId: r.suiteCardId||null, data: r.data })),
+      ...reports.map(r => {
+        // Exclure les screenshots pour reduire la taille de la reponse
+        const dataLight = r.data ? {
+          ...r.data,
+          tests: (r.data.tests||[]).map(t => ({
+            ...t,
+            screenshot: undefined,
+            steps: (t.steps||[]).map(s => ({ ...s, screenshot: undefined }))
+          }))
+        } : r.data;
+        return { type: 'report', cardId: r.cardId, suiteCardId: r.suiteCardId||null, data: dataLight };
+      }),
       ...suiteReports.map(s => ({ type: 'suite-report', cardId: s.cardId, suiteTitle: s.suiteTitle, total: s.total, passed: s.passed, failed: s.failed, rate: s.rate, blockNames: s.blockNames||[], blocs: s.blocs||[], tests: s.tests||[], data: s.data, createdAt: s.createdAt })),
     ];
     res.json({ ok: true, cards });
+  } catch(e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ── GET /api/storage/report/:cardId — details complets avec screenshots ──────
+router.get('/report/:cardId', async (req, res) => {
+  try {
+    const report = await Report.findOne({ cardId: req.params.cardId }).lean();
+    if (!report) return res.status(404).json({ ok: false, error: 'Report not found' });
+    res.json({ ok: true, data: report.data });
   } catch(e) {
     res.status(500).json({ ok: false, error: e.message });
   }

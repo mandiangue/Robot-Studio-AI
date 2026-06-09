@@ -1,0 +1,2641 @@
+/**
+ * RF × IA — Serveur proxy Azure DevOps + Jira
+ * Installation : npm install express
+ * Lancement    : node server.js
+ * URL          : http://localhost:3001
+ */
+require('dotenv').config();
+const express = require('express');
+const path    = require('path');
+const app     = express();
+const PORT    = process.env.PORT || 3001;
+
+const { connectDB } = require('./db');
+const pulledBlocksRouter = require('./routes/pulledblocks');
+connectDB();
+
+app.use(express.json({ limit: '20mb' }));
+app.use('/api/pulledblocks', pulledBlocksRouter);
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+app.use(express.static(path.join(__dirname)));
+
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.use('/api/azure',   require('./routes/azure'));
+app.use('/api/jira',    require('./routes/jira'));
+app.use('/api/storage', require('./routes/Storage'));
+
+// ── RF routes et autres restent dans ce fichier ───────────────────────────────
+
+
+// ══════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// ROBOT FRAMEWORK — RUN + REPORT
+// ══════════════════════════════════════════════════════════════
+
+const { execFile, exec } = require('child_process');
+const fs   = require('fs');
+const os   = require('os');
+
+// Working directory for test files
+const TESTS_DIR = path.join(__dirname, 'rf_tests');
+if (!fs.existsSync(TESTS_DIR)) fs.mkdirSync(TESTS_DIR);
+
+// ── POST /api/rf/run ──────────────────────────────────────────
+// Body: { code, filename, headless }
+app.post('/api/rf/run', async (req, res) => {
+  const { code, filename, headless, browserType } = req.body;
+  if (!code) return res.status(400).json({ error: "code requis" });
+  console.log("[BROWSER] type:", browserType, "headless:", headless);
+  console.log("[CODE] first200:", code.slice(0,200).replace(/\n/g,"|"));  console.log("[CODE] hasLibBrowser:", code.includes("Library    Browser"), "hasNewBrowser:", code.includes("New Browser"));
+
+  const rawName   = (filename || 'test_generated').replace(/\.robot$/, '');
+  const safeName  = rawName.replace(/[^a-zA-Z0-9_\-\/]/g, '_');
+  const safeBase  = safeName.replace(/\//g, '_');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  // Suite blocs use isolated subdirectory to avoid overwriting each other
+  const isSuiteBloc = rawName.startsWith('suite_S');
+  const runBaseDir  = isSuiteBloc
+    ? path.join(TESTS_DIR, 'suite_runs', rawName)
+    : TESTS_DIR;
+  if (!fs.existsSync(runBaseDir)) fs.mkdirSync(runBaseDir, { recursive: true });
+
+  // For suite blocs: resources will be written from the request's POM files
+  // Don't pre-copy from shared rf_tests/resources
+
+  const outputXml = path.join(runBaseDir, safeBase + '_' + timestamp + '_output.xml');
+
+  // Live broadcast — démarrage du run
+  const isSuiteLive = isSuiteBloc;
+  const liveRunId = ++liveRunCounter;
+  const liveNow = new Date().toLocaleTimeString('fr-FR');
+
+  // Live broadcast — démarrage du run
+  const liveTitle = req.body.pageTitle || req.body.title || rawName.replace(/^test_|^suite_/,'').replace(/_/g,' ').trim();
+  if (!isSuiteLive) {
+    const liveRun = { id: liveRunId, title: liveTitle, status: 'running', tests: [], startedAt: liveNow, duration: 0 };
+    liveState.runs.push(liveRun);
+    rfBroadcast('run-start', liveRun);
+    // Polling live — parse output.xml toutes les 1.5s pendant le run
+    const livePoller = setInterval(() => {
+      if (!fs.existsSync(outputXml)) return;
+      try {
+        const xml = fs.readFileSync(outputXml, 'utf8');
+        const partial = parseRobotOutput(xml, '', '');
+        const run = liveState.runs.find(r => r.id === liveRunId);
+        if (!run || run.status !== 'running') { clearInterval(livePoller); return; }
+        run.tests = (partial.tests||[]).map(t => ({
+          name: t.name, status: (t.status||'pass').toLowerCase(), duration: t.duration, message: t.message
+        }));
+        rfBroadcast('run-update', { ...run });
+      } catch(e) {}
+    }, 1500);
+    setTimeout(() => clearInterval(livePoller), 180000);
+    req._livePoller = livePoller;
+  } else {
+    // Suite bloc — polling live aussi
+    const activeSuite = liveState.suites[liveState.suites.length - 1];
+    if (activeSuite) {
+      const blocName = liveTitle || rawName.replace(/suite_S[^_]+_\d+_?/g,'').replace(/_/g,' ').trim() || ('Bloc ' + (activeSuite.blocs.length + 1));
+      // Ajouter un bloc temporaire "en cours"
+      const tempBloc = { name: blocName, tests: [], duration: 0, status: 'running' };
+      activeSuite.blocs.push(tempBloc);
+      rfBroadcast('suite-update', activeSuite);
+      // Polling
+      const suitePoller = setInterval(() => {
+        if (!fs.existsSync(outputXml)) return;
+        try {
+          const xml = fs.readFileSync(outputXml, 'utf8');
+          const partial = parseRobotOutput(xml, '', '');
+          tempBloc.tests = (partial.tests||[]).map(t => ({
+            name: t.name, status: (t.status||'pass').toLowerCase(), duration: t.duration, message: t.message
+          }));
+          rfBroadcast('suite-update', activeSuite);
+        } catch(e) {}
+      }, 1500);
+      setTimeout(() => clearInterval(suitePoller), 180000);
+      req._suitePoller = suitePoller;
+      req._tempBloc    = tempBloc;
+      req._activeSuite = activeSuite;
+    }
+  }
+
+  // Build robot file path
+  const robotRelPath = safeName.replace(/\//g, path.sep) + '.robot';
+  const robotFile    = path.join(runBaseDir, robotRelPath);
+  // Ensure directory exists
+  const robotFileDir = path.dirname(robotFile);
+  if (!fs.existsSync(robotFileDir)) fs.mkdirSync(robotFileDir, { recursive: true });
+
+  // Détecter Browser/Playwright pour bypasser le preprocessing SeleniumLibrary
+  // Tuer le process robot en cours si un run est actif
+  if (_rfProcess) {
+    try {
+      if (process.platform === 'win32') {
+        exec('taskkill /PID ' + _rfProcess.pid + ' /T /F', () => {});
+      } else {
+        process.kill(-_rfProcess.pid, 'SIGKILL');
+      }
+    } catch(e) {
+      try { _rfProcess.kill('SIGKILL'); } catch(e2) {}
+    }
+    _rfProcess = null;
+  }
+  // Tuer chromium/robot residuels et attendre avant de continuer
+  await new Promise(function(resolve) {
+    if (process.platform === 'win32') {
+      exec('taskkill /F /IM robot.exe /T 2>nul & taskkill /F /IM chromium.exe /T 2>nul', function() {
+        setTimeout(resolve, 800);
+      });
+    } else {
+      setTimeout(resolve, 200);
+    }
+  });
+
+  const isPlaywrightCode = (function(){
+    var c = code;
+    return c.includes('Library    Browser') ||
+           c.includes('Library     Browser') ||
+           c.includes('Library   Browser') ||
+           /Library\s+Browser(?!\s*Library)/.test(c) ||
+           c.includes('New Browser    ') ||
+           c.includes('New Browser\n') ||
+           c.includes('    New Browser') ||
+           c.includes('New Page    ') ||
+           c.includes('Fill Text    ') ||
+           c.includes('Wait For Elements State');
+  })();
+  console.log("[DETECT] pw:", isPlaywrightCode, code.slice(0,80).replace(/\n/g,"|"));
+
+  // Inject headless option if requested — works with SeleniumLibrary and BrowserLibrary
+  let finalCode = code;
+  // Remplacer le navigateur si browserType specifie et different de chrome
+  if (browserType && browserType !== 'chrome') {
+    finalCode = finalCode.replace(/(\${BROWSER}\s+)chrome/g, '$1' + browserType);
+    finalCode = finalCode.replace(/(Open Browser\s+\S+\s+)chrome/g, '$1' + browserType);
+  }
+
+  // Correction automatique fichiers Browser/Playwright
+  function fixPlaywrightFile(relPath, content) {
+    // Supprimer Suite Setup / Suite Teardown / New Page de variables.robot et pages/*.robot
+    if (relPath.includes('variables.robot') || relPath.includes('pages/')) {
+      content = content.replace(/^Suite Setup[^\n]*\n?/gm, '');
+      content = content.replace(/^Suite Teardown[^\n]*\n?/gm, '');
+      content = content.replace(/^New Page[^\n]*\n?/gm, '');
+      content = content.replace(/^New Browser[^\n]*\n?/gm, '');
+      content = content.replace(/^New Context[^\n]*\n?/gm, '');
+    }
+    // Dans tests.robot : remplacer Open Browser par Open Browser Session
+    if (relPath.includes('tests/')) {
+      // Suite Setup Open Browser ... → Suite Setup Open Browser Session    ${BASE_URL}
+      content = content.replace(
+        /^(Suite Setup\s+)Open Browser(\s+)(\S+)[^\n]*/gm,
+        '$1Open Browser Session    $3'
+      );
+      // Test Setup Go To si absent
+      if (!content.includes('Test Setup') && content.includes('Suite Setup')) {
+        content = content.replace(
+          /^(Suite Setup[^\n]+)$/m,
+          '$1\nTest Setup        Go To    ${BASE_URL}\nTest Teardown     Take Screenshot'
+        );
+      }
+    }
+    // Partout : supprimer New Page dans *** Settings ***
+    content = content.replace(/^(\*{3}\s*Settings\s*\*{3}[\s\S]*?)^New Page[^\n]*\n?/gm, '$1');
+    return content;
+  }
+
+  // Pour Browser/Playwright : juste gérer headless et sortir du preprocessing Selenium
+  if (isPlaywrightCode) {
+    if (headless) {
+      finalCode = finalCode.replace(
+        /New Browser(\s+)(chromium|chrome|firefox|webkit)/gi,
+        'New Browser$1$2    headless=True'
+      );
+    } else {
+      finalCode = finalCode.replace(
+        /New Browser(\s+)(chromium|chrome|firefox|webkit)(\s*)$/gim,
+        'New Browser$1$2    headless=False'
+      );
+    }
+    // Parser les delimiteurs ***** FILE: et ecrire chaque fichier separement
+    const FILE_RE2 = /[*]{4,6}\s*FILE:\s*([^|\n]+)\|([^|\n]+)\|([^\n]*)/g;
+    const splitRe2 = /[*]{4,6}\s*FILE:[^\n]*\n?/g;
+    const fileMatches2 = [...finalCode.matchAll(FILE_RE2)];
+    const segments2 = finalCode.split(splitRe2).slice(1);
+
+    let testsFile2 = robotFile; // fallback
+
+    if (fileMatches2.length > 0 && segments2.length > 0) {
+      // Nettoyer runBaseDir
+      ['resources', 'tests', 'resources/pages'].forEach(d => {
+        const dd = path.join(runBaseDir, d);
+        if (!fs.existsSync(dd)) fs.mkdirSync(dd, { recursive: true });
+      });
+
+      fileMatches2.forEach((m, idx) => {
+        const relPath = m[1].trim();
+        let content2 = segments2[idx] || '';
+
+        // Auto-corriger les erreurs communes Browser/Playwright
+        content2 = fixPlaywrightFile(relPath, content2);
+
+        const absPath2 = path.join(runBaseDir, relPath.replace(/\//g, path.sep));
+        const dir2 = path.dirname(absPath2);
+        if (!fs.existsSync(dir2)) fs.mkdirSync(dir2, { recursive: true });
+        fs.writeFileSync(absPath2, content2, 'utf8');
+        console.log('  Browser/Playwright: wrote', relPath);
+        if (relPath.includes('tests/') && relPath.endsWith('.robot')) testsFile2 = absPath2;
+      });
+
+      // Vérifier que keywords.robot a bien Open Browser Session
+      const kwFile2 = path.join(runBaseDir, 'resources', 'keywords.robot');
+      if (fs.existsSync(kwFile2)) {
+        let kw2 = fs.readFileSync(kwFile2, 'utf8');
+        if (!kw2.includes('Open Browser Session')) {
+          kw2 += '\n\nOpen Browser Session\n    [Arguments]    ${url}    ${browser}=chromium\n    New Browser    ${browser}    headless=False\n    New Context    acceptDownloads=True\n    New Page       ${url}\n';
+          fs.writeFileSync(kwFile2, kw2, 'utf8');
+          console.log('  Browser/Playwright: added Open Browser Session to keywords.robot');
+        }
+      }
+    } else {
+      // Pas de delimiteurs — ecrire le fichier brut
+      const robotDir2 = path.dirname(robotFile);
+      if (!fs.existsSync(robotDir2)) fs.mkdirSync(robotDir2, { recursive: true });
+      fs.writeFileSync(robotFile, finalCode, 'utf8');
+      console.log('  Browser/Playwright: wrote single file', robotFile);
+    }
+
+    // Lancer le test directement
+    const { execFile: execFileFn } = require('child_process');
+    const outputXml2 = outputXml;
+    console.log("[PW RUN] testsFile2:", testsFile2, "| exists:", require("fs").existsSync(testsFile2));
+    const robotArgs2 = ['--outputdir', runBaseDir, '--output', outputXml2, testsFile2];
+    const robotProc2 = execFileFn('robot', robotArgs2, { cwd: runBaseDir },
+      (err2, stdout2, stderr2) => {
+        _rfProcess = null;
+        try {
+          const xmlContent = fs.existsSync(outputXml2) ? fs.readFileSync(outputXml2, 'utf8') : '';
+          const results2 = parseRobotOutput(xmlContent, stdout2 || '', stderr2 || '');
+          results2.outputXml  = outputXml2;
+          const logFile2 = outputXml2.replace('output.xml', 'log.html');
+          const relLog2 = logFile2.replace(/\\/g, '/').split('rf_tests/').pop();
+          results2.logUrl     = 'http://localhost:3001/rf_tests/' + relLog2;
+          results2.logHtml    = logFile2;
+          results2.reportHtml = outputXml2.replace('output.xml', 'report.html');
+          res.json({ ok: true, ...results2 });
+        } catch(parseErr2) {
+          res.json({ ok: false, error: 'Erreur parsing output.xml: ' + parseErr2.message });
+        }
+        _rfProcess = null;
+      }
+    );
+    robotProc2.on('error', (e2) => {
+    _rfProcess = robotProc2;
+      res.json({ ok: false, error: 'Robot Framework non trouvé: ' + e2.message });
+    });
+    return;
+  }
+  // Always inject popup-blocking Chrome options
+  // Use SeleniumLibrary options string with add_argument only
+  // Experimental options (password manager) require ChromeOptions.py
+  const popupArgs = [
+    '--disable-notifications',
+    '--disable-popup-blocking',
+    '--disable-infobars',
+    '--disable-save-password-bubble',
+    '--disable-features=PasswordManagerEnabled,PasswordLeakDetection',
+    '--disable-features=TranslateUI',
+    '--no-first-run',
+    '--password-store=basic',
+  ].map(a => `add_argument("${a}")`).join(';');
+  const popupPrefs = '';
+
+  if (headless) {
+    const headlessArgs = 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage")';
+    finalCode = finalCode.replace(
+      /Open Browser(\s+)(\S+)(\s+)(Chrome|chrome|Firefox|firefox|chromium)/g,
+      `Open Browser$1$2$3$4    options=${headlessArgs};${popupArgs};${popupPrefs}`
+    );
+    finalCode = finalCode.replace(
+      /New Browser(\s+)(chromium|chrome|firefox)/gi,
+      'New Browser$1$2    headless=True'
+    );
+  } else {
+    // Visible mode — inject popup options on all Open Browser calls
+    finalCode = finalCode.replace(
+      /Open Browser([ \t]+)(\S+)([ \t]+)(\S+)([ \t]*)$/gm,
+      function(m, s1, url, s2, browser, rest) {
+        if (rest && rest.includes('options=')) return m;
+        return 'Open Browser' + s1 + url + s2 + browser + '    options=' + popupArgs;
+      }
+    );
+  }
+  // Inject popup options on Suite Setup Open Browser
+  // Build prefs string for SeleniumLibrary — use Python dict format
+  const prefsStr = 'add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0})';
+  finalCode = finalCode.replace(
+    /^(Suite Setup[ \t]+Open Browser[ \t]+\S+[ \t]+\S+)$/gm,
+    '$1    options=' + popupArgs + ';' + prefsStr
+  );
+
+    // Inject screenshot on failure into each test case
+  finalCode = fixAppiumKeywords(finalCode);
+  finalCode = fixBrowserKeywords(finalCode);
+  finalCode = injectScreenshotOnFailure(finalCode, req.body.browserSession || 'per-test');
+
+  // Also apply to POM resource files on disk
+  if (finalCode.includes('Library    Browser')) {
+    const fixDir2 = (dir) => {
+      if (!fs.existsSync(dir)) return;
+      fs.readdirSync(dir).forEach(f => {
+        const fp = path.join(dir, f);
+        if (fs.statSync(fp).isDirectory()) { fixDir2(fp); return; }
+        if (!f.endsWith('.robot')) return;
+        try {
+          const c = fs.readFileSync(fp, 'utf8');
+          const fixed = fixBrowserKeywords(c);
+          if (fixed !== c) fs.writeFileSync(fp, fixed, 'utf8');
+        } catch(e) {}
+      });
+    };
+    fixDir2(path.join(TESTS_DIR, 'resources'));
+    fixDir2(path.join(TESTS_DIR, 'tests'));
+  }
+
+  // Detect POM multi-file structure by ***** FILE: delimiter
+  const fileDelimRe = /\*{5}\s*FILE:\s*([^|\n]+)\|[^|\n]*\|[^\n]*/g;
+  const fileHeaders = [...finalCode.matchAll(fileDelimRe)];
+  const fileParts   = finalCode.split(/\*{5}\s*FILE:[^\n]+\n/);
+
+  if (fileHeaders.length >= 2) {
+    // Clean old POM files before writing new ones
+    ['resources', 'tests'].forEach(dir => {
+      const dirPath = path.join(TESTS_DIR, dir);
+      if (fs.existsSync(dirPath)) {
+        try {
+          // Only remove .robot files, keep output XMLs and logs
+          const removeRobots = (d) => {
+            fs.readdirSync(d).forEach(f => {
+              const fp = path.join(d, f);
+              if (fs.statSync(fp).isDirectory()) removeRobots(fp);
+              else if (f.endsWith('.robot')) {
+                // Ne pas supprimer si modifié manuellement récemment
+                const editedAt = manuallyEditedFiles.get(fp);
+                const isProtected = editedAt && (Date.now() - editedAt) < 30 * 60 * 1000;
+                if (!isProtected) fs.unlinkSync(fp);
+              }
+            });
+          };
+          removeRobots(dirPath);
+          console.log('  POM: cleaned', dir);
+        } catch(e) {}
+      }
+    });
+
+    // POM multi-file — save each file separately
+    let execFile = null;
+
+    fileHeaders.forEach((h, i) => {
+      const relPath = h[1].trim().replace(/\\/g, '/');
+      const content = (fileParts[i + 1] || '').trim();
+      // For suite blocs, write to isolated runBaseDir; otherwise use TESTS_DIR
+      const baseForFile = isSuiteBloc ? runBaseDir : TESTS_DIR;
+      const absPath = path.join(baseForFile, relPath);
+      const absDir  = path.dirname(absPath);
+      if (!fs.existsSync(absDir)) fs.mkdirSync(absDir, { recursive: true });
+      let injected = cleanRobotCodeServer(fixSelectors(fixAppiumKeywords(
+        isSuiteBloc
+          ? fixResourcePaths(content, relPath, runBaseDir)  // use isolated dir for suite blocs
+          : fixResourcePaths(content, relPath)
+      )));
+      injected = fixBrowserKeywords(injected);
+      injected = injectScreenshotOnFailure(injected, req.body.browserSession || 'per-test');
+      // Deduplicate all sections before writing
+      injected = deduplicateRobotSettings(injected);
+      if (relPath.includes('variables.robot')) {
+        injected = deduplicateRobotVariables(injected);
+        // Supprimer les settings interdits dans un fichier resource
+        injected = injected.split('\n').filter(line => {
+          const l = line.trim().toLowerCase();
+          return !(l.startsWith('suite setup') ||
+                   l.startsWith('suite teardown') ||
+                   l.startsWith('test setup') ||
+                   l.startsWith('test teardown') ||
+                   l.startsWith('test template') ||
+                   l.startsWith('force tags') ||
+                   l.startsWith('default tags'));
+        }).join('\n');
+      }
+      // Ne pas écraser si modifié manuellement (< 30 min) et pas un bloc de suite
+      // MAIS toujours écrire si le fichier n'existe pas
+      const editedAt = manuallyEditedFiles.get(absPath);
+      const wasManuallyEdited = editedAt && (Date.now() - editedAt) < 30 * 60 * 1000;
+      const fileExists = fs.existsSync(absPath);
+      // Ne jamais protéger variables.robot — doit toujours être réécrit par le run
+      const isVarsFile = relPath.includes('variables.robot');
+      if (wasManuallyEdited && !isSuiteBloc && !relPath.startsWith('tests/') && fileExists && !isVarsFile) {
+        console.log('  POM: kept manual edit for', relPath);
+      } else {
+        // Remplacer chrome par browserType dans variables.robot
+        let injectedFinal = injected;
+        if (browserType && browserType !== 'chrome' && relPath.includes('variables.robot')) {
+          console.log('[BROWSER_REPLACE] browserType:', browserType, 'relPath:', relPath, 'includes vars:', relPath.includes('variables.robot'));
+          console.log("[VAR_CONTENT]", injectedFinal.slice(0,200));
+          injectedFinal = injectedFinal.replace(/(\${BROWSER}\s+)chrome\b/g, '$1' + browserType);
+        }
+        fs.writeFileSync(absPath, injectedFinal, 'utf8');
+        console.log('  POM: wrote', relPath, isSuiteBloc ? '(suite bloc)' : '');
+      }
+      if (relPath.startsWith('tests/')) execFile = absPath;
+    });
+
+    // Fix ALL resource paths + inject Open Browser No Popup keyword
+    const sharedRes = path.join(TESTS_DIR, 'resources').replace(/\\/g, '/');
+    const targetRes  = isSuiteBloc ? path.join(runBaseDir, 'resources').replace(/\\/g, '/') : sharedRes;
+    const noPopupPyPath = path.join(__dirname, 'no_popup').replace(/\\/g, '/');
+    // Utilise directement les options Chrome sans no_popup.py
+    const tmpProfile = require('os').tmpdir().replace(/\\/g,'/') + '/chrome_rf_' + Date.now();
+    const chromeArgs = [
+      'add_argument("--incognito")',
+      'add_argument("--disable-notifications")',
+      'add_argument("--disable-save-password-bubble")',
+      'add_argument("--disable-infobars")',
+      'add_argument("--disable-popup-blocking")',
+      'add_argument("--disable-features=PasswordManagerEnabled,TranslateUI,AutofillServerCommunication,PasswordLeakDetection,SavePasswordsBubble")',
+      'add_argument("--no-first-run")',
+      'add_argument("--no-default-browser-check")',
+      'add_argument("--password-store=basic")',
+      `add_argument("--user-data-dir=${tmpProfile}")`,
+      'add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.password_manager_leak_detection":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0,"autofill.profile_enabled":false,"autofill.credit_card_enabled":false})',
+      'add_experimental_option("excludeSwitches",["enable-automation","enable-logging"])',
+    ].join(';');
+    const noPopupKw = [
+      'Open Browser No Popup',
+      '    [Arguments]    ${url}    ${browser}=' + (browserType || 'chrome'),
+      '    ${driver_path}=    Evaluate    __import__("sys").path.insert(0,"${EXECDIR}") or __import__("NoPopupOptions").get_driver_path("${browser}")    sys,NoPopupOptions',
+      '    Run Keyword If    $driver_path    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=' + chromeArgs,
+      '    Run Keyword Unless    $driver_path    Open Browser    ${url}    ${browser}    options=' + chromeArgs,
+      '',
+      'Dismiss Password Popup',
+      '    [Documentation]    Ferme le popup Chrome "modifier mot de passe" sil apparait',
+      '    ${present}=    Run Keyword And Return Status    Page Should Contain Element    xpath=//div[@role="dialog"]//button[contains(@jsname,"")]',
+      '    Run Keyword If    ${present}    Press Keys    None    ESCAPE',
+      '    Sleep    0.2s',
+      '    Execute Javascript    document.activeElement.blur()',
+      '',
+      'Input Password Field',
+      '    [Arguments]    ${locator}    ${value}',
+      '    Input Text    ${locator}    ${value}',
+      '    Dismiss Password Popup',
+    ].join('\n');
+
+    const walkAndFix = (dir) => {
+      if (!fs.existsSync(dir)) return;
+      if (dir.includes('suite_runs') && !isSuiteBloc) return;
+      // Ensure keywords.robot exists in resources dir with Open Browser No Popup
+      if (isSuiteBloc && dir.endsWith('resources') && !fs.existsSync(path.join(dir, 'keywords.robot'))) {
+        fs.writeFileSync(path.join(dir, 'keywords.robot'), '*** Keywords ***\n' + noPopupKw + '\n', 'utf8');
+        console.log('  Created keywords.robot in', path.relative(TESTS_DIR, dir));
+      }
+      for (const f of fs.readdirSync(dir)) {
+        const fp = path.join(dir, f);
+        if (fs.statSync(fp).isDirectory()) { walkAndFix(fp); continue; }
+        if (!f.endsWith('.robot')) continue;
+        let c = fs.readFileSync(fp, 'utf8');
+        let changed = false;
+
+        // Fix shared resource paths for suite blocs
+        if (isSuiteBloc && c.includes(sharedRes)) {
+          c = c.split(sharedRes).join(targetRes);
+          changed = true;
+        }
+
+
+        // Replace Open Browser with Open Browser No Popup everywhere
+        // Skip files that use Browser/Playwright library or contain keyword definition
+        const strippedForCheck = c.replace(/Open Browser No Popup[\s\S]*?(?=\n[A-Za-z]|$)/g, '__KW_DEF__');
+        const isPlaywrightFile = c.includes('Library    Browser') || c.includes('Library     Browser') || c.includes('New Browser') || c.includes('New Page');
+        if (!isPlaywrightFile && strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
+          const before = c;
+          c = c.replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
+          c = c.replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
+          if (c !== before) { changed = true; console.log('  Replaced Open Browser in', f); }
+        }
+
+        // Clean keywords.robot — remove Settings block, inject Open Browser No Popup
+        if ((f === 'keywords.robot' || f.endsWith('_keywords.robot'))) {
+          // Remove *** Settings *** block entirely (it breaks keyword loading)
+          if (c.includes('*** Settings ***')) {
+            c = c.replace(/^\*{3}\s*Settings[^\n]*\n((?:(?!\*{3})[\s\S])*)/m, '');
+            changed = true;
+          }
+          // Remove any incomplete Open Browser No Popup definition (no body / missing Open Browser call)
+          if (c.includes('Open Browser No Popup') && !c.includes('Open Browser    ${url}')) {
+            c = c.replace(/Open Browser No Popup[^\n]*\n(?:[ \t]+[^\n]*\n)*/g, '');
+            changed = true;
+          }
+          if (!c.includes('Open Browser No Popup')) {
+            if (c.includes('*** Keywords ***')) {
+              const kwIdx = c.indexOf('*** Keywords ***');
+              const kwLineEnd = c.indexOf('\n', kwIdx) + 1;
+              c = c.slice(0, kwLineEnd) + noPopupKw + '\n\n' + c.slice(kwLineEnd);
+            } else {
+              c = '*** Keywords ***\n' + noPopupKw + '\n\n' + c;
+            }
+            changed = true;
+          }
+          // Inject Settings block with page imports if missing
+          const pagesDir = path.join(path.dirname(fp), 'pages');
+          if (fs.existsSync(pagesDir)) {
+            const pageFiles = fs.readdirSync(pagesDir).filter(p => p.endsWith('.robot'));
+            if (pageFiles.length > 0 && !c.includes('*** Settings ***')) {
+              const resources = pageFiles.map(p => `Resource    pages/${p}`).join('\n');
+              c = `*** Settings ***\n${resources}\n\n` + c;
+              changed = true;
+            }
+          }
+          // Replace Navigate To Login Page with Go To
+          if (c.includes('Navigate To Login Page')) {
+            c = c.replace(/    Navigate To Login Page\n/g, '    Go To    ${BASE_URL}\n');
+            changed = true;
+          }
+        }
+
+        if (changed) fs.writeFileSync(fp, c, 'utf8');
+      }
+    };
+    walkAndFix(isSuiteBloc ? runBaseDir : TESTS_DIR);
+
+    // Always ensure main keywords.robot imports pages + deduplicate keywords
+    const mainKwFile = path.join(TESTS_DIR, 'resources', 'keywords.robot');
+    if (fs.existsSync(mainKwFile)) {
+      let kwc = fs.readFileSync(mainKwFile, 'utf8');
+      const mainPagesDir = path.join(TESTS_DIR, 'resources', 'pages');
+      if (fs.existsSync(mainPagesDir)) {
+        const pageFiles = fs.readdirSync(mainPagesDir).filter(p => p.endsWith('.robot'));
+        if (pageFiles.length > 0) {
+          const resources = pageFiles.map(p => `Resource    pages/${p}`).join('\n');
+          kwc = kwc.replace(/^\*{3}\s*Settings[^\n]*\n((?:(?!\*{3})[\s\S])*)/m, '');
+          kwc = `*** Settings ***\n${resources}\n\n` + kwc;
+        }
+      }
+      // Deduplicate keywords — keep only first occurrence of each keyword name
+      const kwLines = kwc.split('\n');
+      const seenKws = new Set();
+      const dedupedLines = [];
+      let inKwSection = false, skipBlock = false;
+      for (const line of kwLines) {
+        if (line.startsWith('*** Keywords')) { inKwSection = true; skipBlock = false; dedupedLines.push(line); continue; }
+        if (line.startsWith('***')) { inKwSection = false; skipBlock = false; dedupedLines.push(line); continue; }
+        if (inKwSection && line && !/^\s/.test(line) && line.trim()) {
+          const kwName = line.trim();
+          if (seenKws.has(kwName.toLowerCase())) { skipBlock = true; }
+          else { seenKws.add(kwName.toLowerCase()); skipBlock = false; dedupedLines.push(line); }
+          continue;
+        }
+        if (!skipBlock) dedupedLines.push(line);
+      }
+      fs.writeFileSync(mainKwFile, dedupedLines.join('\n'), 'utf8');
+    }
+
+    // If no tests/ file was generated, auto-create one from keywords
+    // Si plusieurs fichiers tests/feature_*.robot existent, lancer le dossier
+    const testsDir = path.join(TESTS_DIR, 'tests');
+    const testFiles = fs.existsSync(testsDir)
+      ? fs.readdirSync(testsDir).filter(f => f.endsWith('.robot') && f !== 'tests.robot')
+      : [];
+    if (testFiles.length > 1) {
+      execFile = testsDir; // Lancer robot tests/ (tout le dossier)
+    }
+    if (!execFile) {
+      const fallback = path.join(TESTS_DIR, 'tests', 'tests.robot');
+      if (fs.existsSync(fallback)) {
+        execFile = fallback;
+      } else {
+        // Auto-generate tests/tests.robot from keywords found in keywords.robot
+        const kwFile = path.join(TESTS_DIR, 'resources', 'keywords.robot');
+        let testContent = '*** Settings ***\nDocumentation    Tests auto-générés\n';
+
+        // Detect library from variables or keywords file
+        const varFile = path.join(TESTS_DIR, 'resources', 'variables.robot');
+        let library = 'SeleniumLibrary';
+        if (fs.existsSync(kwFile)) {
+          const kwContent = fs.readFileSync(kwFile, 'utf8');
+          const libMatch = kwContent.match(/Library\s+(\S+Library)/);
+          if (libMatch) library = libMatch[1];
+        }
+
+        testContent += 'Library    ' + library + '\n';
+        testContent += 'Resource    ../resources/variables.robot\n';
+        testContent += 'Resource    ../resources/keywords.robot\n\n';
+        testContent += '*** Test Cases ***\n';
+
+        // Extract keyword names from keywords.robot
+        if (fs.existsSync(kwFile)) {
+          const kwContent = fs.readFileSync(kwFile, 'utf8');
+          const kwNames = [];
+          kwContent.split('\n').forEach(line => {
+            // Keyword names start at column 0 with no indent
+            if (/^[A-Za-zÀ-ÿ][^$\[\n]{2,}/.test(line.trim()) && !line.startsWith('#') && !line.startsWith('*') && !line.startsWith(' ') && !line.startsWith('\t') && line.trim().length > 2) {
+              kwNames.push(line.trim());
+            }
+          });
+          kwNames.slice(0, 10).forEach((kw, i) => {
+            testContent += 'TC_' + String(i+1).padStart(3,'0') + ' ' + kw + '\n';
+            testContent += '    ' + kw + '\n\n';
+          });
+        } else {
+          testContent += 'TC_001 Test principal\n    Log    Test auto-généré\n\n';
+        }
+
+        const testsDir = path.join(TESTS_DIR, 'tests');
+        if (!fs.existsSync(testsDir)) fs.mkdirSync(testsDir, { recursive: true });
+        fs.writeFileSync(fallback, testContent, 'utf8');
+        console.log('  POM: auto-created tests/tests.robot');
+        execFile = fallback;
+      }
+    }
+
+    if (!execFile || !fs.existsSync(execFile)) {
+      return res.status(500).json({
+        error: 'Impossible de créer tests/tests.robot',
+        details: 'Fichiers écrits : ' + fileHeaders.map(h => h[1].trim()).join(', ')
+      });
+    }
+
+    // Cross-check keyword names
+    const testsSubDir = path.join(TESTS_DIR, 'tests');
+    crossCheckKeywords(testsSubDir);
+    // Final cleanup of all robot files
+    [execFile, ...fs.readdirSync(path.join(TESTS_DIR, 'resources')).map(f => path.join(TESTS_DIR, 'resources', f))].forEach(fp => {
+      if (typeof fp === 'string' && fp.endsWith('.robot')) finalCleanupRobotFile(fp);
+    });
+    if (fs.existsSync(path.join(TESTS_DIR, 'resources', 'pages'))) {
+      fs.readdirSync(path.join(TESTS_DIR, 'resources', 'pages')).forEach(f => {
+        finalCleanupRobotFile(path.join(TESTS_DIR, 'resources', 'pages', f));
+      });
+    }
+    // Write ChromeOptions helper as RF keyword library
+    const chromeOptFile = path.join(TESTS_DIR, 'NoPopupOptions.py');
+    fs.writeFileSync(chromeOptFile, `from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+def get_no_popup_options():
+    opts = Options()
+    opts.add_argument('--disable-notifications')
+    opts.add_argument('--disable-infobars')
+    opts.add_argument('--disable-popup-blocking')
+    opts.add_argument('--disable-save-password-bubble')
+    opts.add_argument('--disable-features=PasswordManagerEnabled,TranslateUI')
+    opts.add_argument('--no-first-run')
+    opts.add_experimental_option('prefs', {
+        'credentials_enable_service': False,
+        'profile.password_manager_enabled': False,
+        'profile.default_content_setting_values.notifications': 2,
+        'profile.default_content_settings.popups': 0,
+    })
+    return opts
+`);
+
+
+    // Final fix: ensure Suite Setup uses Open Browser, add Test Setup Go To
+    if (fs.existsSync(execFile) && !fs.statSync(execFile).isDirectory()) {
+      let execContent = fs.readFileSync(execFile, 'utf8');
+
+      // Fix Suite Setup Go To → Open Browser
+      execContent = execContent.replace(
+        /^Suite Setup([ \t]+)Go To([ \t]+)(\S+)([ \t]*)(.*)$/gm,
+        'Suite Setup$1Open Browser$2$3    ${BROWSER}$4$5'
+      );
+
+      // Remove Register Keyword Test Setup
+      execContent = execContent.replace(/^Test Setup\s+Register Keyword[^\n]*$/gm, '');
+
+      // Add Test Setup Go To if Suite Teardown present but no Test Setup
+      if (execContent.includes('Suite Teardown') && !execContent.includes('Test Setup')) {
+        // Find the URL from Suite Setup
+        const suiteMatch = execContent.match(/Suite Setup[ \t]+Open Browser[ \t]+(\S+)/);
+        const loginUrl = suiteMatch ? suiteMatch[1] : '\${BASE_URL}';
+        execContent = execContent.replace(
+          /(\*\*\* Settings \*\*\*[^\n]*\n)/,
+          '$1Test Setup        Go To    ' + loginUrl + '\n'
+        );
+      }
+
+      fs.writeFileSync(execFile, execContent, 'utf8');
+    }
+    // Remove duplicate keyword definitions
+    deduplicateKeywords(TESTS_DIR);
+    // Log TC count to debug double run
+  const tcCount = (finalCode.match(/^TC_\d+/gm) || []).length;
+  // Remplacer chrome par browserType dans variables.robot avant execution
+  if (browserType && browserType !== 'chrome') {
+    const varFilePath = path.join(TESTS_DIR, 'resources', 'variables.robot');
+    if (fs.existsSync(varFilePath)) {
+      let varContent = fs.readFileSync(varFilePath, 'utf8');
+      // Remplacer la valeur apres ${BROWSER} quelle qu'elle soit
+      varContent = varContent.replace(/(\$\{BROWSER\}[ 	]+)\S+/g, '$1' + browserType);
+      fs.writeFileSync(varFilePath, varContent, 'utf8');
+      console.log('  [BROWSER] replaced with', browserType);
+    }
+  }
+  console.log('  POM: executing', path.relative(TESTS_DIR, execFile), '| TC count:', tcCount);
+
+    const cmd2 = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
+    _rfProcess = exec(cmd2, { cwd: TESTS_DIR, timeout: 120000 }, (err, stdout, stderr) => {
+      _rfProcess = null;
+      if (!fs.existsSync(outputXml)) {
+        return res.status(500).json({ error: 'Robot Framework n\'a pas pu démarrer', details: stderr || err?.message || stdout });
+      }
+      try {
+        const xml = fs.readFileSync(outputXml, 'utf8');
+        const results = parseRobotOutput(xml, stdout, stderr);
+        // Add log file URL
+        const logFile = safeBase + '_log.html';
+        if (fs.existsSync(path.join(TESTS_DIR, logFile))) {
+          results.logUrl  = 'http://localhost:3001/rf_tests/' + logFile;
+          results.logPath = logFile;
+        }
+        try {
+          const xmlFiles = fs.readdirSync(TESTS_DIR).filter(f => f.includes(safeBase) && f.endsWith('_output.xml')).sort();
+          if (xmlFiles.length > 10) xmlFiles.slice(0, xmlFiles.length - 10).forEach(f => { try { fs.unlinkSync(path.join(TESTS_DIR, f)); } catch(e) {} });
+        } catch(e) {}
+        _lastResults = results;
+        // Après run : effacer la protection manuelle de variables.robot
+        // pour que le prochain run puisse écrire ses propres variables
+        const varPath = path.join(TESTS_DIR, 'resources', 'variables.robot');
+        manuallyEditedFiles.delete(varPath);
+        // Live broadcast résultats
+        if (!isSuiteLive) {
+          const liveRun = liveState.runs.find(r => r.id === liveRunId);
+          if (liveRun) {
+            liveRun.status   = (results.status||'fail').toLowerCase();
+            liveRun.tests    = (results.tests||[]).map(t => ({
+              name: t.name, status: (t.status||'fail').toLowerCase(), duration: t.duration, message: t.message
+            }));
+            liveRun.duration = results.duration;
+            rfBroadcast('run-update', liveRun);
+          }
+        } else {
+          // Suite bloc — cherche la suite active
+          const activeSuite = liveState.suites[liveState.suites.length - 1];
+          if (activeSuite) {
+            const blocName = rawName.replace(/suite_S[^_]+_\d+_?/, '').replace(/_/g,' ') || ('Bloc ' + (activeSuite.blocs.length + 1));
+            // Mettre à jour le bloc temporaire créé pendant le polling
+            if (req._tempBloc && req._activeSuite) {
+              req._tempBloc.tests = (results.tests||[]).map(t => ({
+                name: t.name, status: (t.status||'fail').toLowerCase(), duration: t.duration, message: t.message
+              }));
+              req._tempBloc.duration = results.duration;
+              req._tempBloc.status = (results.status||'fail').toLowerCase();
+              // Mettre à jour le statut global de la suite
+              const allBlocsDone = req._activeSuite.blocs.every(b => b.status === 'pass' || b.status === 'fail');
+              const anyBlocFail  = req._activeSuite.blocs.some(b => b.status === 'fail');
+              if (allBlocsDone) {
+                req._activeSuite.status = anyBlocFail ? 'fail' : 'pass';
+              }
+              rfBroadcast('suite-update', req._activeSuite);
+            } else {
+              // Fallback si pas de tempBloc
+              const activeSuite2 = liveState.suites[liveState.suites.length - 1];
+              if (activeSuite2) {
+                const blocName2 = liveTitle || rawName.replace(/suite_S[^_]+_[0-9]+_?/g,'').replace(/_/g,' ').trim() || ('Bloc ' + (activeSuite2.blocs.length + 1));
+                activeSuite2.blocs.push({
+                  name: blocName2,
+                  tests: (results.tests||[]).map(t => ({ name: t.name, status: (t.status||'fail').toLowerCase(), duration: t.duration, message: t.message })),
+                  duration: results.duration,
+                });
+                rfBroadcast('suite-update', activeSuite2);
+              }
+            }
+            rfBroadcast('suite-update', activeSuite);
+          }
+        }
+        res.json(results);
+      } catch(parseErr) {
+        res.status(500).json({ error: 'Erreur parsing output.xml: ' + parseErr.message });
+      }
+    });
+    return;
+
+  } else {
+    // Single file
+    const robotDir = path.dirname(robotFile);
+    if (!fs.existsSync(robotDir)) fs.mkdirSync(robotDir, { recursive: true });
+    // For suite blocs, fix resource paths to point to main rf_tests/resources
+  const effectiveRelPath = isSuiteBloc ? 'suite_runs/' + rawName + '/' + rawName + '.robot' : robotRelPath;
+  let cleanFinal = cleanRobotCodeServer(fixSelectors(fixResourcePaths(finalCode, effectiveRelPath)));
+  
+  // For suite blocs, replace relative resource paths with absolute paths
+  if (isSuiteBloc) {
+    const absRes = path.join(TESTS_DIR, 'resources').replace(/\\/g, '/');
+    cleanFinal = cleanFinal
+      .replace(/Resource\s+\.\.\/resources\//g, 'Resource    ' + absRes + '/')
+      .replace(/Resource\s+\.\.\/\.\.\/resources\//g, 'Resource    ' + absRes + '/');
+  }
+  
+  // Final fix: ensure Suite Setup uses Open Browser not Go To
+  cleanFinal = cleanFinal.replace(
+    /^Suite Setup([ \t]+)Go To([ \t]+)(\S+)([ \t]*)(.*)$/gm,
+    'Suite Setup$1Open Browser No Popup    $3    ${BROWSER}'
+  );
+  // Replace remaining Open Browser with Open Browser No Popup (strip old options=)
+  if (cleanFinal.includes('Open Browser') && !cleanFinal.includes('Open Browser No Popup')) {
+    cleanFinal = cleanFinal
+      .replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5')
+      .replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
+  }
+  fs.writeFileSync(robotFile, cleanFinal, 'utf8');
+  finalCleanupRobotFile(robotFile);
+  }
+
+  // Run robot — cwd=TESTS_DIR so screenshots land in TESTS_DIR
+  // For POM tests/ subfolder: run RF from the tests/ directory
+  // so that ../resources/ resolves to TESTS_DIR/resources/
+  const isPomTest = robotFile.includes(path.sep + 'tests' + path.sep);
+  const execCwd   = isPomTest ? path.dirname(robotFile) : runBaseDir;
+  // For suite blocs single-file, execFile must point to the bloc's own robot file
+  if (isSuiteBloc && !execFile) execFile = robotFile;
+  const execTarget = isPomTest ? path.basename(robotFile) : robotFile;
+
+  // ── SNAPSHOT: Fix Resource paths in ALL files of the suite bloc ─────────────
+  if (isSuiteBloc) {
+    // Fix paths in every .robot file in this bloc's directory
+    const fixPathsInDir = (dir) => {
+      if (!fs.existsSync(dir)) return;
+      fs.readdirSync(dir).forEach(f => {
+        const fp = path.join(dir, f);
+        if (fs.statSync(fp).isDirectory()) { fixPathsInDir(fp); return; }
+        if (!f.endsWith('.robot')) return;
+        let content = fs.readFileSync(fp, 'utf8');
+        let changed = false;
+        const resLines = [...content.matchAll(/^Resource[ \t]+(.+)$/gm)];
+        for (const m of resLines) {
+          const resPath = m[1].trim();
+          if (fs.existsSync(resPath)) {
+            const resFilename = path.basename(resPath);
+            const subDir = resPath.includes('/pages/') || resPath.includes('\\pages\\') ? 'pages' : '';
+            const isolatedPath = subDir
+              ? path.join(runBaseDir, 'resources', subDir, resFilename)
+              : path.join(runBaseDir, 'resources', resFilename);
+            // Copy file to isolated location if needed
+            if (!fs.existsSync(isolatedPath)) {
+              fs.mkdirSync(path.dirname(isolatedPath), { recursive: true });
+              fs.copyFileSync(resPath, isolatedPath);
+              console.log('  Suite snapshot:', resFilename, '->', path.relative(TESTS_DIR, isolatedPath));
+            }
+            content = content.replace(m[0], 'Resource    ' + isolatedPath.replace(/\\/g, '/'));
+            changed = true;
+          }
+        }
+        if (changed) fs.writeFileSync(fp, content, 'utf8');
+      });
+    };
+    fixPathsInDir(runBaseDir);
+  }
+
+  // If POM tests file doesn't exist on disk, check if tests/ folder has any .robot file
+  if (isPomTest && !fs.existsSync(robotFile)) {
+    const testsDir = path.join(TESTS_DIR, 'tests');
+    if (fs.existsSync(testsDir)) {
+      const robotFiles = fs.readdirSync(testsDir).filter(f => f.endsWith('.robot'));
+      if (robotFiles.length > 0) {
+        const existingTest = path.join(testsDir, robotFiles[0]);
+        console.log('  POM: using existing test file:', robotFiles[0]);
+        const cmd3 = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${robotFiles[0]}"`;
+        _rfProcess = exec(cmd3, { cwd: testsDir, timeout: 120000 }, (err, stdout, stderr) => {
+          _rfProcess = null;
+          if (!fs.existsSync(outputXml)) {
+            return res.status(500).json({ error: 'Robot Framework n\'a pas pu démarrer', details: stderr || err?.message || stdout });
+          }
+          try {
+            const xml = fs.readFileSync(outputXml, 'utf8');
+            const results = parseRobotOutput(xml, stdout, stderr);
+            const logFile = safeBase + '_log.html';
+            if (fs.existsSync(path.join(TESTS_DIR, logFile))) {
+              results.logUrl  = 'http://localhost:3001/rf_tests/' + logFile;
+              results.logPath = logFile;
+            }
+            res.json(results);
+          } catch(e) { res.status(500).json({ error: 'Erreur parsing: ' + e.message }); }
+        });
+        return;
+      }
+    }
+    return res.status(500).json({ error: 'Fichier tests/ introuvable. Régénère le code RF d\'abord.', details: robotFile });
+  }
+
+  console.log('  Exec:', execTarget, 'cwd:', execCwd);
+  const cmd = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execTarget}"`;
+
+  _rfProcess = exec(cmd, { cwd: execCwd, timeout: 120000 }, (err, stdout, stderr) => {
+    _rfProcess = null;
+    // Parse output.xml regardless of exit code (tests may fail but XML is generated)
+    if (!fs.existsSync(outputXml)) {
+      return res.status(500).json({
+        error: 'Robot Framework n\'a pas pu démarrer',
+        details: stderr || err?.message || stdout,
+      });
+    }
+
+    try {
+      const xml     = fs.readFileSync(outputXml, 'utf8');
+      const results = parseRobotOutput(xml, stdout, stderr);
+      // Add log URL
+      const logFile = safeBase + '_log.html';
+      if (fs.existsSync(path.join(TESTS_DIR, logFile))) {
+        results.logUrl  = 'http://localhost:3001/rf_tests/' + logFile;
+        results.logPath = logFile;
+      }
+      // Keep XML for history
+      try {
+        const xmlFiles = fs.readdirSync(TESTS_DIR)
+          .filter(f => f.includes(safeBase) && f.endsWith('_output.xml'))
+          .sort();
+        if (xmlFiles.length > 10) {
+          xmlFiles.slice(0, xmlFiles.length - 10).forEach(f => {
+            try { fs.unlinkSync(path.join(TESTS_DIR, f)); } catch(e) {}
+          });
+        }
+      } catch(e) {}
+      // Effacer protection variables.robot après run
+      manuallyEditedFiles.delete(path.join(TESTS_DIR, 'resources', 'variables.robot'));
+      res.json(results);
+    } catch(parseErr) {
+      res.status(500).json({ error: 'Erreur parsing output.xml: ' + parseErr.message });
+    }
+  });
+});
+
+// ── POST /api/rf/save ─────────────────────────────────────────
+// Body: { code, filename } — saves .robot file, returns path
+app.post('/api/rf/save', (req, res) => {
+  const { code, filename } = req.body;
+  if (!code) return res.status(400).json({ error: "code requis" });
+  console.log("[RUN] isPlaywright check:", code.includes("Library    Browser"), code.includes("New Browser"), code.slice(0,100));
+  const safeName  = (filename || 'test_generated').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/\.robot$/, '');
+  const robotFile = path.join(TESTS_DIR, safeName + '.robot');
+  fs.writeFileSync(robotFile, code, 'utf8');
+  res.json({ success: true, path: robotFile });
+});
+
+// ── Parse Robot Framework output.xml ─────────────────────────
+function parseRobotOutput(xml, stdout, stderr) {
+  const results = {
+    status:    'UNKNOWN',
+    total:     0,
+    passed:    0,
+    failed:    0,
+    skipped:   0,
+    duration:  0,
+    startTime: '',
+    endTime:   '',
+    tests:     [],
+    stdout,
+    stderr,
+  };
+
+  // RF7 statistics — <stat pass="3" fail="0" skip="0">All Tests</stat>
+  const statMatch = xml.match(/<stat[^>]*pass="(\d+)"[^>]*fail="(\d+)"[^>]*skip="(\d+)"[^>]*>All Tests<\/stat>/);
+  if (statMatch) {
+    results.passed  = parseInt(statMatch[1]);
+    results.failed  = parseInt(statMatch[2]);
+    results.skipped = parseInt(statMatch[3]);
+    results.total   = results.passed + results.failed + results.skipped;
+    results.status  = results.failed > 0 ? 'FAIL' : results.skipped > 0 && results.passed === 0 ? 'SKIP' : 'PASS';
+  }
+
+  // Suite duration — last <status> tag inside <suite> (RF7)
+  const suiteStatusMatch = xml.match(/<suite[\s\S]*?<status[^>]*elapsed="([\d.]+)"[^>]*\/>/);
+  if (suiteStatusMatch) results.duration = Math.round(parseFloat(suiteStatusMatch[1]) * 1000);
+
+  const robotMatch = xml.match(/<robot[^>]*generated="([^"]+)"[^>]*>/);
+  if (robotMatch) results.startTime = robotMatch[1];
+
+  // Extract individual test results
+  const testRegex = /<test[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/test>/g;
+  let testMatch;
+
+  while ((testMatch = testRegex.exec(xml)) !== null) {
+    const testName    = testMatch[1];
+    const testContent = testMatch[2];
+
+    // RF7: test status — handle both self-closing and normal tags
+    // Try self-closing first: <status status="PASS" elapsed="0.365"/>
+    const allStatusTags = [
+      ...testContent.matchAll(/<status\s+status="([^"]+)"[^>]*elapsed="([\d.]+)"[^>]*\/?>/g),
+      ...testContent.matchAll(/<status\s+status="([^"]+)"[^\/>\s][^>]*>([^<]*)<\/status>/g),
+    ];
+    // Also try simple self-closing without elapsed
+    const simpleStatus = testContent.match(/<status\s+status="([^"]+)"[^>]*>/);
+    const lastStatus   = allStatusTags[allStatusTags.length - 1];
+    const rawStatus    = lastStatus ? lastStatus[1] : (simpleStatus ? simpleStatus[1] : 'UNKNOWN');
+    const status       = rawStatus === 'SKIPPED' ? 'SKIP' : rawStatus;
+    const message      = lastStatus?.[3]?.trim() || '';
+    // Fallback message from any ERROR msg
+    const errMsg       = testContent.match(/<msg[^>]*level="(?:FAIL|ERROR)"[^>]*>([^<]+)<\/msg>/);
+    const finalMessage = message || (errMsg ? errMsg[1].trim() : '');
+
+    // Duration — RF7 uses elapsed="15.171766" (seconds as float)
+    let duration = 0;
+    const testElapsedMatch = testContent.match(/<status[^>]*elapsed="([\d.]+)"/);
+    if (testElapsedMatch) {
+      duration = Math.round(parseFloat(testElapsedMatch[1]) * 1000);
+    }
+
+    // Tags
+    const tags = [];
+    const tagRegex = /<tag>([^<]+)<\/tag>/g;
+    let tagMatch;
+    while ((tagMatch = tagRegex.exec(testContent)) !== null) tags.push(tagMatch[1]);
+
+    // Keywords / steps + screenshot detection
+    const steps = [];
+    const kwRegex = /<kw[^>]*name="([^"]+)"[^>]*(?:library="([^"]*)")?[^>]*>([\s\S]*?)<\/kw>/g;
+    let kwMatch;
+    while ((kwMatch = kwRegex.exec(testContent)) !== null) {
+      const kwContent = kwMatch[3];
+      const kwStat    = kwContent.match(/<status[^>]*status="([^"]+)"[^>]*starttime="([^"]*)"[^>]*endtime="([^"]*)"[^>]*>([^<]*)<\/status>/);
+      const kwStatus  = kwStat ? kwStat[1] : 'UNKNOWN';
+      const kwMsg     = kwStat ? kwStat[4].trim() : '';
+      const kwStart   = kwStat ? kwStat[2] : '';
+      const kwEnd     = kwStat ? kwStat[3] : '';
+
+      // Duration per step
+      // Step duration — RF7: elapsed="0.125918" in seconds
+      let stepDur = 0;
+      const stepElapsedM = kwContent.match(/<status[^>]*elapsed="([\d.]+)"/);
+      if (stepElapsedM) stepDur = Math.round(parseFloat(stepElapsedM[1]) * 1000);
+
+      // Screenshot — RF7 saves as selenium-screenshot-N.png in cwd/TESTS_DIR
+      let screenshot = '';
+      // Extract filename from HTML message: href="selenium-screenshot-12.png"
+      const hrefMatch = kwContent.match(/href="([^"]+\.png)"/i) || kwMsg.match(/href="([^"]+\.png)"/i);
+      const plainMatch = kwMsg.match(/([\w\-\.]+\.png)/i);
+      const fname = (hrefMatch && hrefMatch[1]) || (plainMatch && plainMatch[1]);
+      if (fname) {
+        const searchDirs = [TESTS_DIR, __dirname, process.cwd()];
+        for (const dir of searchDirs) {
+          const p = path.join(dir, fname);
+          if (fs.existsSync(p)) {
+            try { screenshot = 'data:image/png;base64,' + fs.readFileSync(p).toString('base64'); break; }
+            catch(e) {}
+          }
+        }
+      }
+
+      steps.push({
+        name:       kwMatch[1],
+        lib:        kwMatch[2] || '',
+        status:     kwStatus,
+        message:    kwMsg,
+        duration:   stepDur,
+        screenshot: screenshot,
+      });
+    }
+
+    // Auto-capture — find latest .png in TESTS_DIR (RF7 saves there since cwd=TESTS_DIR)
+    if (status === 'FAIL' && !steps.some(s => s.screenshot)) {
+      let allPngs = [];
+      for (const dir of [TESTS_DIR, __dirname, process.cwd()]) {
+        try {
+          const files = fs.readdirSync(dir)
+            .filter(f => f.endsWith('.png'))
+            .map(f => ({ name: f, dir, time: fs.statSync(path.join(dir, f)).mtimeMs }));
+          allPngs = allPngs.concat(files);
+        } catch(e) {}
+      }
+      try {
+        const pngFiles = allPngs.sort((a, b) => b.time - a.time);
+
+        if (pngFiles.length > 0) {
+          const latestPng = path.join(pngFiles[0].dir, pngFiles[0].name);
+          try {
+            const imgData = fs.readFileSync(latestPng);
+            const b64 = 'data:image/png;base64,' + imgData.toString('base64');
+            // Attach to test as failureScreenshot
+            if (!steps.some(s => s.screenshot)) {
+              steps.push({
+                name: 'Screenshot on failure',
+                lib: 'SeleniumLibrary',
+                status: 'INFO',
+                message: pngFiles[0].name,
+                duration: 0,
+                screenshot: b64,
+              });
+            }
+          } catch(e) {}
+        }
+      } catch(e) {}
+    }
+
+    // Failure analysis
+    let failureAnalysis = '';
+    let suggestion = '';
+    if (status === 'FAIL' && finalMessage) {
+      failureAnalysis = analyzeFailure(finalMessage, testName);
+      suggestion      = suggestFix(finalMessage);
+    }
+
+    results.tests.push({
+      name: testName,
+      status,
+      duration,
+      message: finalMessage,
+      tags,
+      steps,
+      failureAnalysis,
+      suggestion,
+    });
+
+    results.duration += duration;
+  }
+
+  return results;
+}
+
+// ── Failure analysis ──────────────────────────────────────────
+function analyzeFailure(message, testName) {
+  const m = message.toLowerCase();
+  if (m.includes('element') && (m.includes('not found') || m.includes('did not appear')))
+    return '🔍 Sélecteur introuvable — l\'élément HTML n\'existe pas ou n\'est pas encore visible.';
+  if (m.includes('timeout') || m.includes('timed out'))
+    return '⏱️ Timeout — la page ou l\'élément met trop de temps à répondre.';
+  if (m.includes('connection refused') || m.includes('unreachable'))
+    return '🌐 Connexion refusée — l\'application cible n\'est pas accessible.';
+  if (m.includes('expected') && m.includes('but was'))
+    return '❗ Assertion échouée — la valeur obtenue ne correspond pas à celle attendue.';
+  if (m.includes('no browser') || m.includes('browser is not open'))
+    return '🌐 Navigateur non ouvert — une étape "Open Browser" est manquante.';
+  if (m.includes('invalid locator') || m.includes('locator'))
+    return '🏷️ Locateur invalide — la syntaxe du sélecteur CSS/XPath est incorrecte.';
+  if (m.includes('permission') || m.includes('forbidden'))
+    return '🔐 Accès refusé — vérifier les droits ou la connexion.';
+  return '⚠️ Échec inattendu — voir le message d\'erreur pour plus de détails.';
+}
+
+function suggestFix(message) {
+  const m = message.toLowerCase();
+  if (m.includes('element') && (m.includes('not found') || m.includes('did not appear')))
+    return 'Vérifier le sélecteur dans les DevTools (F12), ajouter un "Wait Until Element Is Visible".';
+  if (m.includes('timeout'))
+    return 'Augmenter le timeout : Set Selenium Timeout   15s ou utiliser "Wait Until Element Is Visible".';
+  if (m.includes('connection refused'))
+    return 'Vérifier que l\'application est démarrée et accessible sur l\'URL configurée.';
+  if (m.includes('expected') && m.includes('but was'))
+    return 'Vérifier la valeur attendue dans le test et la comparer avec la valeur réelle retournée.';
+  if (m.includes('no browser'))
+    return 'Ajouter "Open Browser  ${URL}  Chrome" avant les interactions.';
+  return 'Consulter les logs complets pour identifier la ligne exacte en erreur.';
+}
+
+
+// ── Track last tested URL for browser reuse ──────────────────────────────────
+let _lastTestedUrl = null;
+
+// ── Auto-inject screenshot on failure + keep browser open between runs ────────
+function fixSelectors(code) {
+  // Fix invalid SeleniumLibrary selector syntax
+  // id:xxx → id=xxx
+  code = code.replace(/([\s'"])id:([\w-]+)/g, '$1id=$2');
+  // css:xxx → css=xxx
+  code = code.replace(/([\s'"])css:([^\s'"]+)/g, '$1css=$2');
+  // xpath:xxx → xpath=xxx
+  code = code.replace(/([\s'"])xpath:([^\s'"]+)/g, '$1xpath=$2');
+  // css=button[@class=...] → xpath=//button[@class=...]
+  code = code.replace(/css=([a-z*]+\[@[^\]]+\])/g, 'xpath=//$1');
+  // button[@class=...] without prefix → xpath=//button[@class=...]
+  code = code.replace(/([\s'"])([a-z]+\[@[^\]]+\])([\s'"])/g, (m, pre, sel, post) => pre + 'xpath=//' + sel + post);
+  return code;
+}
+
+function fixResourcePaths(code, fileRelPath) {
+  // Compute absolute base for this file
+  const fileDir = path.join(TESTS_DIR, path.dirname(fileRelPath || '')).replace(/\\/g, '/');
+  const resourcesAbs = path.join(TESTS_DIR, 'resources').replace(/\\/g, '/');
+  const pagesAbs     = path.join(TESTS_DIR, 'resources', 'pages').replace(/\\/g, '/');
+
+  // ../resources/ → absolute (from tests/ subfolder)
+  code = code.replace(/Resource\s+\.\.\/resources\//g,  'Resource    ' + resourcesAbs + '/');
+  code = code.replace(/Resource\s+\.\.\/resources\//g, 'Resource    ' + resourcesAbs + '/');
+  // resources/ -> absolute
+  code = code.replace(/Resource\s+resources\//g, 'Resource    ' + resourcesAbs + '/');
+  code = code.replace(/Resource\s+resources\//g,       'Resource    ' + resourcesAbs + '/');
+  // pages/ → absolute (from resources/ subfolder)
+  code = code.replace(/Resource\s+pages\//g,           'Resource    ' + pagesAbs + '/');
+  // variables.robot alone → absolute
+  code = code.replace(/Resource\s+variables\.robot/g,  'Resource    ' + resourcesAbs + '/variables.robot');
+  return code;
+}
+
+function injectScreenshotOnFailure(code, browserSession) {
+  browserSession = browserSession || 'per-test';
+  if (!code.includes('SeleniumLibrary') && !code.includes('Browser')) return code;
+
+  // Register screenshot on failure — ONLY in test files (not resource files)
+  const isResourceFile = code.includes('*** Keywords ***') && !code.includes('*** Test Cases ***');
+  const isBrowserLib = code.includes('Library    Browser') && !code.includes('SeleniumLibrary');
+
+  if (!isResourceFile) {
+    if (isBrowserLib) {
+      // Browser library: no screenshot teardown injection — page may be closed
+      // Screenshots are taken by Browser library's built-in failure handling
+    } else if (!code.includes('Register Keyword To Run On Failure') && !code.includes('Suite Setup')) {
+      // SeleniumLibrary / AppiumLibrary
+      code = code.replace(
+        /(\*\*\* Settings \*\*\*[^\n]*\n)/,
+        '$1Suite Setup    Register Keyword To Run On Failure    Capture Page Screenshot\n'
+      );
+    }
+  }
+  // Replace any remaining Capture Page Screenshot with Take Screenshot for Browser lib
+  if (isBrowserLib) {
+    code = code.replace(/Capture Page Screenshot/g, 'Take Screenshot');
+    // Also fix in [Teardown] lines
+    code = code.replace(/\[Teardown\]\s+Capture Page Screenshot/g, '[Teardown]    Take Screenshot');
+  }
+
+  // ── Clean malformed test cases — remove Settings lines leaked into *** Test Cases ***
+  if (code.includes('*** Test Cases ***')) {
+    // First: remove duplicate *** Settings *** sections — keep only the first
+    const settingsSections = [...code.matchAll(/^\*{3}\s*Settings\s*\*{3}[^\n]*$/gm)];
+    if (settingsSections.length > 1) {
+      // Remove all Settings sections after the first
+      let firstFound = false;
+      code = code.split('\n').reduce((acc, line) => {
+        if (/^\*{3}\s*Settings\s*\*{3}/.test(line)) {
+          if (!firstFound) { firstFound = true; acc.push(line); }
+          // Skip subsequent Settings headers and their content until next ***
+          return acc;
+        }
+        acc.push(line);
+        return acc;
+      }, []).join('\n');
+    }
+
+    // Second: fix missing *** Settings *** header and clean leaked directives
+    const lines2 = code.split('\n');
+    const firstLine = lines2[0]?.trim();
+    // If file starts with a directive without *** Settings ***, add it
+    const startsWithDirective = /^(Documentation|Library|Resource|Suite Setup|Suite Teardown|Test Setup|Test Teardown)[ \t]+/.test(firstLine);
+    const hasSettingsHeader = code.includes('*** Settings');
+    if (startsWithDirective && !hasSettingsHeader) {
+      code = '*** Settings ***\n' + code;
+    }
+
+    // Now clean leaked directives inside *** Test Cases ***
+    const lines3 = code.split('\n');
+    let inTests3 = false;
+    const cleaned3 = [];
+    for (const line of lines3) {
+      const t = line.trim();
+      if (!t) { cleaned3.push(line); continue; }
+      if (/^\*{3}\s*Test Cases/.test(t)) { inTests3 = true; cleaned3.push(line); continue; }
+      if (/^\*{3}/.test(t))               { inTests3 = false; cleaned3.push(line); continue; }
+      if (inTests3) {
+        const isLeaked = /^(Documentation|Library|Resource|Suite Setup|Suite Teardown|Test Setup|Test Teardown|Metadata|Force Tags|Default Tags|Variables)[ \t]+/.test(t)
+          && !/^[ \t]/.test(line);
+        if (isLeaked) continue;
+      }
+      cleaned3.push(line);
+    }
+    code = cleaned3.join('\n');
+  }
+
+  // ── Browser session mode ─────────────────────────────────────────────────────
+  const bSession = browserSession || 'per-test';
+  const hasTestCases = code.includes('*** Test Cases ***');
+
+  if (bSession === 'per-suite' && hasTestCases) {
+    // Find Open Browser in tests.robot OR in keywords/pages files on disk
+    let openBrowserMatches = [...code.matchAll(/Open Browser\s+(\S+)\s+(\S+)/g)];
+
+    // If not in tests.robot, search in resources on disk
+    if (openBrowserMatches.length === 0) {
+      const searchDirs = [
+        path.join(TESTS_DIR, 'resources'),
+        path.join(TESTS_DIR, 'tests'),
+      ];
+      for (const dir of searchDirs) {
+        if (!fs.existsSync(dir)) continue;
+        const files = fs.readdirSync(dir);
+        for (const f of files) {
+          if (!f.endsWith('.robot')) continue;
+          try {
+            const content = fs.readFileSync(path.join(dir, f), 'utf8');
+            const matches = [...content.matchAll(/Open Browser\s+(\S+)\s+(\S+)/g)];
+            if (matches.length > 0) { openBrowserMatches = matches; break; }
+          } catch(e) {}
+        }
+        if (openBrowserMatches.length > 0) break;
+      }
+    }
+
+    // Fallback URL from variables.robot
+    let firstUrl     = '\${BASE_URL}';
+    let firstBrowser = '\${BROWSER}';
+    if (openBrowserMatches.length > 0) {
+      firstUrl     = openBrowserMatches[0][1] || '\${BASE_URL}';
+      firstBrowser = openBrowserMatches[0][2] || '\${BROWSER}';
+    } else {
+      // Read BASE_URL from variables.robot
+      try {
+        const varFile = path.join(TESTS_DIR, 'resources', 'variables.robot');
+        if (fs.existsSync(varFile)) {
+          const varContent = fs.readFileSync(varFile, 'utf8');
+          const urlMatch = varContent.match(/\$\{BASE_URL\}\s+(\S+)/);
+          if (urlMatch) firstUrl = urlMatch[1];
+        }
+      } catch(e) {}
+    }
+    const allSameApp = true;
+
+      if (allSameApp) {
+        // ── Suite Teardown : Open once → run all tests → Close once ──────────
+        function fixSuiteMode(c) {
+          // Replace Open Browser with Go To (but NOT in Suite Setup lines)
+          c = c.replace(/^([ \t]+)Open Browser\s+(\S+)(.*)?$/gm, (m, indent, url) => indent + 'Go To    ' + url);
+          // Protect Suite Setup — convert back if accidentally converted
+          c = c.replace(/^(Suite Setup[ \t]+)Go To([ \t]+\S+)([ \t]*)$/gm,
+            (m, prefix, url) => prefix + 'Open Browser' + url + '    \${BROWSER}');
+
+          // Remove ALL direct close keywords
+          c = c.replace(/^[ \t]+(Close Browser|Close Application|Close Mobile Browser|Close Browser Session)[^\n]*$/gm, '');
+
+          // Remove [Teardown] lines
+          c = c.replace(/^[ \t]+\[Teardown\][^\n]*$/gm, '');
+
+          // Remove ANY BDD step that contains "close" + (browser/application/session)
+          c = c.replace(/^[ \t]+(Given|When|Then|And|But|Finally)[ \t]+[^\n]*(Close|close)[^\n]*(Browser|Application|Session|browser|application|session)[^\n]*$/gm, '');
+
+          // Remove ANY BDD step that opens browser in per-suite mode
+          // e.g. "Given User Opens Login Application", "Given Open Login Page"
+          c = c.replace(/^[ \t]+(Given|When|Then|And|But)[ \t]+[^\n]*(Open|open)[^\n]*(Login|Page|App|Application|Browser|browser)[^\n]*$/gm, '');
+
+          // Remove direct Open Browser calls (not already handled)
+          c = c.replace(/^[ \t]+Open Application[^\n]*$/gm, '');
+
+          return c;
+        }
+
+        code = fixSuiteMode(code);
+
+        // Remove Test Teardown / Suite Setup injected previously
+        code = code.replace(/^Test Teardown[^\n]+\n?/gm, '');
+        code = code.replace(/^Suite Setup\s+Register Keyword To Run On Failure[^\n]+\n?/gm, '');
+
+        // Also fix resource files on disk (keywords.robot, pages/*.robot)
+        const resourcesPath = path.join(TESTS_DIR, 'resources');
+        if (fs.existsSync(resourcesPath)) {
+          const fixDir = (dir) => {
+            fs.readdirSync(dir).forEach(f => {
+              const fp = path.join(dir, f);
+              if (fs.statSync(fp).isDirectory()) { fixDir(fp); return; }
+              if (!f.endsWith('.robot')) return;
+              try {
+                const content = fs.readFileSync(fp, 'utf8');
+                const fixed   = fixSuiteMode(content);
+                if (fixed !== content) {
+                  fs.writeFileSync(fp, fixed, 'utf8');
+                  console.log('  Suite mode: fixed', f);
+                }
+              } catch(e) {}
+            });
+          };
+          fixDir(resourcesPath);
+        }
+
+        // Remove existing Suite Setup / Suite Teardown
+        code = code.replace(/^Suite Setup[^\n]+\n?/gm, '');
+        code = code.replace(/^Suite Teardown[^\n]+\n?/gm, '');
+
+        // Add Suite Setup (Open Browser ONCE) AFTER fixSuiteMode so it's not converted to Go To
+        const popupOptsLine = '    options=' + popupArgs;
+        const optsSuffix = '    options=' + popupArgs;
+        // Use firstUrl/firstBrowser already detected from Open Browser calls
+        // They come from keywords.robot and pages/*.robot files
+        let urlVar = firstUrl || '\${BASE_URL}';
+        let browserVar = firstBrowser || '\${BROWSER}';
+        // If firstUrl is a hardcoded URL (not a variable), convert to variable
+        if (!urlVar.startsWith('\${')) {
+          urlVar = '\${BASE_URL}';
+        }
+
+        code = code.replace(
+          /(\*\*\* Settings \*\*\*[^\n]*\n)/,
+          '$1Suite Setup       Open Browser    ' + urlVar + '    ' + browserVar + optsSuffix + '\n' +
+          (code.includes('AppiumLibrary') ? 'Suite Teardown    Close Application\n' : 'Suite Teardown    Close Browser\n') +
+          'Test Setup        Go To    ' + urlVar + '\n'
+        );
+    }
+
+  } else if (bSession === 'per-test' && hasTestCases) {
+    // ── Test Teardown : each test opens and closes its own browser ────────────
+    const isAppium = code.includes('AppiumLibrary');
+    const closeCmd = isAppium ? 'Close Application' : 'Close Browser';
+
+    // For Appium: if each test already calls Close Mobile Browser / Close Application
+    // don't inject Test Teardown to avoid double close
+    const alreadyCloses = isAppium
+      ? (code.includes('Close Mobile Browser') || code.includes('Close Application'))
+      : (code.includes('Close Browser'));
+
+    if (!alreadyCloses) {
+      code = code.replace(
+        /(\*\*\* Settings \*\*\*[^\n]*\n)/,
+        '$1Test Teardown    Run Keywords    Capture Page Screenshot    AND    ' + closeCmd + '\n'
+      );
+    } else {
+      // Just add screenshot on failure without close
+      code = code.replace(
+        /(\*\*\* Settings \*\*\*[^\n]*\n)/,
+        '$1Test Teardown    Capture Page Screenshot\n'
+      );
+    }
+    // Remove individual [Teardown] lines to avoid duplicates
+    code = code.replace(/^([ \t]+)\[Teardown\][^\n]+$/gm, '');
+  }
+
+  // Detect base URL in this test
+  const urlMatch = code.match(/Open Browser\s+(\S+)\s+/);
+  const currentUrl = urlMatch ? urlMatch[1] : null;
+  const baseUrl = currentUrl ? (() => {
+    try { const u = new URL(currentUrl.replace(/\${[^}]+}/g,'http://placeholder')); return u.hostname; } catch(e) { return currentUrl; }
+  })() : null;
+
+  // If same app (same hostname) — don't close browser between tests, reuse it
+  const sameApp = _lastTestedUrl && baseUrl && _lastTestedUrl === baseUrl;
+
+  if (sameApp) {
+    // Replace "Close Browser" teardown with just a screenshot — keep browser open
+    code = code.replace(
+      /\[Teardown\]\s+Close Browser\s*$/gm,
+      '[Teardown]    Capture Page Screenshot'
+    );
+    code = code.replace(
+      /\[Teardown\]\s+Run Keywords\s+Capture Page Screenshot\s+AND\s+Close Browser/g,
+      '[Teardown]    Capture Page Screenshot'
+    );
+    // Replace Open Browser with Switch Browser or Go To if browser already open
+    code = code.replace(
+      /(Open Browser\s+)(\S+)(\s+)(chrome|Chrome)/g,
+      'Go To    $2'
+    );
+  } else {
+    // Different app or first run — close browser normally after tests
+    code = code.replace(
+      /\[Teardown\]\s+Close Browser/g,
+      '[Teardown]    Run Keywords    Capture Page Screenshot    AND    Close Browser'
+    );
+  }
+
+  if (baseUrl) _lastTestedUrl = baseUrl;
+
+  return code;
+}
+
+
+// ── RF process control ────────────────────────────────────────────────────────
+let _rfProcess = null;
+
+app.post('/api/rf/stop', (req, res) => {
+  if (_rfProcess) {
+    try {
+      // Windows: use taskkill to force kill the process tree
+      if (process.platform === 'win32') {
+        exec('taskkill /PID ' + _rfProcess.pid + ' /T /F', () => {});
+      } else {
+        process.kill(-_rfProcess.pid, 'SIGKILL');
+      }
+    } catch(e) {
+      try { _rfProcess.kill('SIGKILL'); } catch(e2) {}
+    }
+    _rfProcess = null;
+    res.json({ stopped: true });
+  } else {
+    res.json({ stopped: false, msg: 'No active process' });
+  }
+});
+
+app.post('/api/rf/pause',  (req, res) => res.json({ ok: true }));
+app.post('/api/rf/resume', (req, res) => res.json({ ok: true }));
+
+// Store last run results for polling after refresh
+let _lastResults = null;
+
+app.get('/api/rf/status', (req, res) => {
+  res.json({
+    status: _rfProcess ? 'running' : 'idle',
+    results: _lastResults,
+  });
+});
+
+
+// ── Cross-check keyword names between tests.robot and keywords.robot ──────────
+
+// ── Final cleanup of robot files — remove duplicates and fix keywords ─────────
+function finalCleanupRobotFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  try {
+    let code = fs.readFileSync(filePath, 'utf8');
+    const isBrowser  = code.includes('Library    Browser') && !code.includes('SeleniumLibrary');
+    const isResource = code.includes('*** Keywords ***') && !code.includes('*** Test Cases ***');
+
+    // Remove Settings directives from resource files (not allowed)
+    if (isResource) {
+      ['Test Teardown', 'Suite Setup', 'Suite Teardown', 'Test Setup',
+       'Suite Setup    Register', 'Test Teardown    Run Keywords'].forEach(key => {
+        const re = new RegExp('^' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^\n]*\n', 'gm');
+        code = code.replace(re, '');
+      });
+    } else {
+      // For Browser lib: remove Test Teardown Take Screenshot entirely (page may be closed)
+      if (isBrowser) {
+        code = code.replace(/^Test Teardown\s+Take Screenshot\s*\n/gm, '');
+        code = code.replace(/^Test Teardown\s+Run Keywords.*Screenshot.*\n/gm, '');
+      }
+      // Remove duplicate Test Teardown / Suite Setup — keep last
+      ['Test Teardown', 'Suite Setup', 'Suite Teardown', 'Test Setup'].forEach(key => {
+        const re = new RegExp('^' + key + '[^\n]*\n', 'gm');
+        const matches = code.match(re) || [];
+        if (matches.length > 1) {
+          matches.slice(0, -1).forEach(m => { code = code.replace(m, ''); });
+        }
+      });
+    }
+
+    // Fix bare #id selectors in variable values → add css= prefix
+    code = code.replace(/^(\$\{\w+\})\s+(#[\w-]+)$/gm, '$1    css=$2');
+
+    // Final keyword fix for Browser lib
+    if (isBrowser) {
+      code = code.replace(/Capture Page Screenshot/g, 'Take Screenshot');
+    }
+
+    fs.writeFileSync(filePath, code, 'utf8');
+  } catch(e) { console.error('  Cleanup error:', e.message); }
+}
+
+// ── Remove duplicate keyword definitions across files ─────────────────────────
+function deduplicateKeywords(testsDir) {
+  const keywordMap = {}; // keyword name → first file that defines it
+  const robotDirs = [
+    path.join(testsDir, 'resources'),
+    path.join(testsDir, 'resources', 'pages'),
+    path.join(testsDir, 'tests'),
+  ];
+
+  // First pass: collect all keyword definitions
+  robotDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) return;
+    fs.readdirSync(dir).filter(f => f.endsWith('.robot')).forEach(file => {
+      const fp = path.join(dir, file);
+      const content = fs.readFileSync(fp, 'utf8');
+      const kwMatches = [...content.matchAll(/^([A-Za-zÀ-ÿ][^\n]+)\n(?:[ \t]+[^\n]+\n)+/gm)];
+      kwMatches.forEach(m => {
+        const name = m[1].trim();
+        if (!name.startsWith('#') && !name.startsWith('*') && !name.startsWith('$') && !name.startsWith('[')) {
+          if (!keywordMap[name]) keywordMap[name] = fp;
+        }
+      });
+    });
+  });
+
+  // Second pass: remove duplicate keyword blocks (keep first occurrence)
+  const seen = {};
+  robotDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) return;
+    fs.readdirSync(dir).filter(f => f.endsWith('.robot')).forEach(file => {
+      const fp = path.join(dir, file);
+      let content = fs.readFileSync(fp, 'utf8');
+      let changed = false;
+      let inKw = false;
+      let kwName = '';
+      const lines = content.split('\n');
+      const result = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const t = line.trim();
+        if (t.startsWith('*** Keywords')) { inKw = true; result.push(line); continue; }
+        if (t.startsWith('***') && !t.startsWith('*** Keywords')) { inKw = false; result.push(line); continue; }
+        if (inKw && /^[A-Za-zÀ-ÿ]/.test(line) && !t.startsWith('#')) {
+          kwName = t;
+          if (seen[kwName] && seen[kwName] !== fp) {
+            // Skip this keyword block
+            while (i + 1 < lines.length && /^[ \t]/.test(lines[i + 1])) i++;
+            changed = true;
+            continue;
+          }
+          seen[kwName] = fp;
+        }
+        result.push(line);
+      }
+
+      if (changed) {
+        fs.writeFileSync(fp, result.join('\n'), 'utf8');
+        console.log('  Dedup: removed duplicate keywords in', file);
+      }
+    });
+  });
+}
+
+
+// ── Clean Robot Framework code before writing to disk ────────────────────────
+function cleanRobotCodeServer(code) {
+  if (!code) return '';
+
+  // 0. Fix keywords inexistants
+  code = code.replace(/Location Should Not Be/g, 'Location Should Be');
+  code = code.replace(/Page Should Not Contain Element/g, 'Page Should Not Contain');
+  code = code.replace(/Element Should Not Be Visible/g, 'Element Should Not Be Visible');
+
+  // 1. Fix missing *** Settings *** header
+  const firstLine = code.split('\n')[0]?.trim();
+  const startsWithDirective = /^(Documentation|Library|Resource|Suite Setup|Suite Teardown)[ \t]+/.test(firstLine);
+  if (startsWithDirective && !code.includes('*** Settings')) {
+    code = '*** Settings ***\n' + code;
+  }
+
+  // 2. Remove duplicate *** Settings *** sections — keep only first
+  let settingsCount = 0;
+  let skipMode = false;
+  const lines = code.split('\n');
+  const result = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if (/^\*{3}\s*Settings\s*\*{3}/.test(t)) {
+      settingsCount++;
+      if (settingsCount > 1) { skipMode = true; continue; }
+      skipMode = false;
+      result.push(line);
+      continue;
+    }
+    if (/^\*{3}/.test(t) && !/^\*{3}\s*Settings/.test(t)) skipMode = false;
+    if (skipMode) continue;
+    result.push(line);
+  }
+  code = result.join('\n');
+
+  // 3. Remove leaked Settings directives AND fake TC_XXX Settings test cases
+  const lines2 = code.split('\n');
+  let inTests = false;
+  let skipFakeTC = false;
+  const cleaned = [];
+
+  for (let i = 0; i < lines2.length; i++) {
+    const line = lines2[i];
+    const t = line.trim();
+
+    if (!t) { if (!skipFakeTC) cleaned.push(line); continue; }
+    if (/^\*{3}\s*Test Cases/.test(t)) { inTests = true; skipFakeTC = false; cleaned.push(line); continue; }
+    if (/^\*{3}/.test(t))               { inTests = false; skipFakeTC = false; cleaned.push(line); continue; }
+
+    if (inTests) {
+      // Detect fake TC: "TC_XXX Documentation ...", "TC_XXX Library ...", "TC_XXX Resource ..."
+      const isFakeTC = /^TC_\d+\s+(Documentation|Library|Resource|Suite Setup|Suite Teardown|Variables)\s+/.test(t)
+        && !/^\s/.test(line);
+
+      // Also detect raw Settings leaked (no TC_ prefix)
+      const isLeakedSetting = /^(Documentation|Library|Resource|Suite Setup|Suite Teardown|Test Setup|Test Teardown|Metadata|Variables)[ \t]+/.test(t)
+        && !/^[ \t]/.test(line);
+
+      if (isFakeTC) {
+        skipFakeTC = true; // skip this line and its indented body
+        continue;
+      }
+      if (isLeakedSetting) continue;
+
+      // If we hit a real TC (TC_XXX with a real name or BDD step), stop skipping
+      if (skipFakeTC && /^[A-Za-zÀ-ÿ0-9_]/.test(line) && !/^\s/.test(line)) {
+        skipFakeTC = false;
+      }
+      if (skipFakeTC) continue; // skip indented body of fake TC
+    }
+
+    cleaned.push(line);
+  }
+  return cleaned.join('\n');
+}
+
+
+// ── Merge duplicate RF sections (Settings, Keywords, Test Cases) ──────────────
+function mergeRobotSections(code) {
+  const sectionRe = /^(\*{3}[^\n]+\*{3}[^\n]*)$/gm;
+  const lines = code.split('\n');
+  const sections = {};
+  let currentSection = null;
+
+  // Parse all sections
+  for (const line of lines) {
+    if (/^\*{3}/.test(line.trim())) {
+      const name = line.trim().replace(/\*/g,'').trim().split(' ')[0];
+      if (!sections[name]) sections[name] = { header: line, lines: [] };
+      else sections[name].lines.push(''); // separator
+      currentSection = name;
+    } else if (currentSection) {
+      sections[currentSection].lines.push(line);
+    }
+  }
+
+  // Rebuild in order: Settings, Variables, Keywords (from pages), Keywords, Test Cases
+  const order = ['Settings', 'Variables', 'Keywords', 'Test', 'Tasks'];
+  let result = '';
+  const added = new Set();
+
+  for (const key of Object.keys(sections)) {
+    const sec = sections[key];
+    result += sec.header + '\n' + sec.lines.join('\n') + '\n\n';
+  }
+
+  return result;
+}
+
+function crossCheckKeywords(testsDir) {
+  const testsFile   = path.join(testsDir, 'tests.robot');
+  const kwFile      = path.join(path.dirname(testsDir), 'resources', 'keywords.robot');
+  
+  if (!fs.existsSync(testsFile) || !fs.existsSync(kwFile)) return;
+
+  const kwContent   = fs.readFileSync(kwFile, 'utf8');
+  const testContent = fs.readFileSync(testsFile, 'utf8');
+
+  // Extract defined keyword names from keywords.robot AND pages/*.robot
+  const definedKws = [];
+  let inKeywordsSection = false;
+
+  const extractKws = (content) => {
+    inKeywordsSection = false;
+    content.split('\n').forEach(line => {
+      if (line.startsWith('*** Keywords')) { inKeywordsSection = true; return; }
+      if (line.startsWith('***')) { inKeywordsSection = false; return; }
+      if (inKeywordsSection && line && !/^\s/.test(line) && !line.startsWith('#') && line.trim()) {
+        definedKws.push(line.trim());
+      }
+    });
+  };
+
+  extractKws(kwContent);
+
+  // Also check pages/*.robot
+  const pagesDir = path.join(path.dirname(testsDir), 'resources', 'pages');
+  if (fs.existsSync(pagesDir)) {
+    fs.readdirSync(pagesDir).filter(f => f.endsWith('.robot')).forEach(f => {
+      try { extractKws(fs.readFileSync(path.join(pagesDir, f), 'utf8')); } catch(e) {}
+    });
+  }
+
+  if (definedKws.length === 0) return;
+
+  // For each BDD step in tests.robot, find the best matching keyword
+  let fixed = testContent;
+  const bddPrefixes = ['Given ', 'When ', 'And ', 'Then ', 'But '];
+
+  let inTestCases = false;
+  testContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('*** Test Cases')) { inTestCases = true; return; }
+    if (trimmed.startsWith('***')) { inTestCases = false; return; }
+    if (!inTestCases || !trimmed) return;
+    if (!/^\s+/.test(line)) return;
+
+    const prefix = bddPrefixes.find(p => trimmed.startsWith(p));
+    if (!prefix) return;
+
+    const stepName = trimmed.slice(prefix.length).trim();
+
+    // 1. Check if keyword exists with NO prefix
+    const noPrefixMatch = definedKws.find(kw => kw.toLowerCase() === stepName.toLowerCase());
+    if (noPrefixMatch) return; // RF will strip prefix automatically
+
+    // 2. Check if keyword exists WITH a different BDD prefix
+    // e.g. test calls "And X" but keyword is "When X" — fix the prefix
+    const withPrefixMatch = definedKws.find(kw => {
+      const kwNoPrefix = bddPrefixes.reduce((s, p) => s.startsWith(p) ? s.slice(p.length).trim() : s, kw);
+      return kwNoPrefix.toLowerCase() === stepName.toLowerCase();
+    });
+    if (withPrefixMatch) {
+      // Replace "And X" with the correct keyword name as defined
+      const oldStep = line;
+      const indent  = line.match(/^(\s+)/)?.[1] || '    ';
+      const newStep = indent + withPrefixMatch;
+      fixed = fixed.split('\n').map(l => l === oldStep ? newStep : l).join('\n');
+      console.log('  Cross-check prefix fix:', trimmed, '→', withPrefixMatch);
+      return;
+    }
+
+    // Check if this keyword exists (exact match or BDD prefix variant)
+    const exactMatch = definedKws.find(kw =>
+      kw.toLowerCase() === stepName.toLowerCase() ||
+      kw.toLowerCase() === (prefix.trim() + ' ' + stepName).toLowerCase()
+    );
+    if (exactMatch) return; // already matches
+
+    // Find best fuzzy match — same words regardless of BDD prefix
+    const stepWords = stepName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+    let bestMatch = null;
+    let bestScore = 0;
+
+    definedKws.forEach(kw => {
+      // Remove any BDD prefix from keyword name for comparison
+      const kwClean = kw.replace(/^(Given|When|Then|And|But|Etant donné que?|Quand|Alors|Et|Mais)\s+/i, '').toLowerCase();
+      const kwWords = kwClean.replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+      const common  = stepWords.filter(w => kwWords.some(kw2 => kw2.includes(w) || w.includes(kw2))).length;
+      const score   = common / Math.max(stepWords.length, kwWords.length, 1);
+      if (score > bestScore && score > 0.3) { bestScore = score; bestMatch = kw; }
+    });
+
+    if (bestMatch) {
+      // Replace the step with the correct keyword name
+      const oldStep = '    ' + trimmed;
+      const newStep = '    ' + prefix + bestMatch.replace(/^(Given|When|Then|And|But|Etant donné que?|Quand|Alors|Et|Mais)\s+/i, '').trim();
+      // Only replace if different
+      if (oldStep !== newStep) {
+        fixed = fixed.replace(oldStep, newStep);
+        console.log('  Cross-check: ' + trimmed + ' → ' + newStep.trim());
+      }
+    }
+  });
+
+  if (fixed !== testContent) {
+    fs.writeFileSync(testsFile, fixed, 'utf8');
+    console.log('  Cross-check: tests.robot updated');
+  }
+
+  // ── Fix missing arguments ─────────────────────────────────────────────────
+  // Extract keyword signatures (name + arguments) from all resource files
+  const kwSignatures = {};
+  const extractSignatures = (content) => {
+    const lines = content.split('\n');
+    let inKw = false, currentKw = null;
+    for (const line of lines) {
+      if (line.startsWith('*** Keywords')) { inKw = true; continue; }
+      if (line.startsWith('***')) { inKw = false; currentKw = null; continue; }
+      if (!inKw) continue;
+      if (line && !/^\s/.test(line) && line.trim()) {
+        currentKw = line.trim();
+        kwSignatures[currentKw.toLowerCase()] = { name: currentKw, args: [] };
+      } else if (currentKw && line.trim().startsWith('[Arguments]')) {
+        const argsStr = line.replace(/\[Arguments\]/, '').trim();
+        kwSignatures[currentKw.toLowerCase()].args = argsStr.split(/\s{2,}|\t/).map(a => a.trim()).filter(a => a.startsWith('$') || a.startsWith('@') || a.startsWith('&'));
+      }
+    }
+  };
+
+  extractSignatures(kwContent);
+  if (fs.existsSync(pagesDir)) {
+    fs.readdirSync(pagesDir).filter(f => f.endsWith('.robot')).forEach(f => {
+      try { extractSignatures(fs.readFileSync(path.join(pagesDir, f), 'utf8')); } catch(e) {}
+    });
+  }
+
+  // Now fix missing arguments in tests.robot
+  let fixed2 = fs.readFileSync(testsFile, 'utf8');
+  let changed2 = false;
+  const lines2 = fixed2.split('\n');
+  let inTC = false;
+  const fixed2Lines = lines2.map(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('*** Test Cases')) { inTC = true; return line; }
+    if (trimmed.startsWith('***')) { inTC = false; return line; }
+    if (!inTC || !trimmed || !/^\s+/.test(line)) return line;
+
+    const prefix = bddPrefixes.find(p => trimmed.startsWith(p));
+    const stepName = prefix ? trimmed.slice(prefix.length).trim() : trimmed;
+    const stepNameClean = stepName.split(/\s{2,}|\t/)[0].trim(); // keyword name only (no args)
+
+    // Find signature
+    const sig = kwSignatures[stepNameClean.toLowerCase()];
+    if (!sig || sig.args.length === 0) return line;
+
+    // Count existing args in the call
+    const parts = trimmed.split(/\s{2,}|\t/);
+    const kwPart = prefix ? parts[0] : parts[0];
+    const existingArgs = parts.slice(1).filter(a => a.trim());
+
+    if (existingArgs.length >= sig.args.length) return line; // args already present
+
+    // Inject placeholder args
+    const indent = line.match(/^(\s+)/)?.[1] || '    ';
+    // Try to extract value from the keyword call name context
+    const stepLower = stepNameClean.toLowerCase();
+    const numMatch = stepLower.match(/\b(\d+)\b/);
+    const placeholders = sig.args.map(a => {
+      // Garder le nom de l'argument original — ne pas remplacer par des generiques inexistants
+      if (a.startsWith('${') && a.endsWith('}')) return a;
+      const name = a.replace(/[${}]/g, '').toLowerCase();
+      if (name === 'url') return '${BASE_URL}';
+      if (name === 'browser') return '${BROWSER}';
+      if (numMatch) return numMatch[1];
+      return a;
+    });
+    const newLine = indent + kwPart + '    ' + placeholders.join('    ');
+    console.log('  Cross-check args fix:', trimmed, '→', newLine.trim());
+    changed2 = true;
+    return newLine;
+  });
+
+  if (changed2) {
+    fs.writeFileSync(testsFile, fixed2Lines.join('\n'), 'utf8');
+    console.log('  Cross-check: tests.robot args updated');
+  }
+}
+
+// ── Deduplicate *** Variables *** section — keep first occurrence ─────────────
+function deduplicateRobotVariables(code) {
+  const lines = code.split('\n');
+  const seen = new Set();
+  const out = [];
+  let inVars = false, varsWritten = false;
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (t.startsWith('*** Variables')) {
+      if (varsWritten) { inVars = true; continue; } // skip duplicate header
+      varsWritten = true; inVars = true; out.push(line); continue;
+    }
+    if (t.startsWith('***')) { inVars = false; out.push(line); continue; }
+    if (inVars && t) {
+      // Extract variable name (e.g. ${BASE_URL} from "${BASE_URL}    value")
+      const varName = t.match(/^(\$\{[^}]+\}|\@\{[^}]+\}|\&\{[^}]+\})/)?.[1]?.toLowerCase();
+      if (varName) {
+        if (seen.has(varName)) continue; // skip duplicate variable
+        seen.add(varName);
+      }
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
+// ── Deduplicate Settings + Keywords sections ─────────────────────────────────
+function deduplicateRobotSettings(code) {
+  const lines = code.split('\n');
+  const seenSettings = new Set();
+  const seenKeywords = new Set();
+  const out = [];
+  let section = '';
+  let settingsWritten = false;
+  let skipKwBlock = false;
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (t.startsWith('*** Settings')) {
+      if (settingsWritten) { section = 'settings_dup'; continue; }
+      settingsWritten = true; section = 'settings'; out.push(line); continue;
+    }
+    if (t.startsWith('*** Keywords')) {
+      section = 'keywords'; skipKwBlock = false; out.push(line); continue;
+    }
+    if (t.startsWith('***')) {
+      section = t.toLowerCase().replace(/\*/g,'').trim();
+      skipKwBlock = false; out.push(line); continue;
+    }
+    if (section === 'settings' && t) {
+      const key = t.replace(/\s+/g, ' ').toLowerCase();
+      if (seenSettings.has(key)) continue;
+      seenSettings.add(key);
+      out.push(line); continue;
+    }
+    if (section === 'settings_dup') {
+      if (t) {
+        const key = t.replace(/\s+/g, ' ').toLowerCase();
+        if (!seenSettings.has(key)) { seenSettings.add(key); out.push(line); }
+      }
+      continue;
+    }
+    if (section === 'keywords') {
+      if (t && !/^\s/.test(line) && !t.startsWith('#')) {
+        const kwName = t.toLowerCase();
+        if (seenKeywords.has(kwName)) { skipKwBlock = true; continue; }
+        seenKeywords.add(kwName); skipKwBlock = false; out.push(line); continue;
+      }
+      if (skipKwBlock) continue;
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
+
+// ── Fix AppiumLibrary keyword names ──────────────────────────────────────────
+function fixAppiumKeywords(code) {
+  if (!code.includes('AppiumLibrary')) return code;
+  return code
+    .replace(/\bElement Should Contain\b(?!\s+Text)/g,  'Element Should Contain Text')
+    .replace(/\bElement Text Should Be\b/g,               'Element Should Contain Text')
+    .replace(/\bPage Should Contain\b(?!\s+(Element|Text))/g, 'Page Should Contain Text')
+    .replace(/\bClose Browser\b/g,                        'Close Application')
+    .replace(/\bOpen Browser\b/g,                         'Open Application');
+}
+
+function fixBrowserKeywords(code) {
+  const isBrowserLib = code.includes('Library    Browser') && !code.includes('SeleniumLibrary');
+  if (!isBrowserLib) return code;
+
+  // Fix XPath-style selectors used as CSS in Browser library
+  // button[@class="radius"] → xpath=//button[@class="radius"]
+  code = code.replace(/(['"\s])([a-z*]+\[@[^\]]+\])(['"\s])/g, (m, pre, sel, post) => {
+    return pre + 'xpath=//' + sel + post;
+  });
+  // css=button[@class="x"] → xpath=//button[@class="x"]
+  code = code.replace(/css=([a-z*]+\[@[^\]]+\])/g, 'xpath=//$1');
+
+  // Fix chrome -> chromium (Browser library only supports chromium/firefox/webkit)
+  code = code.replace(/New Browser\s+chrome\b/gi,   'New Browser    chromium')
+             .replace(/browser=chrome\b/gi,           'browser=chromium')
+             .replace(/\$\{BROWSER\}\s+chrome\b/gi,  '${BROWSER}    chromium');
+
+  return code
+    .replace(/\bCapture Page Screenshot\b/g,       'Take Screenshot')
+    .replace(/\bShould Be Equal As Strings\s+(\$\{\w+\})\s+(.+)/g, 'Should Contain    $1    $2')
+    .replace(/\bOpen Browser\s+(\S+)\s+(\S+)/g,   'New Browser    chromium\nNew Page    $1')
+    .replace(/\bInput Text\s+(\S+)/g,              'Fill Text    $1')
+    .replace(/\bClick Button\b/g,                  'Click')
+    .replace(/\bClick Element\b/g,                 'Click')
+    .replace(/\bWait Until Element Is Visible\s+(\S+)(\s+\d+s)?/g, 'Wait For Elements State    $1    visible    timeout=10s')
+    .replace(/\bPage Should Contain\b/g,           'Get Text');
+}
+
+
+function detectRunType(code) {
+  if (!code) return 'web';
+  // AppiumLibrary must be checked first — it may also include Browser keywords
+  if (code.includes('AppiumLibrary'))    return 'mobile';
+  if (code.includes('RequestsLibrary')) return 'api';
+  if (code.includes('DatabaseLibrary')) return 'database';
+  // SeleniumLibrary, Browser lib or plain web
+  return 'web';
+}
+
+
+// ── Install RF library ────────────────────────────────────────────────────────
+const LIBRARY_PACKAGES = {
+  'Dialogs':          { pip: null, builtin: true },  // Built-in RF library, no install needed
+  'SeleniumLibrary':  { pip: 'robotframework-seleniumlibrary', post: null },
+  'Browser':          { pip: 'robotframework-browser',         post: 'rfbrowser init' },
+  'AppiumLibrary':    { pip: 'robotframework-appiumlibrary',   post: null },
+  'RequestsLibrary':  { pip: 'robotframework-requests',        post: null },
+  'DatabaseLibrary':  { pip: 'robotframework-databaselibrary', post: null },
+};
+
+
+// ── Check if RF library is installed ─────────────────────────────────────────
+app.post('/api/check-library', (req, res) => {
+  const { library } = req.body;
+  const libMap = {
+    'Dialogs':         null,  // built-in
+    'SeleniumLibrary': 'robotframework-seleniumlibrary',
+    'Browser':         'robotframework-browser',
+    'AppiumLibrary':   'robotframework-appiumlibrary',
+    'RequestsLibrary': 'robotframework-requests',
+    'DatabaseLibrary': 'robotframework-databaselibrary',
+  };
+  const pkg = libMap[library];
+  if (pkg === null) return res.json({ installed: true, library }); // built-in
+  const pkgName = pkg || library.toLowerCase();
+  exec('pip show ' + pkgName, (err) => {
+    res.json({ installed: !err, library });
+  });
+});
+
+app.post('/api/install-library', (req, res) => {
+  const { library } = req.body;
+  const pkg = LIBRARY_PACKAGES[library];
+  if (!pkg) return res.status(400).json({ error: 'Librairie inconnue: ' + library });
+
+  // Built-in library — no install needed
+  if (pkg.builtin) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.flushHeaders();
+    res.write('data: ' + JSON.stringify({ msg: '✅ ' + library + ' est une librairie intégrée à Robot Framework — déjà disponible !' }) + '\n\n');
+    res.write('data: ' + JSON.stringify({ done: true, success: true }) + '\n\n');
+    return res.end();
+  }
+
+  console.log('Installing:', pkg.pip);
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.flushHeaders();
+
+  const send = (msg) => res.write('data: ' + JSON.stringify({ msg }) + '\n\n');
+
+  send('📦 Installation de ' + pkg.pip + '...');
+
+  const proc = exec('pip install ' + pkg.pip + ' --break-system-packages --quiet', (err, stdout, stderr) => {
+    if (err) {
+      send('❌ Erreur: ' + (stderr || err.message));
+      res.write('data: ' + JSON.stringify({ done: true, success: false }) + '\n\n');
+      return res.end();
+    }
+    send('✅ ' + pkg.pip + ' installé !');
+
+    if (pkg.post) {
+      send('⚙️ Configuration: ' + pkg.post + '...');
+      exec(pkg.post, (err2, stdout2, stderr2) => {
+        if (err2) send('⚠️ Post-install: ' + (stderr2 || err2.message));
+        else send('✅ Configuration terminée !');
+        res.write('data: ' + JSON.stringify({ done: true, success: !err2 }) + '\n\n');
+        res.end();
+      });
+    } else {
+      res.write('data: ' + JSON.stringify({ done: true, success: true }) + '\n\n');
+      res.end();
+    }
+  });
+});
+
+
+// ── Read RF resource file ─────────────────────────────────────────────────────
+app.get('/api/rf/read-file', (req, res) => {
+  const relPath = req.query.path || '';
+  const fullPath = path.join(TESTS_DIR, relPath);
+  if (!fullPath.startsWith(TESTS_DIR)) return res.status(403).json({ error: 'forbidden' });
+  if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'not found' });
+  res.json({ content: fs.readFileSync(fullPath, 'utf8') });
+});
+
+// ── List RF resource files ─────────────────────────────────────────────────────
+app.get('/api/rf/list-files', (req, res) => {
+  const relDir = req.query.dir || '';
+  const fullDir = path.join(TESTS_DIR, relDir);
+  if (!fullDir.startsWith(TESTS_DIR)) return res.status(403).json({ error: 'forbidden' });
+  if (!fs.existsSync(fullDir)) return res.json({ files: [] });
+  const files = fs.readdirSync(fullDir).filter(f => f.endsWith('.robot'));
+  res.json({ files });
+});
+
+
+// ── SSE Live ────────────────────────────────────────────────────────────────
+const liveClients = new Set();
+const liveState = { runs: [], suites: [] };
+// Nettoyer les runs orphelins au démarrage
+process.on('exit', () => { liveState.runs.forEach(r => { if (r.status === 'running') r.status = 'fail'; }); });
+let liveRunCounter = 0;
+let liveSuiteCounter = 0;
+
+function rfBroadcast(event, data) {
+  const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  liveClients.forEach(res => { try { res.write(msg); } catch(e) { liveClients.delete(res); } });
+}
+
+app.get('/api/rf/live-stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+  liveClients.add(res);
+  res.write(`event: state\ndata: ${JSON.stringify(liveState)}\n\n`);
+  req.on('close', () => liveClients.delete(res));
+});
+
+app.get('/api/rf/live-state', (req, res) => res.json(liveState));
+
+app.post('/api/rf/live-suite-end', (req, res) => {
+  const { title, status } = req.body;
+  const suite = liveState.suites.slice().reverse().find(s => s.title === title);
+  if (suite) {
+    suite.status = status || 'fail';
+    rfBroadcast('suite-update', suite);
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/rf/live-suite-start', (req, res) => {
+  const { title, blocCount } = req.body;
+  const suite = {
+    id: ++liveSuiteCounter,
+    title: title || 'Suite',
+    status: 'running',
+    blocs: [],
+    startedAt: new Date().toLocaleTimeString('fr-FR'),
+    duration: 0,
+  };
+  liveState.suites.push(suite);
+  rfBroadcast('suite-start', suite);
+  res.json({ ok: true, id: suite.id });
+});
+
+app.post('/api/rf/live-suite-end', (req, res) => {
+  const { title, status } = req.body;
+  const suite = liveState.suites.slice().reverse().find(s => s.title === title);
+  if (suite) {
+    suite.status = status || 'fail';
+    rfBroadcast('suite-update', suite);
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/rf/live-suite-start', (req, res) => {
+  const { title, blocCount } = req.body;
+  const suite = {
+    id: ++liveSuiteCounter,
+    title: title || 'Suite',
+    status: 'running',
+    blocs: [],
+    startedAt: new Date().toLocaleTimeString('fr-FR'),
+    duration: 0,
+  };
+  liveState.suites.push(suite);
+  rfBroadcast('suite-start', suite);
+  res.json({ ok: true, id: suite.id });
+});
+
+app.post('/api/rf/live-reset', (req, res) => {
+  liveState.runs = [];
+  liveState.suites = [];
+  liveRunCounter = 0;
+  liveSuiteCounter = 0;
+  rfBroadcast('reset', {});
+  res.json({ ok: true });
+});
+
+// ── SSE Live ────────────────────────────────────────────────────────────────
+
+// ── API Key chiffrée ──────────────────────────────────────────────────────────
+const crypto = require('crypto');
+
+function decryptApiKey(encryptedWithIV, secret) {
+  try {
+    const [ivHex, encrypted] = encryptedWithIV.split(':');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(secret, 'hex'), Buffer.from(ivHex, 'hex'));
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch(e) {
+    return null;
+  }
+}
+
+// Token de session simple (renouvelé à chaque démarrage serveur)
+const SESSION_TOKEN = crypto.randomBytes(32).toString('hex');
+
+app.get('/api/config/token', (req, res) => {
+  // Retourne le token de session (accessible seulement en local)
+  res.json({ token: SESSION_TOKEN });
+});
+
+app.get('/api/config/apikey', (req, res) => {
+  const { token, provider } = req.query;
+  if (token !== SESSION_TOKEN) return res.status(401).json({ error: 'Token invalide' });
+
+  const providerMap = {
+    anthropic: { env: 'ANTHROPIC_KEY_ENC', plain: 'ANTHROPIC_KEY' },
+    openai:    { env: 'OPENAI_KEY_ENC',    plain: 'OPENAI_KEY' },
+    gemini:    { env: 'GEMINI_KEY_ENC',    plain: 'GEMINI_KEY' },
+    mistral:   { env: 'MISTRAL_KEY_ENC',   plain: 'MISTRAL_KEY' },
+  };
+
+  const p = providerMap[provider || 'anthropic'];
+  if (!p) return res.status(400).json({ error: 'Provider inconnu' });
+
+  const secret = process.env.ENCRYPTION_SECRET;
+  let key = null;
+
+  // Essaie la clé chiffrée en priorité
+  if (process.env[p.env] && secret) {
+    key = decryptApiKey(process.env[p.env], secret);
+  }
+  // Fallback: clé en clair
+  if (!key && process.env[p.plain]) {
+    key = process.env[p.plain];
+  }
+
+  if (!key) return res.status(404).json({ error: 'Clé non configurée' });
+
+  res.json({ key });
+});
+
+
+// ── Sync bidirectionnelle UI ↔ Disque ────────────────────────────────────────
+
+// Fichiers modifiés manuellement (ne pas écraser au run)
+const manuallyEditedFiles = new Map(); // filepath -> timestamp
+
+// POST /api/rf/write-file — écrit un fichier RF sur disque depuis l'UI
+app.post('/api/rf/write-file', (req, res) => {
+  try {
+    const { filepath, content } = req.body;
+    if (!filepath || content === undefined) return res.status(400).json({ ok: false, error: 'filepath et content requis' });
+    const safePath = path.join(TESTS_DIR, filepath.replace(/\.\./g, ''));
+    const dir = path.dirname(safePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(safePath, content, 'utf8');
+    // Marquer comme modifié manuellement (expire après 30 min)
+    manuallyEditedFiles.set(safePath, Date.now());
+    res.json({ ok: true, path: safePath });
+  } catch(e) { res.status(500).json({ ok: false, error: e.message }); }
+});
+
+// Watcher fs.watch — broadcast les changements de fichiers RF via SSE
+const watchDirs = [
+  path.join(TESTS_DIR, 'resources'),
+  path.join(TESTS_DIR, 'tests'),
+];
+watchDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.watch(dir, { recursive: true }, (eventType, filename) => {
+    if (!filename || !filename.endsWith('.robot')) return;
+    const filepath = filename.replace(/\\/g, '/');
+    try {
+      const fullPath = path.join(dir, filename);
+      if (!fs.existsSync(fullPath)) return;
+      const content = fs.readFileSync(fullPath, 'utf8');
+      // Chemin relatif depuis rf_tests/
+      const relPath = path.relative(TESTS_DIR, fullPath).replace(/\\/g, '/');
+      rfBroadcast('file-changed', { filepath: relPath, content, eventType });
+    } catch(e) {}
+  });
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CI/CD — GitLab / Azure DevOps / Jenkins
+// ══════════════════════════════════════════════════════════════════════════════
+
+// POST 
+// POST /api/cicd/pull — récupère les fichiers RF depuis GitLab ou Azure
+app.post('/api/cicd/pull', async (req, res) => {
+  const { provider, url, token, branch, folder } = req.body;
+  if (!url || !token) return res.status(400).json({ ok: false, error: 'Paramètres manquants' });
+
+  try {
+    let files = [];
+
+    if (provider === 'gitlab') {
+      const repoPath = url.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '');
+      const apiBase  = url.match(/^https?:\/\/[^/]+/)[0];
+      // Double-encoder le slash namespace/projet pour l'API GitLab
+      const encoded  = repoPath.split('/').map(encodeURIComponent).join('%2F');
+      const ref      = branch || 'main';
+      const path     = folder || '';
+
+      // Lister les fichiers du dossier
+      const listRes  = await fetch(
+        `${apiBase}/api/v4/projects/${encoded}/repository/tree?ref=${ref}&path=${encodeURIComponent(path)}&recursive=true&per_page=100`,
+        { headers: { 'PRIVATE-TOKEN': token } }
+      );
+      if (!listRes.ok) return res.json({ ok: false, error: 'Impossible de lister le repo : ' + listRes.statusText });
+      const items = await listRes.json();
+      const robots = items.filter(i => i.type === 'blob' && i.name.endsWith('.robot'));
+
+      // Télécharger chaque fichier
+      for (const item of robots) {
+        const fileRes = await fetch(
+          `${apiBase}/api/v4/projects/${encoded}/repository/files/${encodeURIComponent(item.path)}/raw?ref=${ref}`,
+          { headers: { 'PRIVATE-TOKEN': token } }
+        );
+        if (fileRes.ok) {
+          const content = await fileRes.text();
+          files.push({ path: item.path, content });
+        }
+      }
+
+    } else if (provider === 'azure') {
+      const ref   = branch || 'main';
+      const scope = folder ? `&scopePath=${encodeURIComponent('/' + folder)}` : '';
+      const listRes = await fetch(
+        `${url}/items?api-version=7.0&recursionLevel=Full${scope}`,
+        { headers: { 'Authorization': 'Basic ' + Buffer.from(':' + token).toString('base64') } }
+      );
+      if (!listRes.ok) return res.json({ ok: false, error: 'Impossible de lister Azure : ' + listRes.statusText });
+      const data  = await listRes.json();
+      const robots = (data.value || []).filter(i => !i.isFolder && i.path.endsWith('.robot'));
+
+      for (const item of robots) {
+        const fileRes = await fetch(
+          `${url}/items?api-version=7.0&path=${encodeURIComponent(item.path)}&versionDescriptor.version=${ref}`,
+          { headers: { 'Authorization': 'Basic ' + Buffer.from(':' + token).toString('base64') } }
+        );
+        if (fileRes.ok) {
+          files.push({ path: item.path.replace(/^\//, ''), content: await fileRes.text() });
+        }
+      }
+    }
+
+    res.json({ ok: true, files });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+
+
+// POST /api/cicd/diff
+app.post('/api/cicd/diff', async (req, res) => {
+  const { provider, url, token, branch, folder, files } = req.body;
+  if (!url || !token || !files || !files.length) return res.status(400).json({ ok: false, error: 'Parametres manquants' });
+  try {
+    const ref = branch || 'main';
+    const added = [], modified = [], unchanged = [], deleted = [];
+    const normalize = s => (s || '').split('\r\n').join('\n').trim();
+    const localPaths = files.map(f => f.path);
+
+    if (provider === 'gitlab') {
+      const repoPath = url.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '');
+      const apiBase  = url.match(/^https?:\/\/[^/]+/)[0];
+      // Double-encoder le slash namespace/projet pour l'API GitLab
+      const encoded  = repoPath.split('/').map(encodeURIComponent).join('%2F');
+
+      // Lister les fichiers du repo pour detecter les suppressions
+      try {
+        const listRes = await fetch(
+          apiBase + '/api/v4/projects/' + encoded + '/repository/tree?ref=' + ref + '&path=' + encodeURIComponent(folder || '') + '&recursive=true&per_page=100',
+          { headers: { 'PRIVATE-TOKEN': token } }
+        );
+        if (listRes.ok) {
+          const items = await listRes.json();
+          items.filter(i => i.type === 'blob' && i.name.endsWith('.robot')).forEach(item => {
+            const relPath = folder ? item.path.replace(folder + '/', '') : item.path;
+            if (!localPaths.includes(relPath)) deleted.push(relPath);
+          });
+        }
+      } catch(e) {}
+
+      // Comparer fichier par fichier
+      for (const f of files) {
+        const filePath = folder ? folder + '/' + f.path : f.path;
+        const fileRes  = await fetch(
+          apiBase + '/api/v4/projects/' + encoded + '/repository/files/' + encodeURIComponent(filePath) + '/raw?ref=' + ref,
+          { headers: { 'PRIVATE-TOKEN': token } }
+        );
+        if (fileRes.status === 404) { added.push(f.path); }
+        else if (fileRes.ok) {
+          const remote = await fileRes.text();
+          if (normalize(f.content) === normalize(remote)) unchanged.push(f.path);
+          else modified.push(f.path);
+        } else { added.push(f.path); }
+      }
+
+    } else if (provider === 'azure') {
+      const auth = 'Basic ' + Buffer.from(':' + token).toString('base64');
+
+      // Lister les fichiers du repo pour detecter les suppressions
+      try {
+        const scope = folder ? '&scopePath=' + encodeURIComponent('/' + folder) : '';
+        const listRes = await fetch(
+          url + '/items?api-version=7.0&recursionLevel=Full' + scope,
+          { headers: { 'Authorization': auth } }
+        );
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          (listData.value || []).filter(i => !i.isFolder && i.path.endsWith('.robot')).forEach(item => {
+            const relPath = folder ? item.path.replace('/' + folder + '/', '') : item.path.replace(/^\//, '');
+            if (!localPaths.includes(relPath)) deleted.push(relPath);
+          });
+        }
+      } catch(e) {}
+
+      for (const f of files) {
+        const filePath = '/' + (folder ? folder + '/' : '') + f.path;
+        const fileRes  = await fetch(
+          url + '/items?api-version=7.0&path=' + encodeURIComponent(filePath) + '&versionDescriptor.version=' + ref,
+          { headers: { 'Authorization': auth } }
+        );
+        if (fileRes.status === 404) { added.push(f.path); }
+        else if (fileRes.ok) {
+          const remote = await fileRes.text();
+          if (normalize(f.content) === normalize(remote)) unchanged.push(f.path);
+          else modified.push(f.path);
+        } else { added.push(f.path); }
+      }
+    }
+    res.json({ ok: true, added, modified, unchanged, deleted });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/cicd/push — push fichiers RF vers GitLab ou Azure
+app.post('/api/cicd/push', async (req, res) => {
+  const { provider, url, token, branch, newBranch, msg, folder, files } = req.body;
+  if (!url || !token || !files?.length) return res.status(400).json({ ok: false, error: 'Paramètres manquants' });
+
+  try {
+    const targetBranch = newBranch || branch || 'main';
+    // Utiliser action par fichier selon statusMap (added=create, modified=update, défaut=create)
+    const statusMap = {};
+    (files).forEach(f => { statusMap[f.path] = f.status || 'added'; });
+    const actions = files.map(f => ({
+      action: statusMap[f.path] === 'modified' ? 'update' : 'create',
+      file_path: folder ? folder + '/' + f.path : f.path,
+      content: Buffer.from(f.content || '').toString('base64'),
+      encoding: 'base64',
+    }));
+    const actionsUpdate = files.map(f => ({
+      action: 'update',
+      file_path: folder ? folder + '/' + f.path : f.path,
+      content: Buffer.from(f.content || '').toString('base64'),
+      encoding: 'base64',
+    }));
+
+    if (provider === 'gitlab') {
+      // GitLab API v4
+      const repoPath = url.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '');
+      const apiBase  = url.match(/^https?:\/\/[^/]+/)[0];
+      const encodedPath = encodeURIComponent(repoPath);
+
+      // Créer la branche si newBranch est spécifié
+      if (newBranch) {
+        await fetch(`${apiBase}/api/v4/projects/${encodedPath}/repository/branches`, {
+          method: 'POST',
+          headers: { 'PRIVATE-TOKEN': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ branch: newBranch, ref: branch || 'main' }),
+        });
+      }
+
+      // Commit
+      const commitRes = await fetch(`${apiBase}/api/v4/projects/${encodedPath}/repository/commits`, {
+        method: 'POST',
+        headers: { 'PRIVATE-TOKEN': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch: targetBranch, commit_message: msg, actions }),
+      });
+      let commitData = await commitRes.json();
+      if (!commitRes.ok) {
+        // Retry avec update si les fichiers existent déjà
+        const commitRes2 = await fetch(`${apiBase}/api/v4/projects/${encodedPath}/repository/commits`, {
+          method: 'POST',
+          headers: { 'PRIVATE-TOKEN': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ branch: targetBranch, commit_message: msg, actions: actionsUpdate }),
+        });
+        commitData = await commitRes2.json();
+        if (!commitRes2.ok) return res.json({ ok: false, error: commitData.message || commitRes2.statusText });
+      }
+      return res.json({ ok: true, url: `${url}/-/tree/${targetBranch}` });
+
+    } else if (provider === 'azure') {
+      // Azure DevOps REST API — récupérer le SHA de la branche
+      const auth = 'Basic ' + Buffer.from(':' + token).toString('base64');
+      let oldObjectId = '0000000000000000000000000000000000000000';
+      try {
+        const branchRes = await fetch(`${url}/refs?filter=heads/${targetBranch}&api-version=7.0`, { headers: { 'Authorization': auth } });
+        if (branchRes.ok) {
+          const branchData = await branchRes.json();
+          if (branchData.value && branchData.value.length > 0) oldObjectId = branchData.value[0].objectId;
+        }
+      } catch(e) {}
+      const pushRes = await fetch(`${url}/pushes?api-version=7.0`, {
+        method: 'POST',
+        headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refUpdates: [{ name: `refs/heads/${targetBranch}`, oldObjectId }],
+          commits: [{
+            comment: msg,
+            changes: files.map(f => ({
+              changeType: 'add',
+              item: { path: '/' + (folder ? folder + '/' : '') + f.path },
+              newContent: { content: f.content, contentType: 'rawtext' },
+            })),
+          }],
+        }),
+      });
+      const pushData = await pushRes.json();
+      if (!pushRes.ok) return res.json({ ok: false, error: pushData.message || pushRes.statusText });
+      return res.json({ ok: true });
+    }
+
+    res.json({ ok: false, error: 'Provider non supporté' });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/cicd/jenkins — déclencher un pipeline Jenkins
+app.post('/api/cicd/jenkins', async (req, res) => {
+  const { url, job, user, token, params, files } = req.body;
+  if (!url || !job || !token) return res.status(400).json({ ok: false, error: 'Paramètres manquants' });
+
+  try {
+    const auth = Buffer.from(`${user}:${token}`).toString('base64');
+    const triggerUrl = `${url.replace(/\/$/, '')}/job/${encodeURIComponent(job)}/buildWithParameters?${params || ''}`;
+
+    const triggerRes = await fetch(triggerUrl, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + auth },
+    });
+
+    if (!triggerRes.ok && triggerRes.status !== 201) {
+      return res.json({ ok: false, error: `Jenkins a retourné ${triggerRes.status}` });
+    }
+
+    const location = triggerRes.headers.get('location');
+    res.json({ ok: true, queueUrl: location });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`\n🚀 RF × IA Server démarré sur http://localhost:${PORT}`);
+  console.log(`📂 Ouvre http://localhost:${PORT}\n`);
+});

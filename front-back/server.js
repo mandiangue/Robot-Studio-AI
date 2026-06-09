@@ -11,9 +11,11 @@ const app     = express();
 const PORT    = process.env.PORT || 3001;
 
 const { connectDB } = require('./db');
+const pulledBlocksRouter = require('./routes/pulledblocks');
 connectDB();
 
 app.use(express.json({ limit: '20mb' }));
+app.use('/api/pulledblocks', pulledBlocksRouter);
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -50,8 +52,10 @@ if (!fs.existsSync(TESTS_DIR)) fs.mkdirSync(TESTS_DIR);
 // ── POST /api/rf/run ──────────────────────────────────────────
 // Body: { code, filename, headless }
 app.post('/api/rf/run', async (req, res) => {
-  const { code, filename, headless } = req.body;
-  if (!code) return res.status(400).json({ error: 'code requis' });
+  const { code, filename, headless, browserType } = req.body;
+  if (!code) return res.status(400).json({ error: "code requis" });
+  console.log("[BROWSER] type:", browserType, "headless:", headless);
+  console.log("[CODE] first200:", code.slice(0,200).replace(/\n/g,"|"));  console.log("[CODE] hasLibBrowser:", code.includes("Library    Browser"), "hasNewBrowser:", code.includes("New Browser"));
 
   const rawName   = (filename || 'test_generated').replace(/\.robot$/, '');
   const safeName  = rawName.replace(/[^a-zA-Z0-9_\-\/]/g, '_');
@@ -131,8 +135,175 @@ app.post('/api/rf/run', async (req, res) => {
   const robotFileDir = path.dirname(robotFile);
   if (!fs.existsSync(robotFileDir)) fs.mkdirSync(robotFileDir, { recursive: true });
 
+  // Détecter Browser/Playwright pour bypasser le preprocessing SeleniumLibrary
+  // Tuer le process robot en cours si un run est actif
+  if (_rfProcess) {
+    try {
+      if (process.platform === 'win32') {
+        exec('taskkill /PID ' + _rfProcess.pid + ' /T /F', () => {});
+      } else {
+        process.kill(-_rfProcess.pid, 'SIGKILL');
+      }
+    } catch(e) {
+      try { _rfProcess.kill('SIGKILL'); } catch(e2) {}
+    }
+    _rfProcess = null;
+  }
+  // Tuer chromium/robot residuels et attendre avant de continuer
+  await new Promise(function(resolve) {
+    if (process.platform === 'win32') {
+      exec('taskkill /F /IM robot.exe /T 2>nul & taskkill /F /IM chromium.exe /T 2>nul', function() {
+        setTimeout(resolve, 800);
+      });
+    } else {
+      setTimeout(resolve, 200);
+    }
+  });
+
+  const isPlaywrightCode = (function(){
+    var c = code;
+    return c.includes('Library    Browser') ||
+           c.includes('Library     Browser') ||
+           c.includes('Library   Browser') ||
+           /Library\s+Browser(?!\s*Library)/.test(c) ||
+           c.includes('New Browser    ') ||
+           c.includes('New Browser\n') ||
+           c.includes('    New Browser') ||
+           c.includes('New Page    ') ||
+           c.includes('Fill Text    ') ||
+           c.includes('Wait For Elements State');
+  })();
+  console.log("[DETECT] pw:", isPlaywrightCode, code.slice(0,80).replace(/\n/g,"|"));
+
   // Inject headless option if requested — works with SeleniumLibrary and BrowserLibrary
   let finalCode = code;
+  // Remplacer le navigateur si browserType specifie et different de chrome
+  if (browserType && browserType !== 'chrome') {
+    finalCode = finalCode.replace(/(\${BROWSER}\s+)chrome/g, '$1' + browserType);
+    finalCode = finalCode.replace(/(Open Browser\s+\S+\s+)chrome/g, '$1' + browserType);
+  }
+
+  // Correction automatique fichiers Browser/Playwright
+  function fixPlaywrightFile(relPath, content) {
+    // Supprimer Suite Setup / Suite Teardown / New Page de variables.robot et pages/*.robot
+    if (relPath.includes('variables.robot') || relPath.includes('pages/')) {
+      content = content.replace(/^Suite Setup[^\n]*\n?/gm, '');
+      content = content.replace(/^Suite Teardown[^\n]*\n?/gm, '');
+      content = content.replace(/^New Page[^\n]*\n?/gm, '');
+      content = content.replace(/^New Browser[^\n]*\n?/gm, '');
+      content = content.replace(/^New Context[^\n]*\n?/gm, '');
+    }
+    // Dans tests.robot : remplacer Open Browser par Open Browser Session
+    if (relPath.includes('tests/')) {
+      // Suite Setup Open Browser ... → Suite Setup Open Browser Session    ${BASE_URL}
+      content = content.replace(
+        /^(Suite Setup\s+)Open Browser(\s+)(\S+)[^\n]*/gm,
+        '$1Open Browser Session    $3'
+      );
+      // Test Setup Go To si absent
+      if (!content.includes('Test Setup') && content.includes('Suite Setup')) {
+        content = content.replace(
+          /^(Suite Setup[^\n]+)$/m,
+          '$1\nTest Setup        Go To    ${BASE_URL}\nTest Teardown     Take Screenshot'
+        );
+      }
+    }
+    // Partout : supprimer New Page dans *** Settings ***
+    content = content.replace(/^(\*{3}\s*Settings\s*\*{3}[\s\S]*?)^New Page[^\n]*\n?/gm, '$1');
+    return content;
+  }
+
+  // Pour Browser/Playwright : juste gérer headless et sortir du preprocessing Selenium
+  if (isPlaywrightCode) {
+    if (headless) {
+      finalCode = finalCode.replace(
+        /New Browser(\s+)(chromium|chrome|firefox|webkit)/gi,
+        'New Browser$1$2    headless=True'
+      );
+    } else {
+      finalCode = finalCode.replace(
+        /New Browser(\s+)(chromium|chrome|firefox|webkit)(\s*)$/gim,
+        'New Browser$1$2    headless=False'
+      );
+    }
+    // Parser les delimiteurs ***** FILE: et ecrire chaque fichier separement
+    const FILE_RE2 = /[*]{4,6}\s*FILE:\s*([^|\n]+)\|([^|\n]+)\|([^\n]*)/g;
+    const splitRe2 = /[*]{4,6}\s*FILE:[^\n]*\n?/g;
+    const fileMatches2 = [...finalCode.matchAll(FILE_RE2)];
+    const segments2 = finalCode.split(splitRe2).slice(1);
+
+    let testsFile2 = robotFile; // fallback
+
+    if (fileMatches2.length > 0 && segments2.length > 0) {
+      // Nettoyer runBaseDir
+      ['resources', 'tests', 'resources/pages'].forEach(d => {
+        const dd = path.join(runBaseDir, d);
+        if (!fs.existsSync(dd)) fs.mkdirSync(dd, { recursive: true });
+      });
+
+      fileMatches2.forEach((m, idx) => {
+        const relPath = m[1].trim();
+        let content2 = segments2[idx] || '';
+
+        // Auto-corriger les erreurs communes Browser/Playwright
+        content2 = fixPlaywrightFile(relPath, content2);
+
+        const absPath2 = path.join(runBaseDir, relPath.replace(/\//g, path.sep));
+        const dir2 = path.dirname(absPath2);
+        if (!fs.existsSync(dir2)) fs.mkdirSync(dir2, { recursive: true });
+        fs.writeFileSync(absPath2, content2, 'utf8');
+        console.log('  Browser/Playwright: wrote', relPath);
+        if (relPath.includes('tests/') && relPath.endsWith('.robot')) testsFile2 = absPath2;
+      });
+
+      // Vérifier que keywords.robot a bien Open Browser Session
+      const kwFile2 = path.join(runBaseDir, 'resources', 'keywords.robot');
+      if (fs.existsSync(kwFile2)) {
+        let kw2 = fs.readFileSync(kwFile2, 'utf8');
+        if (!kw2.includes('Open Browser Session')) {
+          kw2 += '\n\nOpen Browser Session\n    [Arguments]    ${url}    ${browser}=chromium\n    New Browser    ${browser}    headless=False\n    New Context    acceptDownloads=True\n    New Page       ${url}\n';
+          fs.writeFileSync(kwFile2, kw2, 'utf8');
+          console.log('  Browser/Playwright: added Open Browser Session to keywords.robot');
+        }
+      }
+    } else {
+      // Pas de delimiteurs — ecrire le fichier brut
+      const robotDir2 = path.dirname(robotFile);
+      if (!fs.existsSync(robotDir2)) fs.mkdirSync(robotDir2, { recursive: true });
+      fs.writeFileSync(robotFile, finalCode, 'utf8');
+      console.log('  Browser/Playwright: wrote single file', robotFile);
+    }
+
+    // Lancer le test directement
+    const { execFile: execFileFn } = require('child_process');
+    const outputXml2 = outputXml;
+    console.log("[PW RUN] testsFile2:", testsFile2, "| exists:", require("fs").existsSync(testsFile2));
+    const robotArgs2 = ['--outputdir', runBaseDir, '--output', outputXml2, testsFile2];
+    const robotProc2 = execFileFn('robot', robotArgs2, { cwd: runBaseDir },
+      (err2, stdout2, stderr2) => {
+        _rfProcess = null;
+        try {
+          const xmlContent = fs.existsSync(outputXml2) ? fs.readFileSync(outputXml2, 'utf8') : '';
+          const results2 = parseRobotOutput(xmlContent, stdout2 || '', stderr2 || '');
+          results2.outputXml  = outputXml2;
+          const logFile2 = outputXml2.replace('output.xml', 'log.html');
+          const relLog2 = logFile2.replace(/\\/g, '/').split('rf_tests/').pop();
+          results2.logUrl     = 'http://localhost:3001/rf_tests/' + relLog2;
+          results2.logHtml    = logFile2;
+          results2.reportHtml = outputXml2.replace('output.xml', 'report.html');
+          res.json({ ok: true, ...results2 });
+        } catch(parseErr2) {
+          res.json({ ok: false, error: 'Erreur parsing output.xml: ' + parseErr2.message });
+        }
+        _rfProcess = null;
+      }
+    );
+    robotProc2.on('error', (e2) => {
+    _rfProcess = robotProc2;
+      res.json({ ok: false, error: 'Robot Framework non trouvé: ' + e2.message });
+    });
+    return;
+  }
   // Always inject popup-blocking Chrome options
   // Use SeleniumLibrary options string with add_argument only
   // Experimental options (password manager) require ChromeOptions.py
@@ -274,7 +445,14 @@ app.post('/api/rf/run', async (req, res) => {
       if (wasManuallyEdited && !isSuiteBloc && !relPath.startsWith('tests/') && fileExists && !isVarsFile) {
         console.log('  POM: kept manual edit for', relPath);
       } else {
-        fs.writeFileSync(absPath, injected, 'utf8');
+        // Remplacer chrome par browserType dans variables.robot
+        let injectedFinal = injected;
+        if (browserType && browserType !== 'chrome' && relPath.includes('variables.robot')) {
+          console.log('[BROWSER_REPLACE] browserType:', browserType, 'relPath:', relPath, 'includes vars:', relPath.includes('variables.robot'));
+          console.log("[VAR_CONTENT]", injectedFinal.slice(0,200));
+          injectedFinal = injectedFinal.replace(/(\${BROWSER}\s+)chrome\b/g, '$1' + browserType);
+        }
+        fs.writeFileSync(absPath, injectedFinal, 'utf8');
         console.log('  POM: wrote', relPath, isSuiteBloc ? '(suite bloc)' : '');
       }
       if (relPath.startsWith('tests/')) execFile = absPath;
@@ -302,8 +480,12 @@ app.post('/api/rf/run', async (req, res) => {
     ].join(';');
     const noPopupKw = [
       'Open Browser No Popup',
-      '    [Arguments]    ${url}    ${browser}=chrome',
-      '    Open Browser    ${url}    ${browser}    options=' + chromeArgs,
+      '    [Arguments]    ${url}    ${browser}=' + (browserType || 'chrome'),
+      '    ${driver_path}=    Evaluate    __import__("sys").path.insert(0,"${EXECDIR}") or __import__("NoPopupOptions").get_driver_path("${browser}")    sys,NoPopupOptions',
+      '    ${is_chrome}=    Evaluate    "${browser}".lower() in ("chrome", "chromium")',
+      '    Run Keyword If    ${is_chrome} and $driver_path    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=' + chromeArgs,
+      '    Run Keyword If    ${is_chrome} and not $driver_path    Open Browser    ${url}    ${browser}    options=' + chromeArgs,
+      '    Run Keyword Unless    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}',
       '',
       'Dismiss Password Popup',
       '    [Documentation]    Ferme le popup Chrome "modifier mot de passe" sil apparait',
@@ -341,9 +523,10 @@ app.post('/api/rf/run', async (req, res) => {
 
 
         // Replace Open Browser with Open Browser No Popup everywhere
-        // Skip files that contain the keyword definition (to avoid infinite replacement)
+        // Skip files that use Browser/Playwright library or contain keyword definition
         const strippedForCheck = c.replace(/Open Browser No Popup[\s\S]*?(?=\n[A-Za-z]|$)/g, '__KW_DEF__');
-        if (strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
+        const isPlaywrightFile = c.includes('Library    Browser') || c.includes('Library     Browser') || c.includes('New Browser') || c.includes('New Page');
+        if (!isPlaywrightFile && strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
           const before = c;
           c = c.replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
           c = c.replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
@@ -508,6 +691,21 @@ app.post('/api/rf/run', async (req, res) => {
     fs.writeFileSync(chromeOptFile, `from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+def get_driver_path(browser="chrome"):
+    browser = browser.lower()
+    try:
+        if browser in ("chrome", "chromium"):
+            from webdriver_manager.chrome import ChromeDriverManager
+            return ChromeDriverManager().install()
+        elif browser == "firefox":
+            from webdriver_manager.firefox import GeckoDriverManager
+            return GeckoDriverManager().install()
+        elif browser == "edge":
+            from webdriver_manager.microsoft import EdgeChromiumDriverManager
+            return EdgeChromiumDriverManager().install()
+    except Exception as e:
+        print("webdriver-manager error: " + str(e))
+        return None
 def get_no_popup_options():
     opts = Options()
     opts.add_argument('--disable-notifications')
@@ -556,7 +754,19 @@ def get_no_popup_options():
     deduplicateKeywords(TESTS_DIR);
     // Log TC count to debug double run
   const tcCount = (finalCode.match(/^TC_\d+/gm) || []).length;
+  // Remplacer chrome par browserType dans variables.robot avant execution
+  if (browserType && browserType !== 'chrome') {
+    const varFilePath = path.join(TESTS_DIR, 'resources', 'variables.robot');
+    if (fs.existsSync(varFilePath)) {
+      let varContent = fs.readFileSync(varFilePath, 'utf8');
+      // Remplacer la valeur apres ${BROWSER} quelle qu'elle soit
+      varContent = varContent.replace(/(\$\{BROWSER\}[ 	]+)\S+/g, '$1' + browserType);
+      fs.writeFileSync(varFilePath, varContent, 'utf8');
+      console.log('  [BROWSER] replaced with', browserType);
+    }
+  }
   console.log('  POM: executing', path.relative(TESTS_DIR, execFile), '| TC count:', tcCount);
+
     const cmd2 = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
     _rfProcess = exec(cmd2, { cwd: TESTS_DIR, timeout: 120000 }, (err, stdout, stderr) => {
       _rfProcess = null;
@@ -787,7 +997,8 @@ def get_no_popup_options():
 // Body: { code, filename } — saves .robot file, returns path
 app.post('/api/rf/save', (req, res) => {
   const { code, filename } = req.body;
-  if (!code) return res.status(400).json({ error: 'code requis' });
+  if (!code) return res.status(400).json({ error: "code requis" });
+  console.log("[RUN] isPlaywright check:", code.includes("Library    Browser"), code.includes("New Browser"), code.slice(0,100));
   const safeName  = (filename || 'test_generated').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/\.robot$/, '');
   const robotFile = path.join(TESTS_DIR, safeName + '.robot');
   fs.writeFileSync(robotFile, code, 'utf8');
@@ -1736,17 +1947,13 @@ function crossCheckKeywords(testsDir) {
     const stepLower = stepNameClean.toLowerCase();
     const numMatch = stepLower.match(/\b(\d+)\b/);
     const placeholders = sig.args.map(a => {
+      // Garder le nom de l'argument original — ne pas remplacer par des generiques inexistants
+      if (a.startsWith('${') && a.endsWith('}')) return a;
       const name = a.replace(/[${}]/g, '').toLowerCase();
-      if (name.includes('user') || name.includes('login') || name.includes('username')) return '${USERNAME}';
-      if (name.includes('pass') || name.includes('pwd') || name.includes('password')) return '${PASSWORD}';
-      if (name.includes('url')) return '${BASE_URL}';
-      if (name.includes('msg') || name.includes('message') || name.includes('text') || name.includes('expected')) return '${EXPECTED_MSG}';
-      if (name.includes('count') || name.includes('badge') || name.includes('num') || name.includes('qty')) return numMatch ? numMatch[1] : '1';
-      if (name.includes('price') || name.includes('amount')) return '${EXPECTED_PRICE}';
-      if (name.includes('option') || name.includes('sort') || name.includes('value')) return '${SORT_OPTION}';
-      if (name.includes('product') || name.includes('item') || name.includes('name')) return '${PRODUCT_NAME}';
-      if (numMatch) return numMatch[1]; // use number from step name
-      return a; // keep original variable name as fallback
+      if (name === 'url') return '${BASE_URL}';
+      if (name === 'browser') return '${BROWSER}';
+      if (numMatch) return numMatch[1];
+      return a;
     });
     const newLine = indent + kwPart + '    ' + placeholders.join('    ');
     console.log('  Cross-check args fix:', trimmed, '→', newLine.trim());
@@ -2166,6 +2373,283 @@ watchDirs.forEach(dir => {
       rfBroadcast('file-changed', { filepath: relPath, content, eventType });
     } catch(e) {}
   });
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CI/CD — GitLab / Azure DevOps / Jenkins
+// ══════════════════════════════════════════════════════════════════════════════
+
+// POST 
+// POST /api/cicd/pull — récupère les fichiers RF depuis GitLab ou Azure
+app.post('/api/cicd/pull', async (req, res) => {
+  const { provider, url, token, branch, folder } = req.body;
+  if (!url || !token) return res.status(400).json({ ok: false, error: 'Paramètres manquants' });
+
+  try {
+    let files = [];
+
+    if (provider === 'gitlab') {
+      const repoPath = url.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '');
+      const apiBase  = url.match(/^https?:\/\/[^/]+/)[0];
+      // Double-encoder le slash namespace/projet pour l'API GitLab
+      const encoded  = repoPath.split('/').map(encodeURIComponent).join('%2F');
+      const ref      = branch || 'main';
+      const path     = folder || '';
+
+      // Lister les fichiers du dossier
+      const listRes  = await fetch(
+        `${apiBase}/api/v4/projects/${encoded}/repository/tree?ref=${ref}&path=${encodeURIComponent(path)}&recursive=true&per_page=100`,
+        { headers: { 'PRIVATE-TOKEN': token } }
+      );
+      if (!listRes.ok) return res.json({ ok: false, error: 'Impossible de lister le repo : ' + listRes.statusText });
+      const items = await listRes.json();
+      const robots = items.filter(i => i.type === 'blob' && i.name.endsWith('.robot'));
+
+      // Télécharger chaque fichier
+      for (const item of robots) {
+        const fileRes = await fetch(
+          `${apiBase}/api/v4/projects/${encoded}/repository/files/${encodeURIComponent(item.path)}/raw?ref=${ref}`,
+          { headers: { 'PRIVATE-TOKEN': token } }
+        );
+        if (fileRes.ok) {
+          const content = await fileRes.text();
+          files.push({ path: item.path, content });
+        }
+      }
+
+    } else if (provider === 'azure') {
+      const ref   = branch || 'main';
+      const scope = folder ? `&scopePath=${encodeURIComponent('/' + folder)}` : '';
+      const listRes = await fetch(
+        `${url}/items?api-version=7.0&recursionLevel=Full${scope}`,
+        { headers: { 'Authorization': 'Basic ' + Buffer.from(':' + token).toString('base64') } }
+      );
+      if (!listRes.ok) return res.json({ ok: false, error: 'Impossible de lister Azure : ' + listRes.statusText });
+      const data  = await listRes.json();
+      const robots = (data.value || []).filter(i => !i.isFolder && i.path.endsWith('.robot'));
+
+      for (const item of robots) {
+        const fileRes = await fetch(
+          `${url}/items?api-version=7.0&path=${encodeURIComponent(item.path)}&versionDescriptor.version=${ref}`,
+          { headers: { 'Authorization': 'Basic ' + Buffer.from(':' + token).toString('base64') } }
+        );
+        if (fileRes.ok) {
+          files.push({ path: item.path.replace(/^\//, ''), content: await fileRes.text() });
+        }
+      }
+    }
+
+    res.json({ ok: true, files });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+
+
+// POST /api/cicd/diff
+app.post('/api/cicd/diff', async (req, res) => {
+  const { provider, url, token, branch, folder, files } = req.body;
+  if (!url || !token || !files || !files.length) return res.status(400).json({ ok: false, error: 'Parametres manquants' });
+  try {
+    const ref = branch || 'main';
+    const added = [], modified = [], unchanged = [], deleted = [];
+    const normalize = s => (s || '').split('\r\n').join('\n').trim();
+    const localPaths = files.map(f => f.path);
+
+    if (provider === 'gitlab') {
+      const repoPath = url.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '');
+      const apiBase  = url.match(/^https?:\/\/[^/]+/)[0];
+      // Double-encoder le slash namespace/projet pour l'API GitLab
+      const encoded  = repoPath.split('/').map(encodeURIComponent).join('%2F');
+
+      // Lister les fichiers du repo pour detecter les suppressions
+      try {
+        const listRes = await fetch(
+          apiBase + '/api/v4/projects/' + encoded + '/repository/tree?ref=' + ref + '&path=' + encodeURIComponent(folder || '') + '&recursive=true&per_page=100',
+          { headers: { 'PRIVATE-TOKEN': token } }
+        );
+        if (listRes.ok) {
+          const items = await listRes.json();
+          items.filter(i => i.type === 'blob' && i.name.endsWith('.robot')).forEach(item => {
+            const relPath = folder ? item.path.replace(folder + '/', '') : item.path;
+            if (!localPaths.includes(relPath)) deleted.push(relPath);
+          });
+        }
+      } catch(e) {}
+
+      // Comparer fichier par fichier
+      for (const f of files) {
+        const filePath = folder ? folder + '/' + f.path : f.path;
+        const fileRes  = await fetch(
+          apiBase + '/api/v4/projects/' + encoded + '/repository/files/' + encodeURIComponent(filePath) + '/raw?ref=' + ref,
+          { headers: { 'PRIVATE-TOKEN': token } }
+        );
+        if (fileRes.status === 404) { added.push(f.path); }
+        else if (fileRes.ok) {
+          const remote = await fileRes.text();
+          if (normalize(f.content) === normalize(remote)) unchanged.push(f.path);
+          else modified.push(f.path);
+        } else { added.push(f.path); }
+      }
+
+    } else if (provider === 'azure') {
+      const auth = 'Basic ' + Buffer.from(':' + token).toString('base64');
+
+      // Lister les fichiers du repo pour detecter les suppressions
+      try {
+        const scope = folder ? '&scopePath=' + encodeURIComponent('/' + folder) : '';
+        const listRes = await fetch(
+          url + '/items?api-version=7.0&recursionLevel=Full' + scope,
+          { headers: { 'Authorization': auth } }
+        );
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          (listData.value || []).filter(i => !i.isFolder && i.path.endsWith('.robot')).forEach(item => {
+            const relPath = folder ? item.path.replace('/' + folder + '/', '') : item.path.replace(/^\//, '');
+            if (!localPaths.includes(relPath)) deleted.push(relPath);
+          });
+        }
+      } catch(e) {}
+
+      for (const f of files) {
+        const filePath = '/' + (folder ? folder + '/' : '') + f.path;
+        const fileRes  = await fetch(
+          url + '/items?api-version=7.0&path=' + encodeURIComponent(filePath) + '&versionDescriptor.version=' + ref,
+          { headers: { 'Authorization': auth } }
+        );
+        if (fileRes.status === 404) { added.push(f.path); }
+        else if (fileRes.ok) {
+          const remote = await fileRes.text();
+          if (normalize(f.content) === normalize(remote)) unchanged.push(f.path);
+          else modified.push(f.path);
+        } else { added.push(f.path); }
+      }
+    }
+    res.json({ ok: true, added, modified, unchanged, deleted });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/cicd/push — push fichiers RF vers GitLab ou Azure
+app.post('/api/cicd/push', async (req, res) => {
+  const { provider, url, token, branch, newBranch, msg, folder, files } = req.body;
+  if (!url || !token || !files?.length) return res.status(400).json({ ok: false, error: 'Paramètres manquants' });
+
+  try {
+    const targetBranch = newBranch || branch || 'main';
+    // Utiliser action par fichier selon statusMap (added=create, modified=update, défaut=create)
+    const statusMap = {};
+    (files).forEach(f => { statusMap[f.path] = f.status || 'added'; });
+    const actions = files.map(f => ({
+      action: statusMap[f.path] === 'modified' ? 'update' : 'create',
+      file_path: folder ? folder + '/' + f.path : f.path,
+      content: Buffer.from(f.content || '').toString('base64'),
+      encoding: 'base64',
+    }));
+    const actionsUpdate = files.map(f => ({
+      action: 'update',
+      file_path: folder ? folder + '/' + f.path : f.path,
+      content: Buffer.from(f.content || '').toString('base64'),
+      encoding: 'base64',
+    }));
+
+    if (provider === 'gitlab') {
+      // GitLab API v4
+      const repoPath = url.replace(/^https?:\/\/[^/]+\//, '').replace(/\/$/, '');
+      const apiBase  = url.match(/^https?:\/\/[^/]+/)[0];
+      const encodedPath = encodeURIComponent(repoPath);
+
+      // Créer la branche si newBranch est spécifié
+      if (newBranch) {
+        await fetch(`${apiBase}/api/v4/projects/${encodedPath}/repository/branches`, {
+          method: 'POST',
+          headers: { 'PRIVATE-TOKEN': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ branch: newBranch, ref: branch || 'main' }),
+        });
+      }
+
+      // Commit
+      const commitRes = await fetch(`${apiBase}/api/v4/projects/${encodedPath}/repository/commits`, {
+        method: 'POST',
+        headers: { 'PRIVATE-TOKEN': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch: targetBranch, commit_message: msg, actions }),
+      });
+      let commitData = await commitRes.json();
+      if (!commitRes.ok) {
+        // Retry avec update si les fichiers existent déjà
+        const commitRes2 = await fetch(`${apiBase}/api/v4/projects/${encodedPath}/repository/commits`, {
+          method: 'POST',
+          headers: { 'PRIVATE-TOKEN': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ branch: targetBranch, commit_message: msg, actions: actionsUpdate }),
+        });
+        commitData = await commitRes2.json();
+        if (!commitRes2.ok) return res.json({ ok: false, error: commitData.message || commitRes2.statusText });
+      }
+      return res.json({ ok: true, url: `${url}/-/tree/${targetBranch}` });
+
+    } else if (provider === 'azure') {
+      // Azure DevOps REST API — récupérer le SHA de la branche
+      const auth = 'Basic ' + Buffer.from(':' + token).toString('base64');
+      let oldObjectId = '0000000000000000000000000000000000000000';
+      try {
+        const branchRes = await fetch(`${url}/refs?filter=heads/${targetBranch}&api-version=7.0`, { headers: { 'Authorization': auth } });
+        if (branchRes.ok) {
+          const branchData = await branchRes.json();
+          if (branchData.value && branchData.value.length > 0) oldObjectId = branchData.value[0].objectId;
+        }
+      } catch(e) {}
+      const pushRes = await fetch(`${url}/pushes?api-version=7.0`, {
+        method: 'POST',
+        headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refUpdates: [{ name: `refs/heads/${targetBranch}`, oldObjectId }],
+          commits: [{
+            comment: msg,
+            changes: files.map(f => ({
+              changeType: 'add',
+              item: { path: '/' + (folder ? folder + '/' : '') + f.path },
+              newContent: { content: f.content, contentType: 'rawtext' },
+            })),
+          }],
+        }),
+      });
+      const pushData = await pushRes.json();
+      if (!pushRes.ok) return res.json({ ok: false, error: pushData.message || pushRes.statusText });
+      return res.json({ ok: true });
+    }
+
+    res.json({ ok: false, error: 'Provider non supporté' });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/cicd/jenkins — déclencher un pipeline Jenkins
+app.post('/api/cicd/jenkins', async (req, res) => {
+  const { url, job, user, token, params, files } = req.body;
+  if (!url || !job || !token) return res.status(400).json({ ok: false, error: 'Paramètres manquants' });
+
+  try {
+    const auth = Buffer.from(`${user}:${token}`).toString('base64');
+    const triggerUrl = `${url.replace(/\/$/, '')}/job/${encodeURIComponent(job)}/buildWithParameters?${params || ''}`;
+
+    const triggerRes = await fetch(triggerUrl, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + auth },
+    });
+
+    if (!triggerRes.ok && triggerRes.status !== 201) {
+      return res.json({ ok: false, error: `Jenkins a retourné ${triggerRes.status}` });
+    }
+
+    const location = triggerRes.headers.get('location');
+    res.json({ ok: true, queueUrl: location });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
 });
 
 app.listen(PORT, () => {

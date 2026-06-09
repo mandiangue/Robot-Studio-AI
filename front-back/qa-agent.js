@@ -34,12 +34,12 @@ const LS = {
       localStorage.setItem('qa_agent_style',    document.getElementById('optStyle').value);
       localStorage.setItem('qa_agent_mode',     'multi');
       const hl = document.getElementById('optHeadless'); if (hl) localStorage.setItem('qa_agent_headless', hl.value);
+      const bt = document.getElementById('optBrowserType'); if (bt) localStorage.setItem('qa_agent_browser_type', bt.value);
       localStorage.setItem('qa_agent_welcomed', '1');
     } catch(e) { console.warn('localStorage unavailable — run via http://localhost', e); }
   },
   async load() {
-    // Always show welcome message first
-    showWelcome();
+    // Welcome message is already in index.html — no need to render it here
 
     try {
       // ── API key
@@ -54,6 +54,13 @@ const LS = {
       if (style) document.getElementById('optStyle').value   = style;
       // multi mode is always default
     const headlessSaved = localStorage.getItem('qa_agent_headless'); if (headlessSaved) { const hel = document.getElementById('optHeadless'); if (hel) hel.value = headlessSaved; }
+    const browserTypeSaved = localStorage.getItem('qa_agent_browser_type'); if (browserTypeSaved) { const btel = document.getElementById('optBrowserType'); if (btel) btel.value = browserTypeSaved; }
+    // Mettre a jour le select navigateur quand la librairie change
+    const libSel = document.getElementById('optLibrary');
+    if (libSel) {
+      libSel.addEventListener('change', function() { updateBrowserSelect(); });
+      updateBrowserSelect();
+    }
 
       // ── Sessions
       const az = localStorage.getItem('qa_agent_azure');
@@ -69,9 +76,12 @@ const LS = {
         const parsed = JSON.parse(hist);
         if (parsed.length > 0) {
           chatHistory = parsed;
+          // Marqueurs internes : ne pas afficher dans le chat
+          const _internalMarkers = ['[RF code:', '[Test cases:', '[US Card #', '[Suite:', '[Run #'];
           chatHistory.forEach(m => {
             if (m.role === 'user') renderUserMsg(m.content, false);
-            else                   renderAgentMsg(m.content, false);
+            else if (!_internalMarkers.some(function(mk){ return m.content.startsWith(mk); }))
+              renderAgentMsg(m.content, false);
           });
           // Re-render TC cards — depuis MongoDB en priorité
           let tcStored = localStorage.getItem('qa_tc_store');
@@ -102,9 +112,20 @@ const LS = {
 
           // Re-render code cards — depuis MongoDB en priorité
           const loadAndRenderCards = async () => {
+            // Afficher indicateur de chargement
+            const _loadingDiv = document.createElement('div');
+            _loadingDiv.id = '_loadingIndicator';
+            _loadingDiv.className = 'msg agent';
+            _loadingDiv.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-body"><div class="msg-bubble" style="padding:10px 14px;color:var(--gray);font-size:12px;font-family:monospace">⏳ Chargement des blocs...</div></div>';
+            const _msgs = document.getElementById('messages');
+            if (_msgs) _msgs.appendChild(_loadingDiv);
+
             let cards = [];
             try {
-              const r = await fetch('http://localhost:3001/api/storage/all');
+              const _ctrl = new AbortController();
+              const _timeout = setTimeout(() => _ctrl.abort(), 5000);
+              const r = await fetch('http://localhost:3001/api/storage/all', { signal: _ctrl.signal });
+              clearTimeout(_timeout);
               const d = await r.json();
               if (d.ok && d.cards?.length > 0) {
                 cards = d.cards;
@@ -115,7 +136,10 @@ const LS = {
               }
             } catch(e) {
               const stored = localStorage.getItem('qa_code_cards');
-              if (stored) cards = JSON.parse(stored);
+              if (stored) { try { cards = JSON.parse(stored); } catch(e2) {} }
+              // Supprimer le loader en cas d'erreur
+              const _liErr = document.getElementById('_loadingIndicator');
+              if (_liErr) _liErr.remove();
             }
             if (cards.length > 0) {
               window._codeCards = cards;
@@ -128,19 +152,40 @@ const LS = {
                   if (!card.data?.isSuite && !document.getElementById('reportCard-' + card.data?.runNumber)) {
                     setTimeout(() => renderReportCard(card.data), 0);
                   }
-                } else if (card.type === 'multi' || card.files?.[0]) {
+                } else if (card.type === 'multi' || card.type === 'pulled' || card.files?.[0]) {
                   const files = (card.files||[]).map(f => ({
                     ...f,
-                    code: f.code && f.code.includes('%20') ? (() => { try { return decodeURIComponent(f.code); } catch(e) { return f.code; } })() : f.code
+                    code: (function(raw) {
+                      var c = raw && raw.includes('%20') ? (function(){ try { return decodeURIComponent(raw); } catch(e) { return raw; } })() : raw;
+                      return cleanRobotCodeFromHtml(c);
+                    })(f.code)
                   }));
                   window._lastGeneratedTitle = card.title || '';
                   renderResultCard(files, card.cardId);
+                  // Restaurer le tag si le bloc était tagué
+                  if (card.tagged || card.type === 'pulled') {
+                    if (!window._taggedCards) window._taggedCards = new Set();
+                    window._taggedCards.add(card.cardId);
+                    setTimeout(function(){
+                      var btn = document.getElementById('tagBtn-' + card.cardId);
+                      if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent='Tagged'; }
+                    }, 500);
+                  }
                 }
               });
             }
             updateStatsBar();
+            // Supprimer l'indicateur de chargement
+            const _li = document.getElementById('_loadingIndicator');
+            if (_li) _li.remove();
           };
           await loadAndRenderCards();
+          // Nettoyer le HTML de coloration dans tous les blocs
+          (window._codeCards||[]).forEach(function(card){
+            (card.files||[]).forEach(function(f){
+              if(f.code) f.code = cleanRobotCodeFromHtml(f.code);
+            });
+          });
           scrollToBottom();
         }
       }
@@ -169,6 +214,8 @@ function updateKeyStatus(val) {
 
 // ── Welcome message ────────────────────────────────────────────────────────────
 function showWelcome() {
+  // Ne pas recréer si le welcome est déjà dans le DOM (injecté dans index.html)
+  if (document.getElementById('welcomeMsg')) return;
   renderAgentMsg(`👋 Bonjour ! Je suis ton **QA Agent** spécialisé Robot Framework.
 
 **Ce que je peux faire :**
@@ -1379,7 +1426,11 @@ async function callClaude(apiKey, userText) {
       !m.content.startsWith('[Test run:') &&
       !m.content.startsWith('[RF code:') &&
       !m.content.startsWith('[Test cases:')
-    ),
+    ).map(function(m) {
+      var c = m.content.replace(/<span[^>]*>/g,'').replace(/<\/span>/g,'');
+      c = c.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+      return { role: m.role, content: c };
+    }),
     { role: 'user', content: userText },
   ];
 
@@ -1425,6 +1476,29 @@ function getSessionRules() {
   }
 }
 
+function getBrowserType() {
+  return document.getElementById('optBrowserType')?.value || 'chrome';
+}
+
+function updateBrowserSelect() {
+  const lib = document.getElementById('optLibrary')?.value || 'SeleniumLibrary';
+  const sel = document.getElementById('optBrowserType');
+  const row = sel?.closest('.opt-row');
+  if (!sel) return;
+  const isPlaywright = lib === 'Browser';
+  if (isPlaywright) {
+    // Montrer le select avec les options Browser/Playwright
+    if (row) row.style.display = '';
+    sel.innerHTML = '<option value="chromium">🔵 Chromium</option><option value="firefox">🦊 Firefox</option><option value="webkit">🌿 WebKit</option>';
+    if (!['chromium','firefox','webkit'].includes(sel.value)) sel.value = 'chromium';
+  } else {
+    // Cacher le select pour SeleniumLibrary (Chrome uniquement)
+    if (row) row.style.display = 'none';
+    sel.innerHTML = '<option value="chrome">🌐 Chrome</option>';
+    sel.value = 'chrome';
+  }
+}
+
 function buildRfPrompt(description, library, style, mode) {
   // Library-specific prompts — no POM for API/DB
   if (library === 'RequestsLibrary') {
@@ -1437,13 +1511,13 @@ function buildRfPrompt(description, library, style, mode) {
     return buildRfPromptMobile(description, style);
   }
 
+  // Browser (Playwright) — toujours son propre prompt, même en multi
+  if (library === 'Browser') {
+    return buildRfPromptBrowser(description, style);
+  }
   // In multi-file mode, enforce POM structure with resources/ folder
   if (mode === 'multi') {
     return buildRfPromptPOM(description, library, style);
-  }
-  // Browser (Playwright) specific prompt
-  if (library === 'Browser') {
-    return buildRfPromptBrowser(description, style);
   }
 
   const styleMap = {
@@ -1487,200 +1561,456 @@ ${description}`;
 
 function buildRfPromptBrowser(description, style) {
   const bdd = style === 'bdd';
+  const bddNote = bdd ? 'Use BDD style: Given/When/Then/And/But prefixes on ALL test steps.' : 'Use Keyword-Driven style.';
   const lines = [
-    'You are a Robot Framework expert using Browser library (Playwright).',
-    'Generate plain text only. NO markdown. ALL keyword names in English.',
+    'You are a Robot Framework + Browser library (Playwright) expert.',
+    'Generate ONLY plain .robot code. NO markdown. NO explanations. NO code fences.',
+    'Separate files with ***** FILE: delimiters EXACTLY as shown below.',
     '',
     'DESCRIPTION:',
     description,
     '',
+    'STYLE: ' + bddNote,
+    '',
+    'OUTPUT - follow this EXACT structure:',
+    '',
+    '***** FILE: resources/variables.robot | variables | Variables',
     '*** Settings ***',
-    'Library    Browser',
-    'Library    Collections',
+    'Documentation    Variables',
     '',
     '*** Variables ***',
-    '${BASE_URL}    https://example.com',
-    '${BROWSER}     chromium    # Options: chromium, firefox, webkit — NOT chrome',
-    '${HEADLESS}    false',
+    '${BASE_URL}      [the URL to test]',
+    '${BROWSER}       ' + getBrowserType(),
+    '${HEADLESS}      False',
+    '[add all necessary variables - NO Suite Setup, NO keyword calls here]',
+    '',
+    '***** FILE: resources/keywords.robot | keywords | Keywords',
+    '*** Settings ***',
+    'Library      Browser',
+    'Library      Collections',
+    'Resource     variables.robot',
+    'Resource     pages/[main_page].robot',
     '',
     '*** Keywords ***',
-    '# Browser library keywords (NOT SeleniumLibrary):',
-    '# New Browser    chromium    headless=${HEADLESS}',
-    '# New Page    ${URL}',
-    '# Fill Text    css=#username    tomsmith',
-    '# Click    css=button[type="submit"]',
-    '# Wait For Elements State    css=#flash    visible    timeout=10s',
-    '# Get Text    css=#flash  → returns string',
-    '# Take Screenshot    (NOT Capture Page Screenshot)',
-    '# Close Browser',
+    'Open Browser Session',
+    '    [Arguments]    ${url}=${BASE_URL}    ${browser}=${BROWSER}',
+    '    New Browser    ${browser}    headless=${HEADLESS}',
+    '    New Context    acceptDownloads=True',
+    '    New Page       ${url}',
     '',
-    '# RULES for keywords with arguments:',
-    '# Always define [Arguments] and use them: NEVER call a keyword without its required args',
-    '# Example:',
-    '# Enter Credentials',
-    '#     [Arguments]    ${username}    ${password}',
-    '#     Fill Text    css=#username    ${username}',
-    '#     Fill Text    css=#password    ${password}',
+    '[add business keywords here - each keyword does ONE thing]',
+    '',
+    '***** FILE: resources/pages/[page_name].robot | page | [Page Name]',
+    '*** Settings ***',
+    'Documentation    Page Object for [page name]',
+    'Library          Browser',
+    'Resource         ../variables.robot',
+    '',
+    '*** Keywords ***',
+    '[page object keywords using Browser library only]',
+    '',
+    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '*** Settings ***',
+    'Suite Setup       Open Browser Session    ${BASE_URL}',
+    'Suite Teardown    Close Browser',
+    'Test Setup        Go To    ${BASE_URL}',
+    'Test Teardown     Take Screenshot',
+    'Documentation     [test suite description]',
+    'Library           Browser',
+    'Resource          ../resources/variables.robot',
+    'Resource          ../resources/keywords.robot',
+    'Resource          ../resources/pages/[page_name].robot',
     '',
     '*** Test Cases ***',
-    '# Each test case calls keywords WITH their arguments',
+    '[test cases here - each calls keywords with proper arguments]',
     '',
-    'RULES:',
-    '- Use Browser library keywords: Fill Text NOT Input Text, Click NOT Click Element',
-    '- Take Screenshot NOT Capture Page Screenshot',
-    '- New Browser + New Page to open, Close Browser to close',
-    '- Suite Setup: New Browser | Suite Teardown: Close Browser',
-    '- CSS selectors: css=#id  css=.class  css=button[type="submit"]',
-    '- ALWAYS pass arguments when calling keywords that have [Arguments]',
-    '- Add [Documentation] to every keyword and [Documentation]+[Tags] to every test case',
-    '- Align columns with spaces for readability',
-    bdd ? '- Given/When/Then/And in English' : '',
+    'CRITICAL RULES - NEVER BREAK THESE:',
+    '',
+    '1. SELECTORS - always use unique, specific selectors:',
+    '   GOOD: id=username  css=[data-test="login-button"]  css=[data-test="inventory-item-name"]:first-child',
+    '   BAD:  css=.inventory_item_name  (matches multiple elements - strict mode violation)',
+    '   Use data-test attributes: css=[data-test="xxx"]',
+    '',
+    '2. VARIABLE ASSIGNMENTS - NEVER as BDD steps:',
+    '   WRONG: Then ${prices}=    Get Prices List',
+    '   RIGHT: Put assignments INSIDE keyword definitions only',
+    '',
+    '3. BDD STEPS - only keyword calls, no assignments:',
+    '   Every step: Given/When/Then/And/But [Keyword Name]    [args]',
+    '   NO variable assignments as test case steps',
+    '',
+    '4. ARGUMENTS - always pass all required arguments',
+    '',
+    '5. BROWSER KEYWORDS (use these, NOT SeleniumLibrary):',
+    '   Fill Text    locator    text',
+    '   Click    locator',
+    '   Wait For Elements State    locator    visible    timeout=10s',
+    '   Get Text    locator',
+    '   Get Url',
+    '   Go To    url',
+    '   Take Screenshot',
+    '',
+    '6. Suite Setup calls "Open Browser Session" ONLY',
+    '7. variables.robot has ONLY *** Settings *** + *** Variables ***',
+    '8. Use EXACTLY the browser value shown in the template: ' + getBrowserType() + ' — do NOT change it to chrome or any other value',
+    '',
+    bdd ? '- BDD: Given/When/Then/And in English' : '',
     getSessionRules(),
   ];
-  return lines.filter(l => l !== false).join('\n');
+  return lines.filter(function(l){ return l !== false; }).join('\n');
+}
+
+
+function buildRfPromptBrowser_OLD(description, style) {
+  const bdd = style === 'bdd';
+  const lines = [
+    'You are a Robot Framework expert using the Browser library (Playwright).',
+    'Generate plain .robot files only. NO markdown. ALL keyword names in English.',
+    '',
+    '=== CRITICAL RULES — VIOLATION CAUSES RUNTIME ERRORS ===',
+    '',
+    '1. NEVER put "New Page" or "New Browser" inside *** Settings ***.',
+    '   *** Settings *** only accepts: Library, Resource, Variables, Suite Setup,',
+    '   Suite Teardown, Test Setup, Test Teardown, Documentation, Metadata, Tags.',
+    '',
+    '2. Suite Setup MUST call a single keyword that does: New Browser + New Context + New Page.',
+    '   Example in keywords.robot:',
+    '   Open Browser Session',
+    '       [Arguments]    ${url}    ${browser}=chromium',
+    '       New Browser    ${browser}    headless=False',
+    '       New Context    acceptDownloads=True',
+    '       New Page       ${url}',
+    '',
+    '3. variables.robot must ONLY contain *** Settings *** (Library/Resource/Documentation)',
+    '   and *** Variables ***. NEVER any keyword calls.',
+    '',
+    '4. Test Teardown: use "Take Screenshot" NOT "Capture Page Screenshot".',
+    '',
+    '5. Suite Teardown: always "Close Browser".',
+    '',
+    '=== CORRECT STRUCTURE ===',
+    '',
+    '--- resources/variables.robot ---',
+    '*** Settings ***',
+    'Documentation    Variables',
+    '',
+    '*** Variables ***',
+    '${BASE_URL}      https://example.com',
+    '${BROWSER}       ' + getBrowserType(),
+    '${HEADLESS}      False',
+    '',
+    '--- resources/keywords.robot ---',
+    '*** Settings ***',
+    'Library      Browser',
+    'Library      Collections',
+    'Resource     variables.robot',
+    'Resource     pages/main_page.robot',
+    '',
+    '*** Keywords ***',
+    'Open Browser Session',
+    '    [Arguments]    ${url}    ${browser}=chromium',
+    '    New Browser    ${browser}    headless=${HEADLESS}',
+    '    New Context    acceptDownloads=True',
+    '    New Page       ${url}',
+    '',
+    '--- resources/pages/page.robot ---',
+    '*** Settings ***',
+    'Library      Browser',
+    'Resource     ../variables.robot',
+    '',
+    '*** Keywords ***',
+    '# Page Object keywords using Browser library',
+    '',
+    '--- tests/tests.robot ---',
+    '*** Settings ***',
+    'Suite Setup       Open Browser Session    ${BASE_URL}',
+    'Suite Teardown    Close Browser',
+    'Test Setup        Go To    ${BASE_URL}',
+    'Test Teardown     Take Screenshot',
+    'Library           Browser',
+    'Resource          ../resources/variables.robot',
+    'Resource          ../resources/keywords.robot',
+    '',
+    '*** Test Cases ***',
+    '# Tests here',
+    '',
+    '=== BROWSER LIBRARY KEYWORDS (use these, NOT SeleniumLibrary) ===',
+    'Fill Text    locator    text          # NOT Input Text',
+    'Click    locator                      # NOT Click Element',
+    'Wait For Elements State    locator    visible    timeout=10s',
+    'Get Text    locator    ==    expected  # assertion inline',
+    'Get Text    locator                   # returns string',
+    'Get Url    ==    ${EXPECTED_URL}      # assert URL',
+    'Get Title    ==    ${EXPECTED_TITLE}',
+    'Take Screenshot                       # NOT Capture Page Screenshot',
+    'Scroll To    locator',
+    'Hover    locator',
+    'Select Options By    locator    value    optionValue',
+    'Check Checkbox    locator',
+    'Upload File By Selector    locator    /path/to/file',
+    'Wait For Navigation',
+    'Wait Until Network Is Idle',
+    'Evaluate Javascript    document.title',
+    'New Page    ${URL}                    # opens new tab',
+    'Switch Page    NEW                    # switch to new tab',
+    'Go To    ${URL}                       # navigate',
+    'Go Back',
+    '',
+    '=== CSS SELECTORS ===',
+    'id=username          → css=#username or id=username',
+    'css=.classname',
+    'css=button[type="submit"]',
+    'xpath=//div[@id="x"]',
+    'text=Click me        → finds by text content',
+    '',
+    '=== DESCRIPTION TO TEST ===',
+    description,
+    '',
+    'OUTPUT FORMAT — MANDATORY:',
+    'Separate each file with this exact delimiter:',
+    '***** FILE: resources/variables.robot | variables | Variables',
+    '[content of variables.robot]',
+    '',
+    '***** FILE: resources/keywords.robot | keywords | Keywords',
+    '[content of keywords.robot]',
+    '',
+    '***** FILE: resources/pages/login_page.robot | page | Login Page',
+    '[content of login_page.robot]',
+    '',
+    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '[content of tests.robot]',
+    '',
+    'ADDITIONAL RULES:',
+    '- ALWAYS use ***** FILE: delimiter before each file — this is mandatory',
+    '- Generate: variables.robot, keywords.robot, pages/*.robot, tests/tests.robot',
+    '- Always define [Arguments] and pass them when calling keywords',
+    '- Add [Documentation] to every keyword and test case',
+    '- Add [Tags] to every test case',
+    '- Align columns with spaces for readability',
+    '- Variables in variables.robot, NO hardcoded values in tests',
+    '- keywords.robot must contain "Open Browser Session" keyword',
+    '- tests.robot Suite Setup must call "Open Browser Session    ${BASE_URL}"',
+    bdd ? '- BDD style: Given/When/Then/And/But prefixes on all test steps' : '- Keyword-Driven style: descriptive keyword names',
+    getSessionRules(),
+  ];
+  return lines.filter(l => l !== false && l !== '').join('\n');
 }
 
 function buildRfPromptMobile(description, style) {
   const bdd = style === 'bdd';
   const lines = [
     'You are a Robot Framework expert for mobile web testing with AppiumLibrary.',
-    'Generate plain text only. NO markdown. ALL keyword names in English.',
+    'Generate plain .robot files only. NO markdown. NO explanations.',
     'Testing a WEBSITE on a real Android device via Chrome browser — NOT a native app.',
+    'Separate files with ***** FILE: delimiters EXACTLY as shown.',
     '',
     'DESCRIPTION:',
     description,
     '',
+    'STYLE: ' + (bdd ? 'BDD style: Given/When/Then/And/But prefixes.' : 'Keyword-Driven style.'),
+    '',
+    'OUTPUT — follow this EXACT structure:',
+    '',
+    '***** FILE: resources/variables.robot | variables | Variables',
     '*** Settings ***',
-    'Library    AppiumLibrary',
-    'Library    Collections',
+    'Documentation    Mobile Variables',
     '',
     '*** Variables ***',
     '${APPIUM_SERVER}    http://127.0.0.1:4723',
     '${PLATFORM}         Android',
-    '${DEVICE_NAME}      R92W40HP83N',
+    '${DEVICE_NAME}      [device name]',
     '${AUTOMATION}       UiAutomator2',
-    
-    '# Web selectors — same as SeleniumLibrary but prefixed with id: or xpath:',
-    '# Example: id:username  /  xpath://button[@type="submit"]  /  css:[name="q"]',
+    '${BASE_URL}         [URL to test]',
+    '[add all necessary variables]',
+    '',
+    '***** FILE: resources/keywords.robot | keywords | Keywords',
+    '*** Settings ***',
+    'Library      AppiumLibrary',
+    'Library      Collections',
+    'Resource     variables.robot',
     '',
     '*** Keywords ***',
     'Open Mobile Browser',
-    '    [Arguments]    ${url}',
+    '    [Arguments]    ${url}=${BASE_URL}',
     '    Open Application    ${APPIUM_SERVER}',
     '    ...    platformName=${PLATFORM}',
     '    ...    deviceName=${DEVICE_NAME}',
     '    ...    automationName=${AUTOMATION}',
     '    ...    browserName=Chrome',
-    
     '    Go To Url    ${url}',
     '',
     'Close Mobile Browser',
     '    Close Application',
     '',
-    '# AppiumLibrary web locators — use = not : prefix:',
-    '# id=elementId          (NOT id:elementId)',
-    '# xpath=//tag[@attr]    (standard XPath)',
-    '# css=.class or #id     (CSS selector)',
-    '# Wait Until Element Is Visible    xpath=//input[@id="username"]    10s',
-    '# (AppiumLibrary web: use xpath= for reliable element finding)',
-    '# Input Text    xpath=//input[@id="username"]    tomsmith',
-    '# Click Element    xpath=//button[@type="submit"]',
-    '# Get Text    id=flash',
-    '# Go To Url    https://new-url.com',
-    '# Capture Page Screenshot',
+    '[add business keywords here]',
+    '',
+    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '*** Settings ***',
+    'Suite Setup       Open Mobile Browser    ${BASE_URL}',
+    'Suite Teardown    Close Mobile Browser',
+    'Documentation     [test suite description]',
+    'Library           AppiumLibrary',
+    'Resource          ../resources/variables.robot',
+    'Resource          ../resources/keywords.robot',
     '',
     '*** Test Cases ***',
-    '# Each test = one mobile web scenario',
-    '# Suite Setup opens Chrome once on device, Suite Teardown closes it',
+    '[test cases here]',
     '',
     'RULES:',
-    '- Use browserName=Chrome — NO app path needed',
-    '- Suite Setup: Open Mobile Browser ${url} | Suite Teardown: Close Mobile Browser',
-    '- Locators MUST use = syntax: id=username  xpath=//button  css=#id',
-    '- ALWAYS use xpath= format: xpath=//input[@id="username"] NOT id=username',
+    '- Use xpath= selectors: xpath=//input[@id="username"]',
     '- Always Wait Until Element Is Visible before any interaction',
-    '- Close browser with Close Application (NOT Close Browser)',
-    '- NO APP_PATH variables',
-    '- Add [Documentation] to every keyword and [Documentation]+[Tags] to every test case',
-    '- Align columns with spaces for readability',
-    bdd ? '- Use Given/When/Then/And in English' : '',
+    '- Close Application (NOT Close Browser)',
+    '- NO Open Browser or SeleniumLibrary/Browser keywords',
+    '- [Documentation] on every keyword and test case',
+    '- [Tags] on every test case',
+    bdd ? '- Given/When/Then/And in English' : '',
     getSessionRules(),
   ];
-  return lines.filter(l => l !== false).join('\n');
+  return lines.filter(function(l){ return l !== false; }).join('\n');
 }
+
+
+
 
 function buildRfPromptAPI(description, style) {
   const bdd = style === 'bdd';
+  const bddNote = bdd ? 'BDD style: Given/When/Then/And/But prefixes on ALL steps.' : 'Keyword-Driven style.';
   const lines = [
     'You are a Robot Framework expert for REST API testing with RequestsLibrary.',
-    'Generate plain text only. NO markdown. ALL keyword names in English.',
+    'Generate plain .robot files only. NO markdown. NO explanations.',
+    'Separate files with ***** FILE: delimiters EXACTLY as shown.',
     '',
     'DESCRIPTION:',
     description,
     '',
+    'STYLE: ' + bddNote,
+    '',
+    'OUTPUT — follow this EXACT structure:',
+    '',
+    '***** FILE: resources/variables.robot | variables | Variables',
     '*** Settings ***',
-    'Library    RequestsLibrary',
-    'Library    Collections',
+    'Documentation    Variables API',
     '',
     '*** Variables ***',
-    '${BASE_URL}    https://api.example.com',
+    '${BASE_URL}         [the API base URL]',
+    '${CONTENT_TYPE}     application/json',
+    '[add all necessary variables]',
+    '',
+    '***** FILE: resources/keywords.robot | keywords | Keywords',
+    '*** Settings ***',
+    'Library      RequestsLibrary',
+    'Library      Collections',
+    'Library      String',
+    'Resource     variables.robot',
     '',
     '*** Keywords ***',
-    '# Reusable: Create Session, GET/POST/PUT/DELETE On Session, validate status/body',
+    'Create API Session',
+    '    Create Session    api    ${BASE_URL}    headers={"Content-Type": "${CONTENT_TYPE}"}',
+    '',
+    'Close API Session',
+    '    Delete All Sessions',
+    '',
+    '[add business keywords here]',
+    '',
+    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '*** Settings ***',
+    'Suite Setup       Create API Session',
+    'Suite Teardown    Close API Session',
+    'Documentation     [test suite description]',
+    'Library           RequestsLibrary',
+    'Library           Collections',
+    'Resource          ../resources/variables.robot',
+    'Resource          ../resources/keywords.robot',
     '',
     '*** Test Cases ***',
-    '# Each test = one API scenario',
-    '# ${resp}=    GET On Session    alias    /endpoint',
-    '# Should Be Equal As Strings    ${resp.status_code}    200',
+    '[test cases here]',
     '',
     'RULES:',
-    '- NO Open Browser or SeleniumLibrary keywords',
-    '- Suite Setup: Create Session | Suite Teardown: Delete All Sessions',
-    '- Validate status code AND response body',
-    bdd ? '- Use Given/When/Then/And in English' : '',
+    '- NO Open Browser or SeleniumLibrary/Browser keywords',
+    '- Use GET On Session, POST On Session, PUT On Session, DELETE On Session',
+    '- Always validate status_code AND response body',
+    '- ${resp}=    GET On Session    api    /endpoint',
+    '- Should Be Equal As Integers    ${resp.status_code}    200',
+    '- [Documentation] on every keyword and test case',
+    '- [Tags] on every test case',
+    bdd ? '- Given/When/Then/And in English' : '',
+    getSessionRules(),
   ];
-  return lines.filter(l => l !== false).join('\n');
+  return lines.filter(function(l){ return l !== false; }).join('\n');
 }
 
+
+
+
 function buildRfPromptDB(description, style) {
+  const bdd = style === 'bdd';
   const lines = [
     'You are a Robot Framework expert for database testing with DatabaseLibrary.',
-    'Generate plain text only. NO markdown. ALL keyword names in English.',
+    'Generate plain .robot files only. NO markdown. NO explanations.',
+    'Separate files with ***** FILE: delimiters EXACTLY as shown.',
     '',
     'DESCRIPTION:',
     description,
     '',
+    'STYLE: ' + (bdd ? 'BDD style: Given/When/Then/And/But prefixes.' : 'Keyword-Driven style.'),
+    '',
+    'OUTPUT — follow this EXACT structure:',
+    '',
+    '***** FILE: resources/variables.robot | variables | Variables',
     '*** Settings ***',
-    'Library    DatabaseLibrary',
-    'Library    Collections',
+    'Documentation    Database Variables',
     '',
     '*** Variables ***',
     '${DB_MODULE}    pymysql',
     '${DB_HOST}      localhost',
     '${DB_PORT}      3306',
-    '${DB_NAME}      mydb',
-    '${DB_USER}      root',
-    '${DB_PASS}      password',
+    '${DB_NAME}      [database name]',
+    '${DB_USER}      [username]',
+    '${DB_PASS}      [password]',
+    '[add all necessary variables]',
+    '',
+    '***** FILE: resources/keywords.robot | keywords | Keywords',
+    '*** Settings ***',
+    'Library      DatabaseLibrary',
+    'Library      Collections',
+    'Resource     variables.robot',
     '',
     '*** Keywords ***',
-    '# Connect To Database    ${DB_MODULE}    ${DB_NAME}    ${DB_USER}    ${DB_PASS}    ${DB_HOST}    ${DB_PORT}',
-    '# Table Must Exist    tableName',
-    '# Row Count Is Greater Than X    SELECT * FROM table WHERE ...    0',
-    '# Disconnect From Database',
+    'Connect To DB',
+    '    Connect To Database    ${DB_MODULE}    ${DB_NAME}    ${DB_USER}    ${DB_PASS}    ${DB_HOST}    ${DB_PORT}',
+    '',
+    'Disconnect From DB',
+    '    Disconnect From Database',
+    '',
+    '[add business keywords here]',
+    '',
+    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '*** Settings ***',
+    'Suite Setup       Connect To DB',
+    'Suite Teardown    Disconnect From DB',
+    'Documentation     [test suite description]',
+    'Library           DatabaseLibrary',
+    'Library           Collections',
+    'Resource          ../resources/variables.robot',
+    'Resource          ../resources/keywords.robot',
     '',
     '*** Test Cases ***',
-    '# Each test = one DB scenario',
+    '[test cases here]',
     '',
     'RULES:',
-    '- NO Open Browser or SeleniumLibrary keywords',
-    '- Suite Setup: connect to DB | Suite Teardown: disconnect',
-    '- Validate data, row counts, column values',
-    '- Add [Documentation] to every keyword and [Documentation]+[Tags] to every test case',
-    '- Add comments explaining what each SQL query validates',
+    '- NO Open Browser or SeleniumLibrary/Browser keywords',
+    '- Use: Table Must Exist, Row Count Is Greater Than X, Execute SQL String, Check If Exists In Database',
+    '- Always validate data, row counts, column values',
+    '- [Documentation] on every keyword and test case',
+    '- [Tags] on every test case',
+    bdd ? '- Given/When/Then/And in English' : '',
     getSessionRules(),
   ];
-  return lines.join('\n');
+  return lines.filter(function(l){ return l !== false; }).join('\n');
 }
+
+
+
 
 
 function buildRfPromptPOM(description, library, style) {
@@ -1929,6 +2259,9 @@ function injectRunButton(code, filename) {
 // ── Clean Robot Framework code — remove HTML artifacts and Settings leaks ─────
 function cleanRobotCode(code) {
   if (!code) return '';
+  // Supprimer le HTML de coloration syntaxique si present
+  code = code.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
+  code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
   // Apply Suite Teardown cleanup if mode is per-suite
   const sessionMode = document.getElementById('optBrowserSession')?.value || 'per-test';
@@ -1951,7 +2284,7 @@ function cleanRobotCode(code) {
     // Detect URL variable from code
     const urlVarM = code.match(/\$\{(\w*(?:URL|LOGIN|BASE|HOME)\w*)\}/i);
     const urlVar2 = urlVarM ? '\${' + urlVarM[1] + '}' : '\${BASE_URL}';
-    const browserVar2 = code.includes('\${BROWSER}') ? '\${BROWSER}' : 'chrome';
+    const browserVar2 = code.includes('\${BROWSER}') ? '\${BROWSER}' : getBrowserType();
     // Add Suite Setup + Suite Teardown once
     code = code.replace(/(\*\*\* Settings \*\*\*[^\n]*\n)/, '$1Suite Setup       Open Browser    ' + urlVar2 + '    ' + browserVar2 + '\nSuite Teardown    Close Browser\n');
   }
@@ -2130,7 +2463,10 @@ function buildFileTree(files, activeTab, cardId) {
       const pf = parts2.slice(0, p).join('/');
       if (pf && !tree[pf]) tree[pf] = [];
     }
-    tree[folder].push({ name: parts[parts.length-1], idx: i, fullPath: f.filename });
+    // Dedup : n'ajoute pas si le fichier est deja present (meme fullPath)
+    if (!tree[folder].some(function(x){ return x.fullPath === f.filename; })) {
+      tree[folder].push({ name: parts[parts.length-1], idx: i, fullPath: f.filename });
+    }
   });
   // Also create empty folder entries from .gitkeep files
   files.forEach((f, i) => {
@@ -2163,10 +2499,14 @@ function buildFileTree(files, activeTab, cardId) {
     </div>`;
   };
 
+  if (!window._treeCollapsed) window._treeCollapsed = new Set();
+
   const folderHtml = (folder) => {
     const depth = folder.split('/').length;
     const indent = depth * 12;
-    return `<div class="tree-folder-row" data-folder="${escHtml(folder)}" data-card="${cardId}"
+    const colKey = cardId + '::' + folder;
+    const isCollapsed = window._treeCollapsed.has(colKey);
+    return `<div class="tree-folder-row" data-folder="${escHtml(folder)}" data-card="${cardId}" data-colkey="${escHtml(colKey)}"
       draggable="true"
       ondragstart="window._treeDrag={folder:'${escHtml(folder)}',cardId:'${cardId}'};event.currentTarget.style.opacity='.4'"
       ondragend="event.currentTarget.style.opacity='1'"
@@ -2175,9 +2515,9 @@ function buildFileTree(files, activeTab, cardId) {
       ondrop="treeDropToFolder(event,'${escHtml(folder)}','${cardId}');event.currentTarget.style.background=''"
       style="display:flex;align-items:center;gap:4px;padding:5px 8px 2px ${indent}px;font-size:10px;
              color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;
-             border-radius:4px;transition:background .1s;user-select:none">
-      <span>📁</span>
-      <span style="flex:1">${escHtml(folder.split('/').pop())}</span>
+             border-radius:4px;transition:background .1s;user-select:none;cursor:pointer">
+      <span>${isCollapsed ? '📁' : '📂'}</span>
+      <span style="flex:1" onclick="treeFolderToggle(event,'${escHtml(colKey)}','${cardId}')">${escHtml(folder.split('/').pop())}</span>
       <span class="tree-folder-actions" style="display:flex;gap:2px;margin-left:auto">
         <button data-raction="folder-rename" data-folder="${escHtml(folder)}" data-card="${cardId}"
           style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:10px;padding:1px 3px"
@@ -2208,12 +2548,41 @@ function buildFileTree(files, activeTab, cardId) {
 
   Object.keys(tree).filter(k=>k!=='').sort().forEach(folder => {
     html += folderHtml(folder);
-    tree[folder].forEach(f => { html += fileItemHtml(f, 22); });
-    html += addFileBtn(folder);
-    html += addFolderBtn(folder);
+    const colKey = cardId + '::' + folder;
+    const isCollapsed = window._treeCollapsed && window._treeCollapsed.has(colKey);
+    if (!isCollapsed) {
+      tree[folder].forEach(f => { html += fileItemHtml(f, 22); });
+      html += addFileBtn(folder);
+      html += addFolderBtn(folder);
+    }
   });
 
   return html;
+}
+
+function treeFolderToggle(e, colKey, cardId) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  if (!window._treeCollapsed) window._treeCollapsed = new Set();
+  if (window._treeCollapsed.has(colKey)) window._treeCollapsed.delete(colKey);
+  else window._treeCollapsed.add(colKey);
+  // Re-render l'arbre du bloc
+  const card = (window._codeCards||[]).find(c => c.cardId === cardId);
+  if (!card) return;
+  const treeEl = document.querySelector('#' + cardId + ' [style*="width:200px"]');
+  if (treeEl) {
+    const inner = treeEl.querySelector('[style*="ARBORESCENCE"]')?.parentElement || treeEl;
+    // Reconstruire uniquement la partie arbre (après le header)
+    const headerEl = treeEl.querySelector('[style*="ARBORESCENCE"]')?.closest('div[style*="padding:0 8px"]');
+    if (headerEl) {
+      // Supprimer tout après le header et réinjecter
+      let next = headerEl.nextSibling;
+      while (next) { const tmp = next.nextSibling; next.remove(); next = tmp; }
+      treeEl.insertAdjacentHTML('beforeend', buildFileTree(card.files, 0, cardId).replace(/^[\s\S]*?(?=<div class="tree-)/, ''));
+    }
+  }
+  // Re-render complet du bloc pour mettre à jour l'arbre
+  const el = document.getElementById(cardId);
+  if (el && card) { el.remove(); renderResultCard(card.files, cardId); }
 }
 
 // Show/hide tree action buttons on hover
@@ -2494,6 +2863,9 @@ function deleteFromDB(cardId) {
   if (!cardId) return;
   fetch('http://localhost:3001/api/storage/card/' + cardId, { method: 'DELETE' })
     .catch(e => console.warn('MongoDB delete error:', e.message));
+  // Supprimer aussi de pulledblocks si c'est un bloc pullé
+  fetch('/api/pulledblocks/' + encodeURIComponent(cardId), { method: 'DELETE' })
+    .catch(function(){});
 }
 function deleteTCFromDB() {
   saveTCStore(); // re-sauvegarde sans les blocs supprimés
@@ -2565,7 +2937,8 @@ function renderResultCard(files, existingCardId) {
     ).join('') : '';
 
     const f    = files[active];
-    const safe = escHtml(f.code);
+    const rawCode = cleanRobotCodeFromHtml(f.code);
+    const safe = escHtml(rawCode);
     const hl   = syntaxHL(safe);
 
     // Multi-file run selector
@@ -2602,8 +2975,8 @@ function renderResultCard(files, existingCardId) {
 
     div.innerHTML = `
       <div class="msg-avatar">🤖</div>
-      <div class="msg-body" style="width:100%;max-width:820px">
-        <div class="msg-bubble" style="padding:0;overflow:hidden;min-width:340px;max-width:100%;width:100%;box-sizing:border-box;resize:horizontal;overflow:auto">
+      <div class="msg-body" style="width:100%;max-width:98vw">
+        <div class="msg-bubble" style="padding:0;overflow:hidden;min-width:340px;max-width:100%;width:100%;box-sizing:border-box;resize:both;overflow:auto;min-height:200px">
 
           <!-- Card header -->
           <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap">
@@ -2615,7 +2988,7 @@ function renderResultCard(files, existingCardId) {
               const t = card?.title || window._lastGeneratedTitle || '';
               return t ? '<span style="background:rgba(0,212,170,0.12);border:1px solid var(--teal);color:var(--teal);font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:2px 9px;border-radius:10px;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + escHtml(t) + '">🏷️ ' + escHtml(t) + '</span>' : '';
             })()}
-            <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;gap:4px;flex-wrap:nowrap;align-items:center;flex-shrink:0;margin-left:auto">
               ${runSelector}
               <button data-card="${cardId}" data-raction="toggleedit"
                 style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Éditer le code">✏️ Éditer</button>
@@ -2633,13 +3006,19 @@ function renderResultCard(files, existingCardId) {
                 title="Télécharger ce fichier" style="background:rgba(245,158,11,0.08);border:1px solid var(--warn);color:var(--warn);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Télécharger ce fichier">⬇️</button>
               ${isMulti ? `<button data-card="${cardId}" data-raction="downloadall"
                 title="Télécharger tous les fichiers" style="background:rgba(59,130,246,0.08);border:1px solid #60a5fa;color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Télécharger tous les fichiers">⬇️ Tout</button>` : ''}
+              <button id="tagBtn-${cardId}" onclick="toggleCardTag('${cardId}')"
+                style="background:rgba(0,0,0,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Taguer pour deploy">Tag</button>
+              <button data-card="${cardId}" data-raction="zoom-in"
+                style="background:rgba(0,212,170,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Zoom +">＋</button>
+              <button data-card="${cardId}" data-raction="zoom-out"
+                style="background:rgba(0,212,170,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Zoom -">－</button>
               <button data-card="${cardId}" data-raction="reset"
                 style="background:rgba(230,57,70,0.08);border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Supprimer">✕</button>
             </div>
           </div>
 
           <!-- Layout: tree sidebar + code area -->
-          <div style="display:flex;min-height:360px">
+          <div style="display:flex;min-height:360px;flex:1">
 
             <!-- File tree (multi only) -->
             ${isMulti ? `<div style="width:200px;min-width:140px;flex-shrink:0;background:#060a10;border-right:1px solid var(--border);padding:10px 0;overflow-y:auto;resize:horizontal;overflow:auto"
@@ -2675,10 +3054,10 @@ function renderResultCard(files, existingCardId) {
                   style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px">✕</button>
               </div>
               <!-- Code view (read) -->
-              <div id="${editId}-view" style="flex:1;position:relative;overflow:hidden"
+              <div id="${editId}-view" style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column"
                 onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='f'){event.preventDefault();const s=document.getElementById('${editId}-search');s.style.display='flex';document.getElementById('${editId}-search-input').focus()}"
                 tabindex="0">
-                <pre id="${editId}-pre" style="padding:14px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.75;color:#7dd3c8;overflow:auto;min-height:320px;height:420px;resize:vertical;white-space:pre;margin:0">${hl}</pre>
+                <pre id="${editId}-pre" style="padding:14px;font-family:'IBM Plex Mono',monospace;font-size:${(window._codeFontSize&&window._codeFontSize[cardId])||13}px;line-height:1.75;color:#7dd3c8;overflow:auto;min-height:320px;height:100%;resize:vertical;white-space:pre;margin:0;flex:1">${hl}</pre>
               </div>
 
               <!-- Code editor (hidden by default) -->
@@ -2687,7 +3066,7 @@ function renderResultCard(files, existingCardId) {
                   style="flex:1;width:100%;min-height:320px;background:var(--code);border:none;color:#7dd3c8;
                          font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.75;
                          padding:14px;outline:none;resize:vertical;box-sizing:border-box;white-space:pre;overflow-x:auto"
-                  spellcheck="false">${escHtml(f.code)}</textarea>
+                  spellcheck="false">${escHtml(rawCode)}</textarea>
                 <div style="display:flex;gap:8px;padding:10px 14px;background:var(--card);border-top:1px solid var(--border)">
                   <button data-card="${cardId}" data-raction="applyedit" data-editid="${editId}"
                     style="background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;padding:8px 18px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
@@ -2746,6 +3125,24 @@ function renderResultCard(files, existingCardId) {
           if (newFiles[activeTab]) newFiles[activeTab] = { ...newFiles[activeTab], code: ta.value };
           return { ...c, files: newFiles };
         });
+        // Persister dans PulledBlock si ce bloc vient d'un pull CI/CD
+        (async () => {
+          try {
+            const chk = await fetch('/api/pulledblocks/' + encodeURIComponent(cardId) + '?check=1');
+            // on fait un PATCH silencieux (la route GET n'existe pas, on tente PATCH directement)
+          } catch(e){}
+          const updCard = (window._codeCards||[]).find(x => x.cardId === cardId);
+          if (updCard) _patchPulledBlock(cardId, { files: updCard.files.map(f=>({filename:f.filename,code:f.code,label:f.label||''})) });
+        })();
+        // Persister dans PulledBlock si ce bloc vient d'un pull CI/CD
+        (async () => {
+          try {
+            const chk = await fetch('/api/pulledblocks/' + encodeURIComponent(cardId) + '?check=1');
+            // on fait un PATCH silencieux (la route GET n'existe pas, on tente PATCH directement)
+          } catch(e){}
+          const updCard = (window._codeCards||[]).find(x => x.cardId === cardId);
+          if (updCard) _patchPulledBlock(cardId, { files: updCard.files.map(f=>({filename:f.filename,code:f.code,label:f.label||''})) });
+        })();
         window._lastGeneratedCode = ta.value;
         localStorage.setItem('qa_last_code', ta.value);
         saveCodeCards(); // persiste dans MongoDB + localStorage
@@ -2806,6 +3203,17 @@ function renderResultCard(files, existingCardId) {
         dlFile(files[activeTab].filename, files[activeTab].code);
       } else if (action === 'downloadall') {
         downloadAsZip(files, cardId);
+      } else if (action === 'zoom-in' || action === 'zoom-out') {
+        if (!window._codeFontSize) window._codeFontSize = {};
+        const cur = window._codeFontSize[cardId] || 13;
+        const next = action === 'zoom-in' ? Math.min(cur + 1, 22) : Math.max(cur - 1, 10);
+        window._codeFontSize[cardId] = next;
+        // Appliquer à tous les pre et textarea du bloc
+        const el2 = document.getElementById(cardId);
+        if (el2) {
+          el2.querySelectorAll('pre').forEach(p => p.style.fontSize = next + 'px');
+          el2.querySelectorAll('textarea').forEach(t => t.style.fontSize = next + 'px');
+        }
       } else if (action === 'reset') {
         const card = (window._codeCards||[]).find(c => c.cardId === cardId);
         const blockTitle = card?.title || (files[0]?.filename || 'ce bloc');
@@ -2817,6 +3225,18 @@ function renderResultCard(files, existingCardId) {
           // Remove from savedSuites testIds
           savedSuites.forEach(s => { s.testIds = (s.testIds||[]).filter(id => suiteRegistry.some(t => t.id === id)); });
           saveSuitesList();
+          // Retirer du tag
+          if (window._taggedCards) window._taggedCards.delete(cardId);
+          // Retirer les marqueurs [RF code: ...] liés à ce bloc du chatHistory
+          const _cardFiles = card ? (card.files||[]).map(f => f.filename) : [];
+          if (_cardFiles.length) {
+            chatHistory = chatHistory.filter(function(m){
+              if (!m.content.startsWith('[RF code:')) return true;
+              // Vérifier si ce marqueur correspond aux fichiers du bloc supprimé
+              return !_cardFiles.some(function(fn){ return m.content.includes(fn); });
+            });
+            LS.save();
+          }
           saveCodeCards();
           deleteFromDB(cardId);
           div.remove();
@@ -2869,12 +3289,21 @@ function dlFile(filename, code) {
 
 // ── Syntax highlight ───────────────────────────────────────────────────────────
 function syntaxHL(code) {
-  return code
-    .replace(/(\*{3}[^*]+\*{3})/g, '<span style="color:#e06c75;font-weight:700">$1</span>')
-    .replace(/(#[^\n]*)/g, '<span style="color:#5c6370;font-style:italic">$1</span>')
-    .replace(/(\$\{[^}]+\})/g, '<span style="color:#e5c07b">$1</span>')
-    .replace(/(\[(?:Arguments|Return|Documentation|Tags|Setup|Teardown|Timeout)\])/g, '<span style="color:#c678dd">$1</span>');
+  if (!code) return '';
+  // Ne pas appliquer si le code contient deja des spans HTML
+  if (code.includes('<span')) return code;
+  var c = code;
+  // Sections *** ... ***
+  c = c.replace(/(\*{3}[^*\n]+\*{3})/g, '<span style="color:#e06c75;font-weight:700">$1</span>');
+  // Variables ${...}
+  c = c.replace(/(\$\{[^}]+\})/g, '<span style="color:#e5c07b">$1</span>');
+  // Keywords speciaux [Arguments] etc
+  c = c.replace(/(\[(?:Arguments|Return|Documentation|Tags|Setup|Teardown|Timeout)\])/g, '<span style="color:#c678dd">$1</span>');
+  // Commentaires # (seulement en debut de mot, pas dans les URLs/couleurs)
+  c = c.replace(/(^|\n)([ \t]*#[^\n]*)/g, '$1<span style="color:#5c6370;font-style:italic">$2</span>');
+  return c;
 }
+
 
 // ── Markdown renderer (minimal) ────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -2893,6 +3322,15 @@ function escHtml(s) {
 
 function stripHtml(h) {
   return (h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function cleanRobotCodeFromHtml(code) {
+  if (!code) return code;
+  // Supprimer les balises span de coloration syntaxique
+  var c = code.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
+  // Decoder les entites HTML
+  c = c.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+  return c;
 }
 
 function scrollToBottom() {
@@ -3724,11 +4162,12 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   window._currentRunMsg = runMsgDiv;
 
   try {
+    const browserType = document.getElementById('optBrowserType')?.value || 'chrome';
     const headless = document.getElementById('optHeadless')?.value === 'headless';
     const r    = await fetch('http://localhost:3001/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, pageTitle: window._lastGeneratedTitle || '' }),
+      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '' }),
     });
     const data = await r.json();
     hideTyping();
@@ -4116,10 +4555,10 @@ function buildInlineReport(data) {
           style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0d1117">
           <span style="font-size:18px">${icon}</span>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:700;color:#e8f0f8">${esc(t.name)}</div>
+            <div style="font-size:14px;font-weight:700;color:#e8f0f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px" title="${esc(t.name)}">${esc(t.name)}</div>
             <div style="font-size:11px;color:#94afc8;font-family:monospace;margin-top:2px">${iconEn} · ${fmtD(t.duration)}</div>
           </div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${tags}</div>
+          <div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end;overflow:hidden;max-width:300px;flex-shrink:0">${tags}</div>
           <span style="color:#94afc8;font-size:12px;margin-left:8px">▼</span>
         </div>
         <!-- Test body -->
@@ -5151,7 +5590,7 @@ function resumeTestRun(btn) {
 
 function stopTestRun() {
   window._suiteStopped = true; // Stop suite loop
-  fetch('https://robotstudioai.onrender.com/api/rf/stop', { method: 'POST' })
+  fetch('http://localhost:3001/api/rf/stop', { method: 'POST' })
     .then(r => r.json())
     .then(d => {
       if (d.stopped) showToast('⏹ Run arrêté');
@@ -6064,10 +6503,494 @@ function onSuiteDrop(e, suiteIdx) {
     showToast('⚠️ Drop impossible : ' + err.message);
   }
 }
+
+// ── RF Autocomplete ──────────────────────────────────────────────────────────
+(function(){
+  var RF_COMPLETIONS = [
+    // ── Sections RF
+    '*** Settings ***','*** Variables ***','*** Test Cases ***','*** Keywords ***','*** Tasks ***',
+
+    // ── Settings
+    'Library','Resource','Variables',
+    'Suite Setup','Suite Teardown','Test Setup','Test Teardown',
+    'Test Template','Test Timeout','Documentation','Metadata',
+    'Force Tags','Default Tags','Task Setup','Task Teardown',
+
+    // ── Déclarations Library
+    'Library    SeleniumLibrary',
+    'Library    Browser',
+    'Library    RequestsLibrary',
+    'Library    Collections',
+    'Library    String',
+    'Library    BuiltIn',
+    'Library    OperatingSystem',
+    'Library    Process',
+    'Library    DateTime',
+    'Library    Screenshot',
+    'Library    XML',
+    'Library    JSON',
+
+    // ── Resources communs
+    'Resource    ../resources/keywords.robot',
+    'Resource    ../resources/variables.robot',
+    'Resource    ../resources/pages/main_page.robot',
+    'Resource    variables.robot',
+    'Resource    keywords.robot',
+    'Resource    pages/main_page.robot',
+
+    // ── Annotations
+    '[Documentation]','[Tags]','[Setup]','[Teardown]',
+    '[Template]','[Timeout]','[Arguments]','[Return]',
+
+    // ── BDD
+    'Given ','When ','Then ','And ','But ',
+
+    // ── BuiltIn
+    'Log','Log To Console','Log Many','Log Variables',
+    'Should Be Equal','Should Be Equal As Strings','Should Be Equal As Numbers',
+    'Should Contain','Should Not Contain','Should Start With','Should End With',
+    'Should Be True','Should Be False','Should Be Empty','Should Not Be Empty',
+    'Should Match','Should Match Regexp',
+    'Run Keyword','Run Keyword If','Run Keyword Unless','Run Keywords',
+    'Run Keyword And Return','Run Keyword And Return Status',
+    'Run Keyword And Ignore Error','Run Keyword And Expect Error',
+    'Wait Until Keyword Succeeds',
+    'Set Variable','Set Variable If',
+    'Set Global Variable','Set Suite Variable','Set Test Variable',
+    'Get Variable Value','Variable Should Exist','Variable Should Not Exist',
+    'Sleep','Catenate','Evaluate','Convert To String','Convert To Integer',
+    'Convert To Number','Convert To Boolean','Convert To List',
+    'Get Length','Length Should Be','Should Have Length',
+    'Pass Execution','Pass Execution If','Fail','Skip','Skip If',
+    'Comment','No Operation',
+    'FOR    ${item}    IN    @{list}',
+    'FOR    ${i}    IN RANGE    10',
+    'FOR    ${key}    ${value}    IN    &{dict}',
+    'IF    ${condition}','ELSE IF    ${condition}','ELSE','END',
+    'WHILE    ${condition}',
+    'TRY','EXCEPT','FINALLY','BREAK','CONTINUE',
+    'RETURN',
+
+    // ── SeleniumLibrary
+    'Open Browser','Open Browser    ${URL}    ${BROWSER}',
+    'Close Browser','Close All Browsers',
+    'Get WebElements','Get WebElement',
+    'Go To','Go Back','Go Forward','Reload Page',
+    'Get Location','Get Title','Get Source',
+    'Click Element','Click Button','Click Link','Click Image',
+    'Double Click Element','Mouse Over',
+    'Input Text','Input Password','Clear Element Text',
+    'Press Keys','Press Key',
+    'Submit Form',
+    'Select From List By Value','Select From List By Label','Select From List By Index',
+    'Unselect From List By Value','Unselect From List By Label',
+    'Select All From List','Deselect All From List',
+    'List Selection Should Be','List Should Have No Selections',
+    'Select Checkbox','Unselect Checkbox',
+    'Checkbox Should Be Selected','Checkbox Should Not Be Selected',
+    'Choose File',
+    'Element Should Be Visible','Element Should Not Be Visible',
+    'Element Should Be Enabled','Element Should Be Disabled',
+    'Element Should Be Focused',
+    'Element Should Contain','Element Should Not Contain',
+    'Element Text Should Be','Element Text Should Contain',
+    'Element Attribute Value Should Be',
+    'Wait Until Element Is Visible','Wait Until Element Is Not Visible',
+    'Wait Until Element Is Enabled','Wait Until Element Contains',
+    'Wait Until Page Contains','Wait Until Page Does Not Contain',
+    'Wait Until Page Contains Element','Wait Until Page Does Not Contain Element',
+    'Page Should Contain','Page Should Not Contain',
+    'Page Should Contain Element','Page Should Not Contain Element',
+    'Page Should Contain Button','Page Should Contain Checkbox',
+    'Page Should Contain Link','Page Should Contain Textfield',
+    'Get Text','Get Value','Get Element Attribute',
+    'Get Element Count','Get Element Size','Get Element Location',
+    'Get Horizontal Position','Get Vertical Position',
+    'Execute Javascript','Execute Async Javascript',
+    'Scroll Element Into View','Scroll To Element',
+    'Drag And Drop','Drag And Drop By Offset',
+    'Mouse Down','Mouse Up','Mouse Move',
+    'Capture Page Screenshot','Capture Element Screenshot',
+    'Set Selenium Speed','Set Selenium Timeout','Set Selenium Implicit Wait',
+    'Set Browser Implicit Wait',
+    'Maximize Browser Window','Set Window Size','Set Window Position',
+    'Get Window Size','Get Window Position',
+    'Switch Window','Get Window Handles','Get Window Title',
+    'Close Window','Select Window',
+    'Select Frame','Select Parent Frame','Unselect Frame',
+    'Alert Should Be Present','Alert Should Not Be Present',
+    'Handle Alert','Dismiss Alert','Accept Alert','Input Text Into Alert',
+    'Get Alert Message',
+    'Add Cookie','Get Cookie','Get Cookies','Delete Cookie','Delete All Cookies',
+    'Assign Id To Element',
+    'Locator Should Match X Times','XPath Should Match X Times',
+
+    // ── Browser (Playwright)
+    'New Browser','New Page','New Context',
+    'Close Browser','Close Page','Close Context',
+    'Go To','Take Screenshot',
+    'Click','Click With Options',
+    'Fill','Type Text','Press Keys','Clear Text',
+    'Check','Uncheck','Select Options By','Deselect Options',
+    'Get Text','Get Property','Get Attribute',
+    'Get Element','Get Elements','Get Element Count',
+    'Element Should Be Visible','Element Should Be Hidden',
+    'Element Should Be Enabled','Element Should Be Disabled',
+    'Wait For Elements State','Wait For Navigation',
+    'Wait Until Network Is Idle',
+    'Page Should Contain','Page Should Not Contain',
+    'Get Title','Get Url',
+    'Evaluate Javascript',
+    'Scroll To','Scroll By',
+    'Hover','Focus','Blur',
+    'Upload File','Download',
+    'Set Viewport Size','Get Viewport Size',
+    'Switch Page','Switch Browser','Switch Context',
+    'New Persistent Context',
+    'Record Selector',
+    'Promise To','Wait For Promise',
+    'Run Async Keywords',
+
+    // ── RequestsLibrary
+    'Create Session','Create Client Cert Session',
+    'Delete All Sessions',
+    'GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS',
+    'GET On Session','POST On Session','PUT On Session',
+    'PATCH On Session','DELETE On Session','HEAD On Session',
+    'Request Should Be Successful',
+    'Status Should Be',
+    'GET Request','POST Request','PUT Request','DELETE Request',
+    'Response Should Contain Json',
+
+    // ── Collections
+    'Append To List','Insert Into List','Remove From List',
+    'Remove Values From List','Remove Duplicates',
+    'Get From List','Get Slice From List','Count Values In List',
+    'Get Index From List','List Should Contain Value',
+    'List Should Not Contain Value','List Should Contain Sub List',
+    'Lists Should Be Equal','Sort List','Reverse List',
+    'Set List Value','Copy List',
+    'Create List','Create Dictionary',
+    'Append To Dictionary','Get From Dictionary','Get Dictionary Keys',
+    'Get Dictionary Values','Get Dictionary Items',
+    'Keep In Dictionary','Remove From Dictionary',
+    'Set To Dictionary','Pop From Dictionary',
+    'Dictionary Should Contain Key','Dictionary Should Not Contain Key',
+    'Dictionary Should Contain Value','Dictionary Should Not Contain Value',
+    'Dictionary Should Contain Item','Dictionary Should Not Contain Item',
+    'Dictionaries Should Be Equal','Copy Dictionary','Merge Dictionaries',
+    'Get Match Count','Get Matches','Should Contain Match',
+
+    // ── String
+    'Get Regexp Matches','Replace String','Replace String Using Regexp',
+    'Split String','Split String From Right','Split String To Characters',
+    'Split To Lines','Join String','Join Strings',
+    'Get Line','Get Line Count','Get Lines Containing String',
+    'Get Lines Matching Pattern','Get Lines Matching Regexp',
+    'Remove String','Remove String Using Regexp',
+    'Convert To Lowercase','Convert To Uppercase','Convert To Title Case',
+    'Strip String','Encode String To Bytes','Decode Bytes To String',
+    'Format String','Generate Random String',
+    'Should Be String','Should Not Be String',
+    'Should Be Byte String','Should Not Be Byte String',
+    'Should Be Unicode String','Should Not Be Unicode String',
+    'String Should Match',
+
+    // ── Variables communes SauceDemo
+    '${URL}','${BROWSER}','${BASE_URL}',
+    '${STANDARD_USER}','${LOCKED_USER}','${INVALID_USER}',
+    '${PASSWORD}','${INVALID_PASSWORD}',
+    '${USERNAME_INPUT}','${PASSWORD_INPUT}','${LOGIN_BUTTON}',
+    '${ERROR_MESSAGE}','${INVENTORY_CONTAINER}',
+    '${TIMEOUT}','${IMPLICIT_WAIT}',
+  ];
+
+  function getWordBefore(ta) {
+    var val = ta.value;
+    var pos = ta.selectionStart;
+    var lineStart = val.lastIndexOf('\n', pos - 1) + 1;
+    var line = val.slice(lineStart, pos);
+    var m = line.match(/[\w\$\{\}\*\[\]\/\.\-\_\s]+$/);
+    if (!m) return '';
+    // Pour les sections *** on prend tout depuis le début de ligne
+    if (line.trimStart().startsWith('*')) return line.trimStart();
+    // Sinon dernier mot
+    var m2 = line.match(/[\w\$\{\}\*\[\]\/\.\-\_]+$/);
+    return m2 ? m2[0] : '';
+  }
+
+  function getSuggestions(word) {
+    if (!word || word.length < 2) return [];
+    var w = word.toLowerCase();
+    var exact = RF_COMPLETIONS.filter(function(c){ return c.toLowerCase().startsWith(w); });
+    var contains = RF_COMPLETIONS.filter(function(c){
+      return !c.toLowerCase().startsWith(w) && c.toLowerCase().indexOf(w) > -1;
+    });
+    return exact.concat(contains).slice(0, 14);
+  }
+
+  function removeDropdown() {
+    var old = document.getElementById('_rfAcDropdown');
+    if (old) old.remove();
+  }
+
+  function showDropdown(ta, suggestions, word) {
+    removeDropdown();
+    if (!suggestions.length) return;
+
+    var taRect = ta.getBoundingClientRect();
+    var lineHeight = parseInt(window.getComputedStyle(ta).lineHeight) || 18;
+    var val = ta.value.slice(0, ta.selectionStart);
+    var lineNum = (val.match(/\n/g)||[]).length;
+    var approxTop = taRect.top + (lineNum + 1) * lineHeight - ta.scrollTop + 4;
+    var approxLeft = taRect.left + 14;
+
+    // S'assurer que le dropdown reste dans la fenêtre
+    if (approxTop + 220 > window.innerHeight) approxTop = taRect.top - 220;
+
+    var drop = document.createElement('div');
+    drop.id = '_rfAcDropdown';
+    drop.style.cssText = [
+      'position:fixed',
+      'z-index:99999',
+      'background:#0d1117',
+      'border:1px solid rgba(0,212,170,0.3)',
+      'border-radius:8px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.6)',
+      'font-family:IBM Plex Mono,monospace',
+      'font-size:12px',
+      'max-height:240px',
+      'overflow-y:auto',
+      'min-width:280px',
+      'max-width:480px',
+      'top:' + approxTop + 'px',
+      'left:' + approxLeft + 'px',
+    ].join(';');
+
+    // Header
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'padding:4px 10px;font-size:10px;color:rgba(0,212,170,0.5);border-bottom:1px solid rgba(0,212,170,0.1);letter-spacing:1px';
+    hdr.textContent = 'RF COMPLETIONS';
+    drop.appendChild(hdr);
+
+    var selected = [0];
+
+    suggestions.forEach(function(s, i) {
+      var item = document.createElement('div');
+      item.dataset.idx = i;
+      // Catégorie
+      var cat = '';
+      var catColor = '#7dd3c8';
+      if (s.startsWith('***')) { cat = 'section'; catColor = '#f59e0b'; }
+      else if (s.startsWith('Library') || s.startsWith('Resource')) { cat = 'import'; catColor = '#c084fc'; }
+      else if (s.startsWith('[')) { cat = 'setting'; catColor = '#60a5fa'; }
+      else if (s.startsWith('${')) { cat = 'var'; catColor = '#22c55e'; }
+      else if (s.startsWith('Given') || s.startsWith('When') || s.startsWith('Then') || s.startsWith('And') || s.startsWith('But')) { cat = 'bdd'; catColor = '#f59e0b'; }
+      else if (s.startsWith('FOR') || s.startsWith('IF') || s.startsWith('WHILE') || s.startsWith('TRY') || s.startsWith('END') || s.startsWith('ELSE') || s.startsWith('RETURN') || s.startsWith('BREAK') || s.startsWith('CONTINUE')) { cat = 'control'; catColor = '#ef4444'; }
+      else if (/^[A-Z]/.test(s)) { cat = 'keyword'; catColor = '#7dd3c8'; }
+
+      item.style.cssText = 'padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .08s;border-radius:0';
+      if (i === 0) item.style.background = 'rgba(0,212,170,0.1)';
+
+      var badge = document.createElement('span');
+      badge.style.cssText = 'font-size:9px;padding:1px 5px;border-radius:3px;flex-shrink:0;opacity:0.8;background:rgba(255,255,255,0.05);color:' + catColor;
+      badge.textContent = cat;
+
+      var label = document.createElement('span');
+      label.style.cssText = 'color:#e2e8f0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      var idx2 = s.toLowerCase().indexOf(word.toLowerCase());
+      if (idx2 > -1) {
+        label.innerHTML = escHtml(s.slice(0, idx2))
+          + '<span style="color:' + catColor + ';font-weight:700">' + escHtml(s.slice(idx2, idx2 + word.length)) + '</span>'
+          + escHtml(s.slice(idx2 + word.length));
+      } else {
+        label.textContent = s;
+      }
+
+      item.appendChild(badge);
+      item.appendChild(label);
+
+      item.onmouseenter = function() {
+        selected[0] = i;
+        updateSelection(drop, i);
+      };
+      item.onmousedown = function(e) {
+        e.preventDefault();
+        applyCompletion(ta, s, word);
+        removeDropdown();
+      };
+      drop.appendChild(item);
+    });
+
+    document.body.appendChild(drop);
+    ta._acSuggestions = suggestions;
+    ta._acSelected = selected;
+    ta._acWord = word;
+  }
+
+  function updateSelection(drop, idx) {
+    var items = drop.querySelectorAll('[data-idx]');
+    items.forEach(function(item, i) {
+      item.style.background = i === idx ? 'rgba(0,212,170,0.1)' : 'transparent';
+    });
+    // Scroll into view
+    if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+  }
+
+  function applyCompletion(ta, completion, word) {
+    var pos = ta.selectionStart;
+    var val = ta.value;
+    var start = pos - word.length;
+    ta.value = val.slice(0, start) + completion + val.slice(pos);
+    ta.selectionStart = ta.selectionEnd = start + completion.length;
+    ta.dispatchEvent(new Event('input'));
+    ta.focus();
+  }
+
+  function isRfCodeTextarea(ta) {
+    // Vérifier que le textarea est dans un bloc de code RF (pas le chat)
+    var el = ta;
+    while (el) {
+      if (el.id && el.id.startsWith('result-')) return true;
+      if (el.id && el.id.startsWith('pulled-')) return true;
+      if (el.className && el.className.includes('msg-bubble')) {
+        // Dans un msg-bubble — vérifier si c'est un bloc de code (pas un message chat)
+        return el.style && el.style.padding === '0px' || el.querySelector('pre');
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  function initAutocomplete(ta) {
+    if (ta._rfAcInit) return;
+    // Ne pas appliquer au textarea du chat ou autres textareas non-RF
+    if (!isRfCodeTextarea(ta)) return;
+    ta._rfAcInit = true;
+
+    ta.addEventListener('input', function() {
+      var word = getWordBefore(ta);
+      var suggestions = getSuggestions(word);
+      if (suggestions.length && word.length >= 2) {
+        showDropdown(ta, suggestions, word);
+      } else {
+        removeDropdown();
+      }
+    });
+
+    ta.addEventListener('keydown', function(e) {
+      var drop = document.getElementById('_rfAcDropdown');
+      if (!drop) return;
+      var suggs = ta._acSuggestions || [];
+      var selArr = ta._acSelected || [0];
+      var sel = selArr[0];
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        sel = Math.min(sel + 1, suggs.length - 1);
+        selArr[0] = sel;
+        updateSelection(drop, sel);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        sel = Math.max(sel - 1, 0);
+        selArr[0] = sel;
+        updateSelection(drop, sel);
+      } else if (e.key === 'Tab') {
+        if (suggs[sel]) {
+          e.preventDefault();
+          applyCompletion(ta, suggs[sel], ta._acWord || '');
+          removeDropdown();
+        }
+      } else if (e.key === 'Enter') {
+        var drop2 = document.getElementById('_rfAcDropdown');
+        if (drop2 && suggs[sel]) {
+          e.preventDefault();
+          applyCompletion(ta, suggs[sel], ta._acWord || '');
+          removeDropdown();
+        }
+      } else if (e.key === 'Escape') {
+        removeDropdown();
+      }
+    });
+
+    ta.addEventListener('blur', function() {
+      setTimeout(removeDropdown, 180);
+    });
+  }
+
+  // Observer pour les textareas créés dynamiquement
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes.forEach(function(node) {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === 'TEXTAREA') { initAutocomplete(node); return; }
+        if (node.querySelectorAll) {
+          // Chercher uniquement dans les blocs de code RF
+          var rfBlocks = node.querySelectorAll('[id^="result-"], [id^="pulled-"]');
+          rfBlocks.forEach(function(block) {
+            block.querySelectorAll('textarea').forEach(function(ta) { initAutocomplete(ta); });
+          });
+          // Aussi si le node lui-même est un bloc RF
+          if (node.id && (node.id.startsWith('result-') || node.id.startsWith('pulled-'))) {
+            node.querySelectorAll('textarea').forEach(function(ta) { initAutocomplete(ta); });
+          }
+        }
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Init sur les textareas existants
+  document.addEventListener('DOMContentLoaded', function() {
+    // Uniquement les textareas dans les blocs de code RF
+    document.querySelectorAll('[id^="result-"] textarea, [id^="pulled-"] textarea').forEach(function(ta) {
+      initAutocomplete(ta);
+    });
+  });
+
+  window._rfInitAutocomplete = initAutocomplete;
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Open dashboard inline ──────────────────────────────────────────────────────
 function openDashboard() {
-  // Open in same tab
-  window.open('dashboard.html', '_blank');
+  const panel = document.getElementById('dashboardPanel');
+  if (!panel) { window.open('dashboard.html', '_blank'); return; }
+  if (panel.style.display === 'flex') {
+    closeDashboardPanel();
+    return;
+  }
+  panel.style.display       = 'flex';
+  panel.style.flexDirection = 'column';
+  const btn = document.querySelector('[onclick="openDashboard()"]');
+  if (btn) btn.classList.add('active');
+  // Setup resize handle
+  const handle = document.getElementById('dashboardPanelHandle');
+  if (handle && !handle._resizeInit) {
+    handle._resizeInit = true;
+    handle.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = panel.offsetWidth;
+      const onMove = function(ev) {
+        const newW = Math.min(Math.max(startW + (startX - ev.clientX), 400), window.innerWidth * 0.95);
+        panel.style.width = newW + 'px';
+      };
+      const onUp = function() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+}
+
+function closeDashboardPanel() {
+  const panel = document.getElementById('dashboardPanel');
+  if (panel) panel.style.display = 'none';
+  const btn = document.querySelector('[onclick="openDashboard()"]');
+  if (btn) btn.classList.remove('active');
 }
 
 // ── Debug mode — add Pause Execution before failed keyword ───────────────────
@@ -7025,7 +7948,10 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
     });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Anthropic error ' + r.status); }
     const d = await r.json();
-    return d.content[0]?.text?.trim() || '';
+    var raw = d.content[0]?.text?.trim() || '';
+    raw = raw.replace(/<span[^>]*>/g,'').replace(/<\/span>/g,'');
+    raw = raw.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    return raw;
   }
 }async function callClaudeRaw(apiKey, prompt) {
   const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax. ${getSessionRules()}`;
@@ -7080,7 +8006,7 @@ function renderLiveTimeline(tests) {
       const nextS = (tests[i+1]?.status||'pending').toLowerCase();
       // Trait : rouge si l'un fail, orange si l'un skip, vert si les deux pass
       const lineColor = (s==='fail' || nextS==='fail') ? 'var(--red)' : (s==='skip' || nextS==='skip') ? 'var(--warn)' : (s==='pass' && nextS==='pass') ? 'var(--green)' : 'var(--border)';
-      html += `<div style="width:32px;height:2px;background:${lineColor};flex-shrink:0;margin-bottom:22px;transition:background .4s"></div>`;
+      html += `<div style="width:32px;height:2px;background:${lineColor};flex-shrink:0;margin-bottom:26px;align-self:flex-start;margin-top:18px;transition:background .4s"></div>`;
     }
   });
   // End node
@@ -7231,6 +8157,425 @@ function _apFilter(s) { const c=document.getElementById('analysisPanelContent');
 function _apSearch(v) { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),search:v};_apRenderList(c);} }
 function _apPage(p)   { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),page:p};_apRenderList(c);} }
 let _analysisPanelOpen = false;
+
+if(!window._taggedCards) window._taggedCards = new Set();
+function toggleCardTag(cardId) {
+  if(!window._taggedCards) window._taggedCards=new Set();
+  if(window._taggedCards.has(cardId)){window._taggedCards.delete(cardId);showToast('Retire du deploy');}
+  else{window._taggedCards.add(cardId);showToast('Tague pour deploy');}
+  var btn=document.getElementById('tagBtn-'+cardId);
+  if(btn){var t=window._taggedCards.has(cardId);btn.style.borderColor=t?'#c084fc':'var(--border)';btn.style.color=t?'#c084fc':'var(--gray)';btn.textContent=t?'Tagged':'Tag';}
+  var badge=document.getElementById('cicdBadge');
+  if(badge) badge.textContent=window._taggedCards.size>0?' ('+window._taggedCards.size+')':'';
+}
+function getTaggedFiles(){
+  if(!window._taggedCards) return [];
+  var files=[];
+  window._taggedCards.forEach(function(id){
+    var card=(window._codeCards||[]).find(function(c){return c.cardId===id;});
+    if(card&&card.files) card.files.forEach(function(f){if(f.filename&&f.code&&!f.filename.endsWith('.gitkeep')) files.push({path:f.filename,content:f.code});});
+  });
+  return files;
+}
+function _importRFFiles(files, source) {
+  if (!files || !files.length) { showToast('Aucun fichier .robot trouve'); return; }
+  // Normaliser les chemins : retirer le prefixe commun redondant
+  var _allPaths = files.map(function(f){ return f.path; });
+  var _commonPrefix = (function(){
+    if (_allPaths.length === 0) return '';
+    var parts = _allPaths[0].split('/');
+    var prefix = [];
+    for (var pi = 0; pi < parts.length - 1; pi++) {
+      var seg = parts[pi];
+      if (_allPaths.every(function(p){ return p.split('/')[pi] === seg; })) {
+        prefix.push(seg);
+      } else { break; }
+    }
+    return prefix.length ? prefix.join('/') + '/' : '';
+  })();
+  var rf = files.map(function(f){
+    var cleanPath = _commonPrefix && f.path.startsWith(_commonPrefix)
+      ? f.path.slice(_commonPrefix.length) : f.path;
+    return { filename: cleanPath, code: f.content,
+             label: cleanPath.split('/').pop().replace('.robot','') };
+  });
+  // Déduplication par source
+  window._codeCards = window._codeCards || [];
+  var existing = window._codeCards.find(function(card) {
+    return card.source === source || card.title === source;
+  });
+
+  if (existing) {
+    existing.files = rf;
+    existing.title = source;
+    existing.source = source;
+    existing.tagged = true;
+    var el = document.getElementById(existing.cardId);
+    if (el) { el.remove(); renderResultCard(rf, existing.cardId); }
+    // Restaurer tag visuel
+    if (!window._taggedCards) window._taggedCards = new Set();
+    window._taggedCards.add(existing.cardId);
+    setTimeout(function(){
+      var btn = document.getElementById('tagBtn-' + existing.cardId);
+      if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent='Tagged'; }
+    }, 100);
+    saveCodeCards();
+    _savePulledBlock(existing.cardId, source, rf, true);
+    showToast('Bloc mis à jour : ' + source);
+    return;
+  }
+
+  // Nouveau bloc — ID stable basé sur la source
+  var _b64 = '';
+  try { _b64 = btoa(unescape(encodeURIComponent(source))).replace(/[^a-zA-Z0-9]/g,'').slice(0,16); } catch(e) { _b64 = Date.now().toString(36); }
+  var stableId = 'pulled-' + _b64 + '-' + Date.now();
+
+  renderResultCard(rf, stableId);
+
+  // Brancher dans _codeCards pour persistance automatique via saveCodeCards
+  window._codeCards.push({
+    type:   'pulled',
+    cardId: stableId,
+    title:  source,
+    source: source,
+    files:  rf,
+    tagged: true,
+  });
+
+  // Taguer automatiquement
+  if (!window._taggedCards) window._taggedCards = new Set();
+  window._taggedCards.add(stableId);
+  setTimeout(function(){
+    var btn = document.getElementById('tagBtn-' + stableId);
+    if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent='Tagged'; }
+  }, 100);
+
+  saveCodeCards();
+  _savePulledBlock(stableId, source, rf, true);
+  showToast(rf.length + ' fichiers importés : ' + source);
+}
+// ── PulledBlock persistence ──────────────────────────────────────────────────
+
+function _savePulledBlock(blockId, source, files, tagged) {
+  var provider = 'gitlab';
+  if (source && source.toLowerCase().includes('azure')) provider = 'azure';
+  var payload = {
+    blockId:  blockId,
+    source:   source || blockId,
+    provider: provider,
+    files:    files.map(function(f){ return { filename: f.filename, code: f.code, label: f.label||'' }; }),
+    tagged:   true,
+  };
+  fetch('/api/pulledblocks', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  }).catch(function(e){ console.warn('[PulledBlock] save error', e); });
+}
+
+function _patchPulledBlock(blockId, update) {
+  fetch('/api/pulledblocks/' + encodeURIComponent(blockId), {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(update),
+  }).catch(function(e){ console.warn('[PulledBlock] patch error', e); });
+}
+
+async function _loadPulledBlocks() {
+  try {
+    var res  = await fetch('/api/pulledblocks');
+    var data = await res.json();
+    if (!data.ok || !data.blocks || !data.blocks.length) return;
+    data.blocks.forEach(function(b) {
+      // Ne pas re-rendre si le bloc est déjà affiché
+      if (document.getElementById(b.blockId)) return;
+      var rf = b.files.map(function(f){ return { filename: f.filename, code: f.code, label: f.label||'' }; });
+      renderResultCard(rf, b.blockId);
+      var c = (window._codeCards||[]).find(function(x){ return x.cardId === b.blockId; });
+      if (c) {
+        c.title = b.source;
+        if (b.tagged) {
+          if (!window._taggedCards) window._taggedCards = new Set();
+          window._taggedCards.add(b.blockId);
+          var btn = document.getElementById('tagBtn-' + b.blockId);
+          if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; }
+        }
+      }
+    });
+    console.log('[PulledBlock] ' + data.blocks.length + ' bloc(s) restauré(s)');
+  } catch(e) {
+    console.warn('[PulledBlock] load error', e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── PulledBlock persistence ──────────────────────────────────────────────────
+
+function _savePulledBlock(blockId, source, files, tagged) {
+  var provider = 'gitlab';
+  if (source && source.toLowerCase().includes('azure')) provider = 'azure';
+  else if (source && source.toLowerCase().includes('jenkins')) provider = 'jenkins';
+  var payload = {
+    blockId:  blockId,
+    source:   source || blockId,
+    provider: provider,
+    files:    files.map(function(f){ return { filename: f.filename, code: f.code, label: f.label||'' }; }),
+    tagged:   tagged || false,
+  };
+  fetch('/api/pulledblocks', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  }).catch(function(e){ console.warn('[PulledBlock] save error', e); });
+}
+
+function _patchPulledBlock(blockId, update) {
+  fetch('/api/pulledblocks/' + encodeURIComponent(blockId), {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(update),
+  }).catch(function(e){ console.warn('[PulledBlock] patch error', e); });
+}
+
+async function _loadPulledBlocks() {
+  try {
+    var res  = await fetch('/api/pulledblocks');
+    var data = await res.json();
+    if (!data.ok || !data.blocks || !data.blocks.length) return;
+    data.blocks.forEach(function(b) {
+      // Ne pas re-rendre si le bloc est déjà affiché
+      if (document.getElementById(b.blockId)) return;
+      var rf = b.files.map(function(f){ return { filename: f.filename, code: f.code, label: f.label||'' }; });
+      renderResultCard(rf, b.blockId);
+      var c = (window._codeCards||[]).find(function(x){ return x.cardId === b.blockId; });
+      if (c) {
+        c.title = b.source;
+        if (b.tagged) {
+          if (!window._taggedCards) window._taggedCards = new Set();
+          window._taggedCards.add(b.blockId);
+          var btn = document.getElementById('tagBtn-' + b.blockId);
+          if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; }
+        }
+      }
+    });
+    console.log('[PulledBlock] ' + data.blocks.length + ' bloc(s) restauré(s)');
+  } catch(e) {
+    console.warn('[PulledBlock] load error', e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function openCICDPanel(){
+  if(!window._taggedCards) window._taggedCards=new Set();
+  var ov=document.getElementById('cicdPanelOverlay');
+  if(ov){ov.style.display=ov.style.display==='none'?'flex':'none';if(ov.style.display!=='none')_renderCICDContent();return;}
+  ov=document.createElement('div');ov.id='cicdPanelOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:800;display:flex;justify-content:flex-end;pointer-events:none';
+  var panel=document.createElement('div');
+  panel.style.cssText='width:560px;min-width:380px;max-width:95vw;height:100vh;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;pointer-events:all;box-shadow:-4px 0 24px rgba(0,0,0,0.4);position:relative;';
+  var handle=document.createElement('div');handle.style.cssText='position:absolute;left:0;top:0;bottom:0;width:5px;cursor:ew-resize;z-index:10';
+  handle.addEventListener('mousedown',function(e){e.preventDefault();var sx=e.clientX,sw=panel.offsetWidth;var onM=function(m){panel.style.width=Math.min(Math.max(sw+(sx-m.clientX),380),window.innerWidth*0.95)+'px';};var onU=function(){document.removeEventListener('mousemove',onM);document.removeEventListener('mouseup',onU);};document.addEventListener('mousemove',onM);document.addEventListener('mouseup',onU);});
+  var hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0';
+  hdr.innerHTML='<span style="font-size:13px;font-weight:700;color:#c084fc;letter-spacing:1px">CI/CD DEPLOY</span>'
+    +'<span id="cicdTagCount" style="font-size:11px;color:var(--gray);margin-left:6px"></span>'
+    +'<button onclick="document.getElementById(\'cicdPanelOverlay\').style.display=\'none\'" style="background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer;margin-left:auto">&#x2715;</button>';
+  var tabs=document.createElement('div');tabs.style.cssText='display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card)';
+  [['tagged','TAGUÉS'],['gitlab','GITLAB'],['azure','AZURE']].forEach(function(td,i){
+    var b=document.createElement('button');b.id='cicdTab-'+td[0];b.textContent=td[1];
+    b.style.cssText='flex:1;padding:10px;font-size:11px;font-family:monospace;cursor:pointer;border:none;border-bottom:2px solid '+(i===0?'#c084fc':'transparent')+';background:transparent;color:'+(i===0?'#c084fc':'var(--gray)');
+    (function(t){b.onclick=function(){switchCICDTab(t);};})(td[0]);tabs.appendChild(b);
+  });
+  var content=document.createElement('div');content.id='cicdPanelContent';content.style.cssText='flex:1;overflow-y:auto;';content.dataset.tab='tagged';
+  panel.appendChild(handle);panel.appendChild(hdr);panel.appendChild(tabs);panel.appendChild(content);
+  ov.appendChild(panel);document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.style.display='none';});
+  _renderCICDContent();
+}
+function switchCICDTab(tab){
+  ['tagged','gitlab','azure'].forEach(function(t){var b=document.getElementById('cicdTab-'+t);if(b){b.style.borderBottomColor=t===tab?'#c084fc':'transparent';b.style.color=t===tab?'#c084fc':'var(--gray)';}});
+  var c=document.getElementById('cicdPanelContent');if(c){c.dataset.tab=tab;_renderCICDContent();}
+}
+function _renderCICDContent(){
+  var c=document.getElementById('cicdPanelContent');if(!c)return;
+  var tab=c.dataset.tab||'tagged';
+  var el=document.getElementById('cicdTagCount');
+  if(el)el.textContent=window._taggedCards&&window._taggedCards.size>0?window._taggedCards.size+' tague(s)':'Aucun bloc tague';
+  if(tab==='tagged')_cicdTaggedTab(c);else _cicdProviderTab(c,tab);
+}
+function _cicdTaggedTab(c){
+  var tagged=[...(window._taggedCards||new Set())].map(function(id){return(window._codeCards||[]).find(function(x){return x.cardId===id;});}).filter(Boolean);
+  if(!tagged.length){c.innerHTML='<div style="padding:40px;text-align:center;color:var(--gray);font-size:12px">Clique sur <strong style="color:#c084fc">Tag</strong> sur un bloc de code</div>';return;}
+  var h='<div style="padding:8px 14px;font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">'+tagged.length+' bloc(s) — '+getTaggedFiles().length+' fichier(s)</div>';
+  tagged.forEach(function(card){
+    var nbFiles=(card.files||[]).length;
+    h+='<div style="border-bottom:1px solid var(--border);padding:10px 14px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+      +'<span style="font-size:12px;font-weight:700;color:var(--teal);flex:1">'+escHtml(card.title||card.cardId)+'</span>'
+      +'<span style="font-size:10px;color:var(--gray);margin-right:6px">('+nbFiles+' fichier(s))</span>'
+      +'<button onclick="toggleCardTag(\''+card.cardId+'\');" style="background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">Retirer</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap">'
+      +(card.files||[]).map(function(f){return'<span style="font-size:13px;background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:8px;color:var(--teal);font-family:monospace">'+escHtml(f.filename)+'</span>';}).join('')
+      +'</div></div>';
+  });
+  h+='<div style="padding:12px;display:flex;gap:6px;border-top:1px solid var(--border)"><button onclick="switchCICDTab(\'gitlab\')" style="flex:1;padding:8px;font-size:11px;font-family:monospace;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:rgba(192,132,252,0.08);color:#c084fc">GitLab</button><button onclick="switchCICDTab(\'azure\')" style="flex:1;padding:8px;font-size:11px;font-family:monospace;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:rgba(0,120,212,0.08);color:#60a5fa">Azure</button></div>';
+  c.innerHTML=h;
+}
+function _cicdInp(id,val,ph,pw){return'<input id="'+id+'" type="'+(pw?'password':'text')+'" value="'+escHtml(val||'')+'" placeholder="'+escHtml(ph||'')+'" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;font-family:monospace;color:var(--text);box-sizing:border-box"/>';}
+function _cicdProviderTab(c,provider){
+  var isGL=provider==='gitlab',color=isGL?'#c084fc':'#60a5fa',label=isGL?'GitLab':'Azure DevOps';
+  var stored={};try{stored=JSON.parse(localStorage.getItem('cicd_'+provider)||'{}');}catch(e){}
+  var files=getTaggedFiles();
+  var fHtml=files.length?files.map(function(f){return'<div style="font-size:11px;color:var(--teal);font-family:monospace">'+escHtml(f.path)+'</div>';}).join(''):'<div style="font-size:11px;color:var(--red)">Aucun bloc tague</div>';
+  c.innerHTML='<div style="padding:16px 14px"><div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:14px">'+label+'</div><div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">URL repo</label>'+_cicdInp(provider+'_url',stored.url,isGL?'https://gitlab.com/org/repo':'https://dev.azure.com/org/repo')+'</div>'
+    +'<div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Token</label>'+_cicdInp(provider+'_token',stored.token,'token',true)+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Branche</label>'+_cicdInp(provider+'_branch',stored.branch||'main','main')+'</div>'
+    +'<div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Nouvelle branche</label>'+_cicdInp(provider+'_newbranch',stored.newbranch,'feature/tests-rf')+'</div></div>'
+    +'<div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Message commit</label>'+_cicdInp(provider+'_msg',stored.msg||'feat: ajout tests RF','feat: ...')+'</div>'
+    +'<div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Dossier destination</label>'+_cicdInp(provider+'_folder',stored.folder||'tests/robot','tests/robot')+'</div>'
+    +'</div><div style="margin-top:12px;padding:8px;background:var(--card);border-radius:6px;border:1px solid var(--border)"><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Fichiers ('+files.length+')</div>'+fHtml+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'
+    +'<button onclick="_cicdPush(&quot;'+provider+'&quot;)" style="padding:10px;background:rgba(192,132,252,0.12);border:1px solid '+color+';color:'+color+';border-radius:8px;font-size:12px;font-family:monospace;cursor:pointer;font-weight:700">Push</button>'
+    +'<button onclick="_cicdPull(&quot;'+provider+'&quot;)" style="padding:10px;background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);border-radius:8px;font-size:12px;font-family:monospace;cursor:pointer;font-weight:700">Pull</button>'
+    +'</div><div id="'+provider+'_status" style="margin-top:10px;font-size:12px;display:none"></div></div>';
+}
+
+async function _cicdPush(provider){
+  var url=document.getElementById(provider+'_url')?.value?.trim(),token=document.getElementById(provider+'_token')?.value?.trim();
+  var branch=document.getElementById(provider+'_branch')?.value?.trim()||'main',newBranch=document.getElementById(provider+'_newbranch')?.value?.trim()||'';
+  var msg=document.getElementById(provider+'_msg')?.value?.trim()||'feat: tests RF',folder=document.getElementById(provider+'_folder')?.value?.trim()||'tests/robot';
+  var statusEl=document.getElementById(provider+'_status'),files=getTaggedFiles();
+  if(!url||!token){showToast('URL et token requis');return;}
+  if(!files.length){showToast('Aucun bloc tagué');return;}
+  localStorage.setItem('cicd_'+provider,JSON.stringify({url:url,token:token,branch:branch,newbranch:newBranch,msg:msg,folder:folder}));
+  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Analyse des changements...</span>';}
+
+  // ── Étape 1 : git status (diff)
+  var diffData = null;
+  try {
+    var diffRes = await fetch('http://localhost:3001/api/cicd/diff', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({provider,url,token,branch,folder,files})
+    });
+    diffData = await diffRes.json();
+  } catch(e) {
+    diffData = { ok: false };
+  }
+
+  // Si diff échoue, on pushe tout avec create/update fallback
+  if (!diffData || !diffData.ok) {
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--warn)">Diff indisponible — push direct...</span>';
+    await _cicdDoPush(provider,url,token,branch,newBranch,msg,folder,files,statusEl);
+    return;
+  }
+
+  var added    = diffData.added    || [];
+  var modified = diffData.modified || [];
+  var unchanged= diffData.unchanged|| [];
+  var deleted  = diffData.deleted  || [];
+  var toPush   = files.filter(function(f){ return added.includes(f.path)||modified.includes(f.path); })
+                      .map(function(f){ return {...f, status: modified.includes(f.path)?'modified':'added'}; });
+  // Ajouter les fichiers à supprimer
+  deleted.forEach(function(p){ toPush.push({path:p, content:'', status:'deleted'}); });
+
+  if(!toPush.length){
+    if(statusEl)statusEl.innerHTML='<span style="color:var(--gray)">Aucun changement à pusher</span>';
+    showToast('Rien à pusher — tous les fichiers sont identiques');
+    return;
+  }
+
+  // ── Étape 2 : afficher le dialog git status
+  _showDiffDialog({added,modified,unchanged,deleted,toPush,provider,url,token,branch,newBranch,msg,folder,statusEl});
+}
+
+function _showDiffDialog({added,modified,unchanged,deleted,toPush,provider,url,token,branch,newBranch,msg,folder,statusEl}){
+  deleted = deleted || [];
+  document.getElementById('_diffDialog')?.remove();
+  var d = document.createElement('div');
+  d.id = '_diffDialog';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  var rows = '';
+  added.forEach(function(p){ rows+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;font-family:monospace"><span style="color:#22c55e;width:80px;flex-shrink:0">● added</span><span style="color:var(--text)">'+escHtml(p)+'</span></div>'; });
+  modified.forEach(function(p){ rows+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;font-family:monospace"><span style="color:#f59e0b;width:80px;flex-shrink:0">● modified</span><span style="color:var(--text)">'+escHtml(p)+'</span></div>'; });
+  deleted.forEach(function(p){ rows+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;font-family:monospace"><span style="color:#ef4444;width:80px;flex-shrink:0">✕ deleted</span><span style="color:#ef4444;text-decoration:line-through">'+escHtml(p)+'</span></div>'; });
+  unchanged.forEach(function(p){ rows+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;font-family:monospace"><span style="color:var(--gray);width:80px;flex-shrink:0">○ unchanged</span><span style="color:var(--gray)">'+escHtml(p)+'</span></div>'; });
+
+  d.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:480px;overflow:hidden">'
+    +'<div style="padding:12px 18px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">'
+    +'<span style="font-size:13px;font-weight:700;color:var(--teal)">📋 Git Status</span>'
+    +'<span style="font-size:11px;color:var(--gray);margin-left:auto">'+toPush.length+' fichier(s) à pusher</span>'
+    +'</div>'
+    +'<div style="padding:14px 18px;max-height:320px;overflow-y:auto">'+rows+'</div>'
+    +'<div style="padding:12px 18px;background:var(--card);border-top:1px solid var(--border);display:flex;gap:8px">'
+    +'<button id="_diffConfirm" style="flex:1;padding:9px;background:rgba(192,132,252,0.12);border:1px solid #c084fc;color:#c084fc;border-radius:8px;font-size:12px;font-family:monospace;cursor:pointer;font-weight:700">🚀 Push ('+toPush.length+')</button>'
+    +'<button id="_diffCancel" style="padding:9px 16px;background:transparent;border:1px solid var(--border);color:var(--gray);border-radius:8px;font-size:12px;font-family:monospace;cursor:pointer">Annuler</button>'
+    +'</div>'
+    +'</div>';
+
+  document.body.appendChild(d);
+  document.getElementById('_diffCancel').onclick=function(){ d.remove(); if(statusEl)statusEl.innerHTML=''; };
+  document.getElementById('_diffConfirm').onclick=async function(){
+    d.remove();
+    await _cicdDoPush(provider,url,token,branch,newBranch,msg,folder,toPush,statusEl);
+  };
+}
+
+async function _cicdDoPush(provider,url,token,branch,newBranch,msg,folder,files,statusEl){
+  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Push en cours...</span>';}
+  try{
+    var res=await fetch('http://localhost:3001/api/cicd/push',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({provider,url,token,branch,newBranch,msg,folder,files})});
+    var data=await res.json();
+    if(data.ok){if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">✅ Push réussi !</span>';showToast('Code pushé sur '+provider);}
+    else{if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">Erreur: '+escHtml(data.error||'inconnue')+'</span>';}
+  }catch(e){if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml(e.message)+'</span>';}
+}
+async function _cicdPull(provider){
+  var url=document.getElementById(provider+'_url')?.value?.trim(),token=document.getElementById(provider+'_token')?.value?.trim();
+  var branch=document.getElementById(provider+'_branch')?.value?.trim()||'main',folder=document.getElementById(provider+'_folder')?.value?.trim()||'';
+  var statusEl=document.getElementById(provider+'_status');
+  if(!url||!token){showToast('URL et token requis');return;}
+  // Sauvegarder token + url au Pull
+  var _stored={};try{_stored=JSON.parse(localStorage.getItem('cicd_'+provider)||'{}');}catch(e){}
+  localStorage.setItem('cicd_'+provider,JSON.stringify({..._stored,url:url,token:token,branch:branch,folder:folder}));
+  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Recuperation...</span>';}
+  try{var res=await fetch('http://localhost:3001/api/cicd/pull',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:provider,url:url,token:token,branch:branch,folder:folder})});var data=await res.json();
+  if(data.ok&&data.files&&data.files.length){
+    var _repoName=(function(){try{var u=document.getElementById(provider+'_url')?.value?.trim()||'';return u.replace(/\/$/,'').split('/').pop()||provider;}catch(e){return provider;}})();
+    var _source=_repoName+' ('+provider+'/'+branch+')';
+    _importRFFiles(data.files,_source);if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">'+data.files.length+' fichier(s)</span>';showToast(data.files.length+' fichiers importes');}
+  else{if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml((data&&data.error)||'Aucun .robot')+'</span>';}}
+  catch(e){if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml(e.message)+'</span>';}
+}
+async function _cicdJenkinsTrigger(){
+  showToast('Jenkins supprimé — utilise GitLab ou Azure');
+  return;
+  var url='',job='',user='',token='',params='';
+  var statusEl=null;
+  if(!url||!job||!token){showToast('URL, job et token requis');return;}
+  localStorage.setItem('cicd_jenkins',JSON.stringify({url:url,job:job,user:user,token:token,params:params}));
+  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Declenchement...</span>';}
+  try{var res=await fetch('http://localhost:3001/api/cicd/jenkins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,job:job,user:user,token:token,params:params})});var data=await res.json();
+  if(data.ok){if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">Pipeline declenche!</span>';showToast('Jenkins declenche');}
+  else{if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml((data&&data.error)||'Erreur')+'</span>';}}
+  catch(e){if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml(e.message)+'</span>';}
+}
+async function _cicdJenkinsPull(){
+  showToast('Jenkins supprimé — utilise GitLab ou Azure');
+  return;
+  var url='',job='',user='',token='',build='';
+  var statusEl=null;
+  if(!url||!job||!token){showToast('URL, job et token requis');return;}
+  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Pull artifacts...</span>';}
+  try{var res=await fetch('http://localhost:3001/api/cicd/jenkins-artifacts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,job:job,user:user,token:token,buildNumber:build})});var data=await res.json();
+  if(data.ok&&data.files&&data.files.length){_importRFFiles(data.files,'Jenkins #'+(data.buildNumber||'?'));if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">'+data.files.length+' artifact(s)</span>';showToast(data.files.length+' artifacts');}
+  else{if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml((data&&data.error)||'Aucun artifact')+'</span>';}}
+  catch(e){if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml(e.message)+'</span>';}
+}
 
 function openAnalysisPanel() {
   let overlay = document.getElementById('analysisPanelOverlay');

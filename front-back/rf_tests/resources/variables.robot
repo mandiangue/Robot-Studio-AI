@@ -1,28 +1,13 @@
 *** Settings ***
 Documentation    Variables
 
-
-
 *** Variables ***
-${BASE_URL}       https://the-internet.herokuapp.com/login
-${URL}            https://the-internet.herokuapp.com/login
-${BROWSER}        chrome
-${USERNAME}       tomsmith
-${PASSWORD}       SuperSecretPassword!
-${WRONG_PASSWORD}    WrongPassword123
-${WRONG_USERNAME}    unknownuser
-${USERNAME_FIELD}    id=username
-${PASSWORD_FIELD}    id=password
-${LOGIN_BUTTON}      css=button[type='submit']
-${SUCCESS_MSG}       You logged into a secure area!
-${WRONG_PASS_MSG}    Your password is invalid!
-${WRONG_USER_MSG}    Your username is invalid!
-${LOGOUT_MSG}        You logged out of the secure area!
-${FLASH_MSG}         id=flash
-${LOGOUT_BUTTON}     css=.button.secondary.radius
-${FLASH_ERROR_COLOR}    rgba(198, 15, 19, 1)
-${VALID_USER}    tomsmith
-${VALID_PASS}    SuperSecretPassword!
-${WRONG_USER}    wronguser
-${WRONG_PASS}    WrongPassword
-${FLASH_MESSAGE}     id=flash
+${BASE_URL}      https://www.saucedemo.com
+${BROWSER}       webkit
+${HEADLESS}      False
+${STANDARD_USER}    standard_user
+${LOCKED_USER}      locked_out_user
+${PASSWORD}         secret_sauce
+${FIRST_NAME}       John
+${LAST_NAME}        Doe
+${POSTAL_CODE}      12345

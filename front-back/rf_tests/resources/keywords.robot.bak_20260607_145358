@@ -1,0 +1,85 @@
+*** Settings ***
+Resource    pages/main_page.robot
+
+*** Keywords ***
+Open Browser No Popup
+    [Arguments]    ${url}    ${browser}=chrome
+    Open Browser    ${url}    ${browser}    options=add_argument("--incognito");add_argument("--disable-notifications");add_argument("--disable-save-password-bubble");add_argument("--disable-infobars");add_argument("--disable-popup-blocking");add_argument("--disable-features=PasswordManagerEnabled,TranslateUI,AutofillServerCommunication,PasswordLeakDetection,SavePasswordsBubble");add_argument("--no-first-run");add_argument("--no-default-browser-check");add_argument("--password-store=basic");add_argument("--user-data-dir=C:/Users/Landing/AppData/Local/Temp/chrome_rf_1780835249750");add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.password_manager_leak_detection":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0,"autofill.profile_enabled":false,"autofill.credit_card_enabled":false});add_experimental_option("excludeSwitches",["enable-automation","enable-logging"])
+
+Dismiss Password Popup
+    [Documentation]    Ferme le popup Chrome "modifier mot de passe" sil apparait
+    ${present}=    Run Keyword And Return Status    Page Should Contain Element    xpath=//div[@role="dialog"]//button[contains(@jsname,"")]
+    Run Keyword If    ${present}    Press Keys    None    ESCAPE
+    Sleep    0.2s
+    Execute Javascript    document.activeElement.blur()
+
+Input Password Field
+    [Arguments]    ${locator}    ${value}
+    Input Text    ${locator}    ${value}
+    Dismiss Password Popup
+
+
+
+Given User Is On The Login Page
+    Go To    ${BASE_URL}
+    Title Should Be    Swag Labs
+
+When User Logs In With Locked Account
+    Fill Login Form    ${LOCKED_USER}    ${PASSWORD}
+
+Then Error Message For Locked User Is Displayed
+    Element Should Be Visible    ${LBL_ERROR}
+    ${msg}=    Get Text    ${LBL_ERROR}
+    Should Contain    ${msg}    locked
+
+Given User Is Logged In As Standard User
+    Go To    ${BASE_URL}
+    Fill Login Form    ${STANDARD_USER}    ${PASSWORD}
+    Title Should Be    Swag Labs
+
+When User Sorts Products By Price Low To High
+    Select From List By Value    ${SELECT_SORT}    lohi
+
+Then Products Are Displayed From Lowest To Highest Price
+    ${prices}=    Get All Product Prices As Numbers
+    ${sorted}=    Evaluate    sorted(${prices})
+    Lists Should Be Equal    ${prices}    ${sorted}
+
+When User Adds A Product To The Cart And Navigates To Cart
+    Add First Product To Cart
+    Go To Cart Page
+
+When User Removes The Product From The Cart
+    Remove Item From Cart
+
+Then The Cart Is Empty
+    Page Should Not Contain Element    ${CART_BADGE}
+    Page Should Not Contain Element    ${BTN_REMOVE}
+
+When User Completes Checkout With Valid Information
+    Go To Cart Page
+    Go To Checkout Page
+    Fill Checkout Information    ${FIRST_NAME}    ${LAST_NAME}    ${ZIP_CODE}
+    Finish Order
+
+Then Order Confirmation Message Is Displayed
+    Element Should Be Visible    ${LBL_CONFIRM}
+    ${msg}=    Get Text    ${LBL_CONFIRM}
+    Should Contain    ${msg}    Thank you for your order!
+
+When User Opens The Hamburger Menu And Clicks Logout
+    Open Hamburger Menu
+    Click Logout Link
+
+Then User Is Redirected To The Login Page
+    Title Should Be    Swag Labs
+    Element Should Be Visible    ${BTN_LOGIN}
+
+When User Clicks On The First Product Name
+    Click First Product Name
+
+Then Product Detail Page Is Displayed With All Information
+    Element Should Be Visible    ${LBL_DETAIL_NAME}
+    Element Should Be Visible    ${LBL_DETAIL_DESC}
+    Element Should Be Visible    ${LBL_DETAIL_PRICE}
+    Element Should Be Visible    ${BTN_DETAIL_CART}
