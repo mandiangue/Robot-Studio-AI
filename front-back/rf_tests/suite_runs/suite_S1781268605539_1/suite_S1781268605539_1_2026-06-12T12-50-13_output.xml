@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-12T14:50:15.463348" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781268605539_1\tests">
+<kw name="Register Keyword To Run On Failure" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-06-12T14:50:15.786558" level="INFO">Capture Page Screenshot will be run on failure.</msg>
+<arg>Capture Page Screenshot</arg>
+<doc>Sets the keyword to execute, when a SeleniumLibrary keyword fails.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.786336" elapsed="0.000295"/>
+</kw>
+<suite id="s1-s1" name="suite S1781268605539 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781268605539_1\tests\suite_S1781268605539_1.robot">
+<kw name="Register Keyword To Run On Failure" owner="SeleniumLibrary" type="SETUP">
+<msg time="2026-06-12T14:50:15.792656" level="INFO">Capture Page Screenshot will be run on failure.</msg>
+<arg>Capture Page Screenshot</arg>
+<doc>Sets the keyword to execute, when a SeleniumLibrary keyword fails.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.792507" elapsed="0.000211"/>
+</kw>
+<test id="s1-s1-t1" name="TC_001 Connexion Avec Utilisateur Problematique" line="11">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.793617" elapsed="0.000749"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.798954" level="FAIL">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.794514" elapsed="0.004658">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.799321" elapsed="0.000035"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.799458" elapsed="0.000029"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.799714" elapsed="0.000038"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.799946" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.799911" elapsed="0.000134"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-12T14:50:15.793279" elapsed="0.006908">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.800425" elapsed="0.000128"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:50:15.792835" elapsed="0.007775">Setup failed:
+Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</test>
+<test id="s1-s1-t2" name="TC_002 Tri Des Produits Par Prix Decroissant" line="16">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.801588" elapsed="0.000650"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.803927" level="FAIL">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.802368" elapsed="0.001677">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.804179" elapsed="0.000031"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.804313" elapsed="0.000028"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.804448" elapsed="0.000029"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.804613" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.804581" elapsed="0.000121"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-12T14:50:15.801260" elapsed="0.003560">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.805012" elapsed="0.000112"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:50:15.800873" elapsed="0.004304">Setup failed:
+Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</test>
+<test id="s1-s1-t3" name="TC_003 Ajout De Plusieurs Produits Au Panier" line="23">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.806044" elapsed="0.000553"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.808714" level="FAIL">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.806953" elapsed="0.001891">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.808984" elapsed="0.000033"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.809118" elapsed="0.000029"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.809255" elapsed="0.000029"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.809420" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.809389" elapsed="0.000124"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-12T14:50:15.805751" elapsed="0.003873">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.809809" elapsed="0.000112"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:50:15.805413" elapsed="0.004560">Setup failed:
+Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</test>
+<test id="s1-s1-t4" name="TC_004 Suppression D Un Produit Depuis Le Panier" line="34">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.810873" elapsed="0.000586"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.813447" level="FAIL">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.811586" elapsed="0.001969">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.813684" elapsed="0.000032"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.813816" elapsed="0.000029"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.813948" elapsed="0.000028"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.814114" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.814078" elapsed="0.000123"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-12T14:50:15.810566" elapsed="0.003745">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.814492" elapsed="0.000107"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:50:15.810193" elapsed="0.004457">Setup failed:
+Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</test>
+<test id="s1-s1-t5" name="TC_005 Validation Du Formulaire De Checkout Avec Champs Vides" line="44">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.815704" elapsed="0.000901"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.818725" level="FAIL">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.816745" elapsed="0.002092">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.818971" elapsed="0.000033"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.819103" elapsed="0.000028"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.819232" elapsed="0.000028"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.819497" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.819465" elapsed="0.000126"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-12T14:50:15.815304" elapsed="0.004403">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.819897" elapsed="0.000117"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:50:15.814869" elapsed="0.005197">Setup failed:
+Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</test>
+<test id="s1-s1-t6" name="TC_006 Finalisation Complete D Une Commande" line="54">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.820942" elapsed="0.000580"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.823878" level="FAIL">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.821648" elapsed="0.002341">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.824119" elapsed="0.000031"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.824247" elapsed="0.000028"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.824381" elapsed="0.000028"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:50:15.824541" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-12T14:50:15.824512" elapsed="0.000115"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-12T14:50:15.820646" elapsed="0.004091">Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T14:50:15.824916" elapsed="0.000116"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:50:15.820290" elapsed="0.004793">Setup failed:
+Evaluating expression '__import__("NoPopupOptions").get_driver_path("chrome")' failed: ModuleNotFoundError: No module named 'NoPopupOptions'</status>
+</test>
+<doc>Tests Main - SauceDemo</doc>
+<status status="FAIL" start="2026-06-12T14:50:15.786727" elapsed="0.038768"/>
+</suite>
+<status status="FAIL" start="2026-06-12T14:50:15.465643" elapsed="0.360430"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="6" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="0" fail="6" skip="0">Tests</stat>
+<stat name="suite S1781268605539 1" id="s1-s1" pass="0" fail="6" skip="0">Tests.suite S1781268605539 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-06-12T14:50:15.508287" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781268605539_1\resources\variables.robot' on line 19: Setting variable '${INVENTORY_ITEM_PRICE} css=.inventory_item_price' failed: Invalid variable name '${INVENTORY_ITEM_PRICE} css=.inventory_item_price'.</msg>
+<msg time="2026-06-12T14:50:15.508469" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781268605539_1\resources\variables.robot' on line 25: Setting variable '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack' failed: Invalid variable name '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack'.</msg>
+<msg time="2026-06-12T14:50:15.789342" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781268605539_1\resources\variables.robot' on line 19: Setting variable '${INVENTORY_ITEM_PRICE} css=.inventory_item_price' failed: Invalid variable name '${INVENTORY_ITEM_PRICE} css=.inventory_item_price'.</msg>
+<msg time="2026-06-12T14:50:15.789501" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781268605539_1\resources\variables.robot' on line 25: Setting variable '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack' failed: Invalid variable name '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack'.</msg>
+<msg time="2026-06-12T14:50:15.799946" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:50:15.804613" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:50:15.809420" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:50:15.814114" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:50:15.819497" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:50:15.824541" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+</errors>
+</robot>

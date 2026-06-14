@@ -160,8 +160,7 @@ const LS = {
                       return cleanRobotCodeFromHtml(c);
                     })(f.code)
                   }));
-                  window._lastGeneratedTitle = card.title || '';
-                  renderResultCard(files, card.cardId);
+                  setTimeout(() => { window._lastGeneratedTitle = card.title || ''; renderResultCard(files, card.cardId); }, 0);
                   // Restaurer le tag si le bloc était tagué
                   if (card.tagged || card.type === 'pulled') {
                     if (!window._taggedCards) window._taggedCards = new Set();
@@ -1331,6 +1330,7 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
     const r   = await azureFetch(url, token);
     const data = await r.json();
     hideTyping();
+    if (data && data.stopped === true) { window._rfRunning = false; window._currentRunMsg = null; return; }
 
     if (!r.ok) {
       renderAgentMsg(`❌ Work Item #${id} introuvable : ${data.message || r.status}`);
@@ -1456,8 +1456,11 @@ function getSessionRules() {
     '\n*** Keywords ***' +
     '\nOpen Browser No Popup' +
     '\n    [Arguments]    ${url}    ${browser}=chrome' +
-    '\n    ${opts}=    Evaluate    __import__(\'no_popup\').create_chrome_options()' +
-    '\n    Open Browser    ${url}    ${browser}    options=${opts}';
+    '\n    ${driver_path}=    Evaluate    __import__(\"sys\").path.insert(0,\"${EXECDIR}\") or __import__(\"NoPopupOptions\").get_driver_path(\"${browser}\")    sys,NoPopupOptions' +
+    '\n    ${opts}=    Evaluate    __import__(\"NoPopupOptions\").get_no_popup_options(\"${browser}\")    NoPopupOptions' +
+    '\n    ${is_chrome}=    Evaluate    \"${browser}\".lower() in (\"chrome\", \"chromium\")' +
+    '\n    Run Keyword If    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=${opts}' +
+    '\n    Run Keyword Unless    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}';
 
   if (mode === 'per-suite') {
     return 'SESSION=SUITE_TEARDOWN: '
@@ -1469,9 +1472,9 @@ function getSessionRules() {
       + 'Add this keyword definition in keywords.robot: ' + openBrowserDef;
   } else {
     return 'SESSION=TEST_TEARDOWN: '
-      + 'Use keyword "Open Browser No Popup" instead of Open Browser directly. '
-      + 'Add Test Teardown    Close Browser in Settings. '
-      + 'Each test case must call Open Browser No Popup at start. '
+      + 'Use Test Setup    Open Browser No Popup    ${BASE_URL}    ${BROWSER} to open browser before each TC. '
+      + 'Use Test Teardown    Close Browser to close browser after each TC. '
+      + 'Settings must have: Test Setup    Open Browser No Popup    ${BASE_URL}    ${BROWSER} and Test Teardown    Close Browser. '
       + 'Add this keyword definition in keywords.robot: ' + openBrowserDef;
   }
 }
@@ -1589,7 +1592,7 @@ function buildRfPromptBrowser(description, style) {
     'Library      Browser',
     'Library      Collections',
     'Resource     variables.robot',
-    'Resource     pages/[main_page].robot',
+    'Resource     pages/main_page.robot',
     '',
     '*** Keywords ***',
     'Open Browser Session',
@@ -1600,16 +1603,16 @@ function buildRfPromptBrowser(description, style) {
     '',
     '[add business keywords here - each keyword does ONE thing]',
     '',
-    '***** FILE: resources/pages/[page_name].robot | page | [Page Name]',
+    '***** FILE: resources/pages/main_page.robot | page | Main Page',
     '*** Settings ***',
-    'Documentation    Page Object for [page name]',
+    'Documentation    Page Object for the application (ALL selectors here)',
     'Library          Browser',
     'Resource         ../variables.robot',
     '',
     '*** Keywords ***',
     '[page object keywords using Browser library only]',
     '',
-    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '***** FILE: tests/feature_main.robot | tests | Main Tests',
     '*** Settings ***',
     'Suite Setup       Open Browser Session    ${BASE_URL}',
     'Suite Teardown    Close Browser',
@@ -1619,10 +1622,11 @@ function buildRfPromptBrowser(description, style) {
     'Library           Browser',
     'Resource          ../resources/variables.robot',
     'Resource          ../resources/keywords.robot',
-    'Resource          ../resources/pages/[page_name].robot',
+    'Resource          ../resources/pages/main_page.robot',
     '',
     '*** Test Cases ***',
     '[test cases here - each calls keywords with proper arguments]',
+    '',
     '',
     'CRITICAL RULES - NEVER BREAK THESE:',
     '',
@@ -1777,19 +1781,19 @@ function buildRfPromptBrowser_OLD(description, style) {
     '***** FILE: resources/pages/login_page.robot | page | Login Page',
     '[content of login_page.robot]',
     '',
-    '***** FILE: tests/tests.robot | tests | Test Cases',
-    '[content of tests.robot]',
+    '***** FILE: tests/feature_main.robot | tests | Main Tests',
+    '[content of feature_main.robot]',
     '',
     'ADDITIONAL RULES:',
     '- ALWAYS use ***** FILE: delimiter before each file — this is mandatory',
-    '- Generate: variables.robot, keywords.robot, pages/*.robot, tests/tests.robot',
+    '- Generate: variables.robot, keywords.robot, pages/*.robot, and ONE tests/feature_<page>.robot PER page object',
     '- Always define [Arguments] and pass them when calling keywords',
     '- Add [Documentation] to every keyword and test case',
     '- Add [Tags] to every test case',
     '- Align columns with spaces for readability',
     '- Variables in variables.robot, NO hardcoded values in tests',
     '- keywords.robot must contain "Open Browser Session" keyword',
-    '- tests.robot Suite Setup must call "Open Browser Session    ${BASE_URL}"',
+    '- each tests/feature_*.robot Suite Setup must call "Open Browser Session    ${BASE_URL}"',
     bdd ? '- BDD style: Given/When/Then/And/But prefixes on all test steps' : '- Keyword-Driven style: descriptive keyword names',
     getSessionRules(),
   ];
@@ -1844,7 +1848,7 @@ function buildRfPromptMobile(description, style) {
     '',
     '[add business keywords here]',
     '',
-    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '***** FILE: tests/feature_main.robot | tests | Main Tests',
     '*** Settings ***',
     'Suite Setup       Open Mobile Browser    ${BASE_URL}',
     'Suite Teardown    Close Mobile Browser',
@@ -1912,7 +1916,7 @@ function buildRfPromptAPI(description, style) {
     '',
     '[add business keywords here]',
     '',
-    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '***** FILE: tests/feature_main.robot | tests | Main Tests',
     '*** Settings ***',
     'Suite Setup       Create API Session',
     'Suite Teardown    Close API Session',
@@ -1984,7 +1988,7 @@ function buildRfPromptDB(description, style) {
     '',
     '[add business keywords here]',
     '',
-    '***** FILE: tests/tests.robot | tests | Test Cases',
+    '***** FILE: tests/feature_main.robot | tests | Main Tests',
     '*** Settings ***',
     'Suite Setup       Connect To DB',
     'Suite Teardown    Disconnect From DB',
@@ -2027,18 +2031,18 @@ function buildRfPromptPOM(description, library, style) {
   const totalTcCount = pages.reduce((s, p) => s + (p.cases||[]).length, 0);
   let prompt = 'Tu es un expert Robot Framework. Génère EXACTEMENT ces ' + (pages.length + 3) + ' fichiers POM.\n';
   prompt += 'Style: ' + styleGuide + ' | Library: ' + library + '\n';
-  prompt += '⚠️ Le fichier tests/tests.robot DOIT contenir EXACTEMENT ' + totalTcCount + ' Test Cases — un par cas listé.\n\n';
+  prompt += '⚠️ Les fichiers tests/feature_*.robot DOIVENT contenir AU TOTAL EXACTEMENT ' + totalTcCount + ' Test Cases — un par cas listé.\n\n';
   prompt += '⚠️ RÈGLES ABSOLUES :\n';
   prompt += '- Texte brut uniquement, JAMAIS de balises markdown.\n';
   prompt += '- Tous les noms de keywords en ANGLAIS.\n';
-  prompt += '- COHÉRENCE STRICTE : chaque keyword appelé dans tests/tests.robot DOIT être défini AVEC LE MÊME NOM EXACT dans keywords.robot ou pages/*.robot.\n';
+  prompt += '- COHÉRENCE STRICTE : chaque keyword appelé dans les fichiers tests/ DOIT être défini AVEC LE MÊME NOM EXACT dans keywords.robot ou pages/*.robot.\n';
   prompt += '- Exemple correct :\n';
   prompt += '  keywords.robot  → "Open Login Page"\n';
-  prompt += '  tests.robot     → "Given Open Login Page" (même nom après le préfixe BDD)\n';
+  prompt += '  feature_*.robot → "Given Open Login Page" (même nom après le préfixe BDD)\n';
   prompt += '- Exemple INTERDIT :\n';
   prompt += '  keywords.robot  → "Open Login Page"\n';
-  prompt += '  tests.robot     → "Given User Opens The Login Page" (nom différent)\n';
-  prompt += '- Génère TOUJOURS keywords.robot AVANT tests.robot pour garantir la cohérence.\n';
+  prompt += '  feature_*.robot → "Given User Opens The Login Page" (nom différent)\n';
+  prompt += '- Génère TOUJOURS keywords.robot AVANT les fichiers tests/ pour garantir la cohérence.\n';
   prompt += '- INTERDIT dans variables.robot, keywords.robot et pages/*.robot : Suite Setup, Suite Teardown, Test Setup, Test Teardown, Test Template, Force Tags, Default Tags. Ces settings ne sont autorisés QUE dans tests.robot.\n';
   prompt += '- variables.robot EST UN FICHIER RESOURCE — il ne contient QUE *** Settings *** (Documentation, Library, Resource) et *** Variables ***.\n\n';
   prompt += 'DESCRIPTION:\n' + description + '\n\n';
@@ -2077,13 +2081,15 @@ function buildRfPromptPOM(description, library, style) {
     });
     prompt += 'RAPPEL: Génère ' + (pages.length + 3) + ' fichiers avec leur contenu RF complet.\n';
   } else {
-    prompt += '***** FILE: tests/tests.robot | tests | Tests\n';
-    prompt += '*** Settings ***\nDocumentation    Tests\nLibrary    ' + library + '\nResource    ../resources/variables.robot\nResource    ../resources/keywords.robot\n\n*** Test Cases ***\n# Tests basés sur les cas décrits\n\n';
+    // Une seule page — nommer le fichier selon la page
+    const singlePage = pages[0];
+    const singleFname = 'feature_' + singlePage.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_') + '.robot';
+    prompt += '***** FILE: tests/' + singleFname + ' | tests | Tests ' + singlePage + '\n';
+    prompt += '*** Settings ***\nDocumentation    Tests ' + singlePage + '\nLibrary    ' + library + '\nResource    ../resources/variables.robot\nResource    ../resources/keywords.robot\n\n*** Test Cases ***\n# Tests basés sur les cas décrits\n\n';
     prompt += 'RAPPEL: Génère les ' + (pages.length + 3) + ' fichiers ci-dessus avec leur contenu Robot Framework complet.\n';
-    prompt += 'Le fichier tests/tests.robot EST OBLIGATOIRE — il contient les Test Cases.\n';
+    prompt += 'Le fichier tests/' + singleFname + ' EST OBLIGATOIRE — il contient les Test Cases.\n';
   }
   prompt += 'RAPPEL: Génère les ' + (pages.length + 3) + ' fichiers ci-dessus avec leur contenu Robot Framework complet.\n';
-  prompt += 'Le fichier tests/tests.robot EST OBLIGATOIRE — il contient les Test Cases.\n';
 
   return prompt;
 }
@@ -2212,6 +2218,7 @@ function renderCodeMsg(code, filename) {
   const title4 = window._lastGeneratedTitle || filename?.replace('.robot','') || 'Code RF';
   window._codeCards.push({ type: 'single', cardId: cardId4, title: title4, files: [{ filename: filename||'test_generated.robot', code: clean }] });
   saveCodeCards();
+  /* SYNC-ON-GEN */ try { window._lastCardId = cardId4; syncCardFilesToDisk(cardId4).then(() => showToast('\ud83d\udcbe Fichier synchronis\u00e9 sur disque')); } catch(e){}
   // Note: variables.robot snapshot désactivé — les fichiers sont déjà dans card.files
   try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
   renderResultCard([{ filename, code: clean }], cardId4);
@@ -2384,6 +2391,79 @@ function renderMultiFileMsg(raw) {
     desc:     h[3].trim(),
   }));
 
+  // Split tests/tests.robot en feature_*.robot selon les pages si plusieurs pages detects
+  const pageFiles = files.filter(f => f.filename.startsWith('resources/pages/'));
+  if (pageFiles.length > 1) {
+    const testsFile = files.find(f => f.filename === 'tests/tests.robot');
+    if (testsFile) {
+      // Parser les TC du fichier tests.robot
+      const lines = testsFile.code.split('\n');
+      const tcStart = lines.findIndex(l => l.trim().startsWith('*** Test Cases ***'));
+      const header = tcStart >= 0 ? lines.slice(0, tcStart + 1).join('\n') + '\n' : '';
+      // Extraire chaque TC
+      const tcBlocks = [];
+      let current = null;
+      for (let i = (tcStart >= 0 ? tcStart + 1 : 0); i < lines.length; i++) {
+        const line = lines[i];
+        if (line && !/^\s/.test(line) && !line.startsWith('#') && line.trim() && !line.startsWith('*')) {
+          if (current) tcBlocks.push(current);
+          current = { name: line.trim(), lines: [line] };
+        } else if (current) {
+          current.lines.push(line);
+        }
+      }
+      if (current) tcBlocks.push(current);
+
+      if (tcBlocks.length > 0 && pageFiles.length > 1) {
+        // Associer chaque TC à une page selon les keywords appelés
+        const newFiles = [];
+        const tcPerPage = {};
+        tcBlocks.forEach(tc => {
+          const tcText = tc.lines.join('\n').toLowerCase();
+          let assignedPage = null;
+          // Chercher la première page qui match — un TC va dans UNE SEULE page
+          for (const pf of pageFiles) {
+            const pageName = pf.filename.split('/').pop().replace('_page.robot','').replace('.robot','');
+            if (tcText.includes(pageName.toLowerCase())) {
+              assignedPage = pageName;
+              break;
+            }
+          }
+          if (!assignedPage) {
+            // TC sans page associée — mettre dans la première page
+            assignedPage = pageFiles[0].filename.split('/').pop().replace('_page.robot','').replace('.robot','');
+          }
+          if (!tcPerPage[assignedPage]) tcPerPage[assignedPage] = [];
+          tcPerPage[assignedPage].push(tc);
+        });
+
+        // Créer un fichier par page
+        const headerBase = header.replace('tests/tests.robot', '');
+        Object.entries(tcPerPage).forEach(([pageName, tcs]) => {
+          if (tcs.length === 0) return;
+          const fname = 'tests/feature_' + pageName.toLowerCase().replace(/[^a-z0-9]/g,'_') + '.robot';
+          const code = headerBase + tcs.map(tc => tc.lines.join('\n')).join('\n') + '\n';
+          newFiles.push({ filename: fname, code, label: 'tests', desc: 'Tests ' + pageName });
+        });
+
+        if (newFiles.length > 1) {
+          // Remplacer tests.robot par les fichiers feature_*.robot
+          const idx = files.indexOf(testsFile);
+          files.splice(idx, 1, ...newFiles);
+          console.log('[SPLIT] tests.robot -> ' + newFiles.map(f => f.filename).join(', '));
+        }
+      }
+    }
+  }
+
+  // Renuméroter les TC globalement et en ordre continu
+  let globalTcCounter = 1;
+  files.filter(f => f.filename.startsWith('tests/')).forEach(f => {
+    f.code = f.code.replace(/^(TC_\d+)( .+)$/gm, (m, tc, name) => {
+      return 'TC_' + String(globalTcCounter++).padStart(3,'0') + name;
+    });
+  });
+
   // If no tests/ file — auto-generate one from keywords found in keywords.robot
   const hasTests = files.some(f => f.filename.startsWith('tests/'));
   if (!hasTests) {
@@ -2442,6 +2522,48 @@ function renderMultiFileMsg(raw) {
   // Store clean code (not encoded)
   const cardId5 = 'result-' + Date.now();
   const title5 = window._lastGeneratedTitle || 'Code RF';
+  // Rendre visible le __init__.robot (Setup/Teardown centralises) dans l arborescence
+  if (!files.some(f => String(f.filename || '').endsWith('__init__.robot'))) {
+    const allGenCode = files.map(f => f.code || '').join('\n');
+    const isBrowserGen = /^[ \t]*Library[ \t]+Browser[ \t]*$/m.test(allGenCode)
+                      || /Fill Text|New Browser|New Page|Wait For Elements State/.test(allGenCode);
+    const isSuiteModeGen = /^Suite Setup/m.test(allGenCode);
+    const openKwInit = isBrowserGen
+      ? 'Open Browser Session    ${BASE_URL}'
+      : 'Open Browser No Popup    ${BASE_URL}    ${BROWSER}';
+    const initLines = [
+      '*** Settings ***',
+      'Resource    ../resources/variables.robot',
+      'Resource    ../resources/keywords.robot'
+    ];
+    if (isSuiteModeGen) {
+      initLines.push('Suite Setup     ' + openKwInit);
+      initLines.push('Suite Teardown  Close Browser');
+      initLines.push('Test Setup      Go To    ${BASE_URL}');
+    } else {
+      initLines.push('Test Setup      ' + openKwInit);
+      initLines.push('Test Teardown   Close Browser');
+    }
+    initLines.push('');
+    files.push({
+      filename: 'tests/__init__.robot',
+      type: 'init',
+      title: 'Init (Setup/Teardown)',
+      code: initLines.join('\n')
+    });
+  }
+  // Centraliser : retirer Test/Suite Setup/Teardown de tous les fichiers hors __init__
+  if (files.some(f => String(f.filename || '').endsWith('__init__.robot'))) {
+    files.forEach(f => {
+      const fnD = String(f.filename || '');
+      if (fnD.endsWith('__init__.robot') || !f.code) return;
+      f.code = f.code
+        .replace(/^Test Setup[^\n]*\n?/gm, '')
+        .replace(/^Test Teardown[^\n]*\n?/gm, '')
+        .replace(/^Suite Setup[^\n]*\n?/gm, '')
+        .replace(/^Suite Teardown[^\n]*\n?/gm, '');
+    });
+  }
   window._codeCards.push({ type: 'multi', cardId: cardId5, title: title5, files: files.map(f => ({ ...f, code: f.code })) });
   saveCodeCards();
 
@@ -3090,6 +3212,21 @@ function renderResultCard(files, existingCardId) {
       const btn = e.target.closest('[data-raction]');
       if (!btn) return;
       const action = btn.dataset.raction;
+      if (btn.dataset.card) {
+        try {
+          const selRF = document.querySelector('select[data-raction="runselect"][data-card="' + btn.dataset.card + '"]');
+          let sfRF = null;
+          if (selRF && selRF.value !== 'all') {
+            const cardRF = (window._codeCards || []).find(c => c.cardId === btn.dataset.card);
+            const fRF = cardRF && cardRF.files && cardRF.files[Number(selRF.value)];
+            const fnRF = fRF ? String(fRF.filename || '') : '';
+            if (fnRF.indexOf('tests/') === 0 && !fnRF.endsWith('__init__.robot')) {
+              sfRF = fnRF.split('/').pop().replace(/\.robot$/i, '');
+            }
+          }
+          window._runSuiteFilter = sfRF;
+        } catch (eRF) { window._runSuiteFilter = null; }
+      }
       if (action === 'folder-rename') {
         treeFolderRename(e, btn.dataset.folder, cardId);
       } else if (action === 'folder-delete') {
@@ -3427,6 +3564,7 @@ async function handleJiraConnect(url, token, apiKey, userText) {
     });
     const data = await r.json();
     hideTyping();
+    if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
     if (r.status === 401) { renderAgentMsg('❌ Token Jira invalide ou email incorrect.'); return; }
     if (!r.ok)            { renderAgentMsg(`❌ Erreur Jira : HTTP ${r.status}`); return; }
@@ -3456,6 +3594,7 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
     const r  = await fetch(`https://robotstudioai.onrender.com/api/jira/issue/${issueKey}`);
     const data = await r.json();
     hideTyping();
+    if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
     if (r.status === 404) { renderAgentMsg(`❌ Issue **${issueKey}** introuvable.`); return; }
     if (!r.ok)            { renderAgentMsg(`❌ Erreur Jira : ${data.error || r.status}`); return; }
@@ -3697,21 +3836,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Connexion SSE permanente pour sync VS Code → UI
   (function connectSyncSSE() {
+function _rerenderCardIfRendered(card) {
+  try {
+    if (!card || !card.cardId) return;
+    if (window._rfRunning || window._suiteRunning) return;
+    const el = document.getElementById(card.cardId);
+    if (el && typeof renderResultCard === 'function') {
+      // memoriser la position d origine (le noeud qui suit)
+      const parent = el.parentNode;
+      const nextSibling = el.nextSibling;
+      el.remove();
+      renderResultCard(card.files, card.cardId);
+      // renderResultCard a fait appendChild (en dernier) -> on replace a l origine
+      const fresh = document.getElementById(card.cardId);
+      if (fresh && parent && nextSibling && nextSibling.parentNode === parent) {
+        parent.insertBefore(fresh, nextSibling);
+      }
+    }
+  } catch(e) {}
+}
+
     const es = new EventSource('http://localhost:3001/api/rf/live-stream');
     es.addEventListener('file-changed', e => {
       const { filepath, content } = JSON.parse(e.data);
       let updated = false;
-      (window._codeCards||[]).forEach(card => {
-        if (!card.files) return;
+      let _changedCard = null;
+      // FIX contamination : ne synchroniser QUE la carte en cours d'execution.
+      // Avant on bouclait sur TOUTES les cartes en matchant par nom de fichier
+      // (variables.robot, keywords.robot...) communs -> le run d'un bloc ecrasait
+      // le code des autres cartes. On cible desormais la seule carte _lastCardId.
+      const _tgtCard = (window._codeCards||[]).find(c => c.cardId === window._lastCardId);
+      if (_tgtCard && _tgtCard.files) {
         const fname = filepath.split('/').pop();
-        const f = card.files.find(f => f.filename === filepath || (f.filename||'').split('/').pop() === fname);
+        const f = _tgtCard.files.find(f => f.filename === filepath || (f.filename||'').split('/').pop() === fname);
         if (f && f.code !== content) {
           f.code = content;
           updated = true;
+          _changedCard = _tgtCard;
         }
-      });
+      }
       if (updated) {
         saveCodeCards();
+        _rerenderCardIfRendered(_changedCard);
         // Pas de re-render complet — juste un toast discret
         // Le code est mis à jour en mémoire, sera utilisé au prochain run
         showToast('🔄 ' + filepath.split('/').pop() + ' synchronisé');
@@ -4092,6 +4258,12 @@ async function syncCardFilesToDisk(cardId) {
 }
 
 async function runTestsFromCard(code, filename, suiteCtx) {
+  // Bloquer si un run est deja en cours
+  if (window._rfRunning && !suiteCtx?.isSuite) {
+    showToast('⏳ Un test est déjà en cours — attends la fin.');
+    return;
+  }
+  window._rfRunning = true;
   const apiKey = document.getElementById('apiKey').value.trim();
   const isSuiteRun = suiteCtx?.isSuite;
 
@@ -4167,10 +4339,11 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     const r    = await fetch('http://localhost:3001/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '' }),
+      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '', suiteFilter: window._runSuiteFilter || null }),
     });
     const data = await r.json();
     hideTyping();
+    if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
     if (!r.ok) {
       renderAgentMsg(`❌ Erreur lors du lancement :\n\n${data.error}\n\n${data.details || ''}`);
@@ -4201,10 +4374,12 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     }
 
     chatHistory.push({ role: 'assistant', content: `[Test run: ${data.status} ${data.passed}/${data.total}]` });
+    window._rfRunning = false;
     LS.save();
 
   } catch(err) {
     hideTyping();
+    window._rfRunning = false;
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
       renderAgentMsg('❌ Serveur proxy non démarré.\n\nLance **`node server.js`** dans ton terminal puis réessaie.');
     } else {
@@ -5093,7 +5268,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Poll server every 3s to check if run completed
       const pollInterval = setInterval(async () => {
         try {
-          const resp = await fetch('https://robotstudioai.onrender.com/api/rf/status');
+          const resp = await fetch('http://localhost:3001/api/rf/status');
           if (!resp.ok) return;
           const data = await resp.json();
           if (data.status === 'idle' && data.results) {
@@ -5598,7 +5773,16 @@ function stopTestRun() {
     })
     .catch(() => showToast('⚠️ Erreur arrêt — Ctrl+C dans le terminal'));
   hideTyping();
+  window._rfRunning = false;
+  var _rm = window._currentRunMsg;
+  if (_rm) {
+    var _lbl = _rm.querySelector('[id$="-label"]');
+    if (_lbl) _lbl.innerHTML = '⏹ Run stoppé';
+    var _btn = _rm.querySelector('button');
+    if (_btn) _btn.remove();
+  }
   window._currentRunMsg = null;
+  try { localStorage.removeItem('qa_active_run'); } catch(e) {}
 }
 
 // ── Suite Panel ───────────────────────────────────────────────────────────────
@@ -5668,6 +5852,22 @@ function openSuitePanel() {
 function setupSuiteDropZone() {}
 
 // ── Render available code cards as a list to add to suite ────────────────────
+// Detecte le vrai fichier de test d un card (tests/ + *** Test Cases ***), quel que soit son nom
+function _findTestFile(files) {
+  if (!Array.isArray(files)) return null;
+  // priorite : fichier de tests/ avec des Test Cases
+  let tf = files.find(f => /(?:^|\/)tests\//.test(f.filename || '') && (f.code || '').includes('*** Test Cases'));
+  if (tf) return tf;
+  // sinon : n importe quel fichier avec des Test Cases
+  tf = files.find(f => (f.code || '').includes('*** Test Cases'));
+  if (tf) return tf;
+  // fallback historique
+  return files.find(f => (f.filename || '').includes('tests.robot')) || files[0] || null;
+}
+function _isTestFile(f) {
+  return /(?:^|\/)tests\//.test(f.filename || '') && (f.code || '').includes('*** Test Cases');
+}
+
 function renderAvailableCodeCards() {
   const container = document.getElementById('suiteDropZone');
   if (!container) return;
@@ -5712,7 +5912,7 @@ function addCardToSuite(cardId) {
   }
 
   const title = card.title || card.files?.[0]?.filename?.replace('.robot','') || 'Test';
-  const mainFile = card.files?.find(f => f.filename.includes('tests.robot')) || card.files?.[0];
+  const mainFile = _findTestFile(card.files);
   const filename = mainFile?.filename || 'tests.robot';
 
   // Build self-contained code by merging ALL files from this card
@@ -5786,7 +5986,7 @@ function addCardToSuite(cardId) {
   if (cardObj?.files?.some(f => f.code?.trim())) {
     const fname = 'suite_PLACEHOLDER_' + id + '.robot';
     const pomLines = cardObj.files
-      .filter(f => f.code?.trim() && !f.filename.includes('tests.robot'))
+      .filter(f => f.code?.trim() && !_isTestFile(f))
       .map(f => {
         const relPath = f.filename.replace(/^.*rf_tests[/\\]/, '').replace(/\\/g, '/');
         const label = relPath.split('/').pop().replace('.robot','');
@@ -6031,17 +6231,20 @@ function addNewSuiteGroup() {
   modal.id = '_suitePickerModal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
 
+  const _fmtDate = (cardId, card) => { let ts=null; const m=String(cardId||'').match(/(\d{10,})/); if(m) ts=parseInt(m[1]); if((!ts||isNaN(ts))&&card&&card.createdAt) ts=new Date(card.createdAt).getTime(); if(!ts||isNaN(ts)) return ''; try { return new Date(ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',',''); } catch(e){ return ''; } };
   const rows = cards.map((card, i) => {
     const title = card.title || card.files?.[0]?.filename?.replace('.robot','') || 'Bloc ' + (i+1);
     const fileCount = card.files?.length || 0;
+    const dateStr = _fmtDate(card.cardId, card);
     return `<label style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);
               border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer"
               onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
       <input type="checkbox" value="${i}" class="suite-picker-cb" style="accent-color:var(--teal);width:16px;height:16px;cursor:pointer" />
       <div style="flex:1">
         <div style="font-size:13px;font-weight:700;color:var(--text)">${escHtml(title)}</div>
-        <div style="font-size:11px;color:var(--gray)">${fileCount} fichier(s)</div>
+        <div style="font-size:11px;color:var(--gray)">${fileCount} fichier(s)${dateStr ? ' \u00b7 \ud83d\udd5b ' + dateStr : ''}</div>
       </div>
+      <span onclick="event.preventDefault();event.stopPropagation();this.closest('label').remove()" title="Retirer de la liste" style="cursor:pointer;color:var(--gray);font-size:16px;padding:2px 8px;border-radius:5px;flex-shrink:0" onmouseover="this.style.color='#ff5c5c'" onmouseout="this.style.color='var(--gray)'">\u2715</span>
     </label>`;
   }).join('');
 
@@ -6086,7 +6289,7 @@ function addNewSuiteGroup() {
       const card = cards[parseInt(cb.value)];
       if (!card) return;
       const title = card.title || card.files?.[0]?.filename?.replace('.robot','') || 'Test';
-      const mainFile = card.files?.find(f => f.filename.includes('tests.robot')) || card.files?.[0];
+      const mainFile = _findTestFile(card.files);
       const code = mainFile?.code || '';
       const id = generateSuiteId();
 
@@ -6095,7 +6298,7 @@ function addNewSuiteGroup() {
       if (card.files?.some(f => f.code?.trim())) {
         const fname = 'suite_PLACEHOLDER_' + id + '.robot';
         const pomLines = card.files
-          .filter(f => f.code?.trim() && !f.filename.includes('tests.robot'))
+          .filter(f => f.code?.trim() && !_isTestFile(f))
           .map(f => {
             const relPath = f.filename.replace(/^.*rf_tests[/\\]/, '').replace(/\\/g, '/');
             const label = relPath.split('/').pop().replace('.robot','');
@@ -6241,7 +6444,7 @@ async function runSuiteGroup(idx) {
     if (card?.files?.length > 1 && hasFullFiles) {
       // Send all resource files + THIS bloc's test code (not the shared tests.robot)
       const pomLines = card.files
-        .filter(f => f.code?.trim() && !f.filename.includes('tests.robot'))  // skip shared tests
+        .filter(f => f.code?.trim() && !_isTestFile(f))  // skip shared tests
         .map(f => {
           let relPath = f.filename.replace(/^.*rf_tests[/\\]/, '').replace(/\\/g, '/');
           const label = relPath.split('/').pop().replace('.robot','');
@@ -6283,8 +6486,9 @@ async function runSuiteGroup(idx) {
       // Initial delay to let RF start
       setTimeout(() => {
         const check = setInterval(async () => {
+          if (window._suiteStopped) { clearInterval(check); resolve(); return; }
           try {
-            const r = await fetch('https://robotstudioai.onrender.com/api/rf/status');
+            const r = await fetch('http://localhost:3001/api/rf/status');
             const d = await r.json();
             if (d.status === 'idle') { clearInterval(check); resolve(); }
           } catch(e) { clearInterval(check); resolve(); }
@@ -6295,7 +6499,9 @@ async function runSuiteGroup(idx) {
   }
   // Update progress to done
   const finalLbl = suiteProgressDiv.querySelector('#suite-progress-label');
-  if (finalLbl) finalLbl.textContent = '✅ Suite : ' + suite.title + ' — ' + tests.length + '/' + tests.length + ' terminé';
+  if (finalLbl) finalLbl.textContent = window._suiteStopped
+    ? '⏹ Suite arrêtée : ' + suite.title + ' — arrêt manuel'
+    : '✅ Suite : ' + suite.title + ' — ' + tests.length + '/' + tests.length + ' terminé';
 
   // Consolidated report will be rendered by result handler when all blocs complete
   // Fallback: render now if not already rendered
@@ -6324,14 +6530,18 @@ async function runSuiteGroup(idx) {
 
 
 async function runCheckedSuiteGroups() {
-  const checked = [...document.querySelectorAll('.suite-group-cb:checked')];
-  if (checked.length === 0) { showToast('⚠️ Coche au moins une suite'); return; }
-  for (const cb of checked) {
-    const suite = savedSuites.find(s => s.id === cb.dataset.suiteId);
-    if (suite) {
-      const idx = savedSuites.indexOf(suite);
-      await runSuiteGroup(idx);
+  if (window._suiteBatchRunning || window._suiteRunning) { showToast('⏳ Une suite est déjà en cours'); return; }
+  // dedup : un meme suiteId ne doit etre lance qu'une fois par clic
+  const ids = [...new Set([...document.querySelectorAll('.suite-group-cb:checked')].map(cb => cb.dataset.suiteId))];
+  if (ids.length === 0) { showToast('⚠️ Coche au moins une suite'); return; }
+  window._suiteBatchRunning = true;
+  try {
+    for (const id of ids) {
+      const suite = savedSuites.find(s => s.id === id);
+      if (suite) await runSuiteGroup(savedSuites.indexOf(suite));
     }
+  } finally {
+    window._suiteBatchRunning = false;
   }
 }
 
@@ -7873,6 +8083,28 @@ function getCurrentProvider() {
 }
 
 // ── Universal API call ─────────────────────────────────────────────────────────
+// ── Snapshot DOM de l appli cible pour guider la generation ──────────────────
+async function fetchDomSnapshot(text) {
+  try {
+    const m = String(text || '').match(/https?:\/\/[^\s"'<>)]+/);
+    if (!m) return '';
+    const r = await fetch('/api/inspect-dom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: m[0], wait: 3 })
+    });
+    if (!r.ok) return '';
+    const d = await r.json();
+    if (!d || d.error || !d.elements || !d.elements.length) return '';
+    const lines = d.elements.map(e => JSON.stringify(e));
+    return '\n\nDOM SNAPSHOT — elements interactifs REELS de ' + d.url
+         + ' (titre: ' + (d.title || '') + ').\n'
+         + 'REGLE STRICTE: utilise EXCLUSIVEMENT des selecteurs derives de ces elements'
+         + ' (priorite: id > name > data-testid > css court). N invente JAMAIS un id ou une classe.\n'
+         + lines.join('\n') + '\n';
+  } catch (e) { return ''; }
+}
+
 async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
   const provider = getCurrentProvider();
   const model    = document.getElementById('modelSelect')?.value || 'claude-sonnet-4-6';
@@ -7955,7 +8187,9 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
   }
 }async function callClaudeRaw(apiKey, prompt) {
   const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax. ${getSessionRules()}`;
-  return await callAI(apiKey, [{ role: 'user', content: prompt }], sys, 4096);
+  const domSnap = await fetchDomSnapshot(prompt);
+  if (domSnap) console.log('[DOM-AWARE] snapshot injecte (' + domSnap.length + ' chars)');
+  return await callAI(apiKey, [{ role: 'user', content: prompt + domSnap }], sys, 4096);
 }
 
 
@@ -8132,16 +8366,19 @@ function connectLive() {
     const { filepath, content } = JSON.parse(e.data);
     // Mettre à jour toutes les cartes qui contiennent ce fichier
     let updated = false;
+    let _changedCard2 = null;
     (window._codeCards||[]).forEach(card => {
       if (!card.files) return;
       const f = card.files.find(f => f.filename === filepath || f.filename.endsWith('/' + filepath.split('/').pop()));
       if (f && f.code !== content) {
         f.code = content;
         updated = true;
+        _changedCard2 = card;
       }
     });
     if (updated) {
       saveCodeCards();
+      _rerenderCardIfRendered(_changedCard2);
       showToast('🔄 Fichier mis à jour depuis VS Code : ' + filepath.split('/').pop());
     }
   });

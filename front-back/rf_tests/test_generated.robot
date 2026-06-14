@@ -5,7 +5,7 @@ Documentation    Variables for Login Tests
 *** Variables ***
 ${URL}                          https://the-internet.herokuapp.com/login
 ${BROWSER}                      chromium
-${HEADLESS}                     False
+${HEADLESS}                     ${False}
 ${VALID_USERNAME}               tomsmith
 ${VALID_PASSWORD}               SuperSecretPassword!
 ${INVALID_USERNAME}             wronguser

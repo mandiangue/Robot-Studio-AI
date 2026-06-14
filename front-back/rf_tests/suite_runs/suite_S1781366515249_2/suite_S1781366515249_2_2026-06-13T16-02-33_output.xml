@@ -1,0 +1,799 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-13T18:02:35.032571" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781366515249_2\tests">
+<kw name="Open Browser Session" owner="keywords" type="SETUP">
+<kw name="New Browser" owner="Browser">
+<msg time="2026-06-13T18:02:35.457539" level="INFO">{"browser": "chromium", "headless": false, "chromiumSandbox": false, "devtools": false, "handleSIGHUP": true, "handleSIGINT": true, "handleSIGTERM": true, "slowMo": 0.0, "timeout": 30000.0, "tracesDir": "C:\\Users\\Landing\\Desktop\\docDev\\robotClaude\\front-back\\rf_tests\\suite_runs\\suite_S1781366515249_2\\browser\\traces\\temp\\d9effe82-f19d-4392-a711-01bd91d1eab4"}</msg>
+<msg time="2026-06-13T18:02:35.515728" level="INFO">Starting Browser process C:\Users\Landing\AppData\Local\Programs\Python\Python313\Lib\site-packages\Browser\wrapper\index.js using at 127.0.0.1:62892</msg>
+<msg time="2026-06-13T18:02:49.258762" level="INFO">Successfully created browser with options: {"browser":"chromium","headless":false,"chromiumSandbox":false,"devtools":false,"handleSIGHUP":true,"handleSIGINT":true,"handleSIGTERM":true,"slowMo":0,"timeout":30000,"tracesDir":"C:\\Users\\Landing\\Desktop\\docDev\\robotClaude\\front-back\\rf_tests\\suite_runs\\suite_S1781366515249_2\\browser\\traces\\temp\\d9effe82-f19d-4392-a711-01bd91d1eab4"}</msg>
+<arg>${browser}</arg>
+<arg>headless=${HEADLESS}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new playwright Browser with specified options.</doc>
+<status status="PASS" start="2026-06-13T18:02:35.454977" elapsed="13.804161"/>
+</kw>
+<kw name="New Context" owner="Browser">
+<msg time="2026-06-13T18:02:49.264848" level="INFO">{
+  "acceptDownloads": true,
+  "bypassCSP": false,
+  "forcedColors": "none",
+  "ignoreHTTPSErrors": false,
+  "javaScriptEnabled": true,
+  "offline": false,
+  "reducedMotion": "no-preference",
+  "serviceWorkers": "allow",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  }
+}</msg>
+<msg time="2026-06-13T18:02:49.290583" level="INFO">Successfully created context. </msg>
+<msg time="2026-06-13T18:02:49.290687" level="INFO">{'acceptDownloads': True, 'bypassCSP': False, 'forcedColors': 'none', 'ignoreHTTPSErrors': False, 'javaScriptEnabled': True, 'offline': False, 'reducedMotion': 'no-preference', 'serviceWorkers': 'allow', 'viewport': {'width': 1280, 'height': 720}}</msg>
+<arg>acceptDownloads=True</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new BrowserContext with specified options.</doc>
+<status status="PASS" start="2026-06-13T18:02:49.259680" elapsed="0.031122"/>
+</kw>
+<kw name="New Page" owner="Browser">
+<msg time="2026-06-13T18:02:52.896779" level="INFO">Successfully initialized new page object and opened url: https://the-internet.herokuapp.com/login</msg>
+<arg>${url}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Open a new Page.</doc>
+<status status="PASS" start="2026-06-13T18:02:49.291063" elapsed="3.606433"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<status status="PASS" start="2026-06-13T18:02:35.452783" elapsed="17.444976"/>
+</kw>
+<suite id="s1-s1" name="suite S1781366515249 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781366515249_2\tests\suite_S1781366515249_2.robot">
+<test id="s1-s1-t1" name="TC_001 Connexion Reussie Avec Identifiants Valides" line="11">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-13T18:02:53.106520" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:52.930854" elapsed="0.175891"/>
+</kw>
+<kw name="When Login With Credentials" owner="keywords">
+<kw name="Go To Login Page" owner="main_page">
+<kw name="Go To" owner="Browser">
+<msg time="2026-06-13T18:02:53.295565" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.108711" elapsed="0.187054"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:53.328582" level="INFO">Waited for Element with selector id=username at state visible</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.295996" elapsed="0.032791"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:53.107884" elapsed="0.221051"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:53.331172" level="INFO">Fills the text 'tomsmith' in the given field.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.329788" elapsed="0.018089"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-13T18:02:53.329156" elapsed="0.018882"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:53.350517" level="INFO">Fills the text 'SuperSecretPassword!' in the given field.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.348904" elapsed="0.013727"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-13T18:02:53.348259" elapsed="0.014527"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-13T18:02:53.365125" level="INFO">Clicks the element 'css=button[type="submit"]'.</msg>
+<arg>${LOGIN_BUTTON}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.363596" elapsed="0.284685"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:53.363010" elapsed="0.285418"/>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<arg>${VALID_PASSWORD}</arg>
+<status status="PASS" start="2026-06-13T18:02:53.107120" elapsed="0.541379"/>
+</kw>
+<kw name="Then Verify Successful Login" owner="keywords">
+<kw name="Verify Url Contains" owner="keywords">
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-13T18:02:53.654994" level="INFO">${url} = https://the-internet.herokuapp.com/secure</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.650118" elapsed="0.004931"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>${fragment}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.655511" elapsed="0.001713"/>
+</kw>
+<arg>/secure</arg>
+<status status="PASS" start="2026-06-13T18:02:53.649372" elapsed="0.007996"/>
+</kw>
+<kw name="Verify Flash Message Contains" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:53.678448" level="INFO">Waited for Element with selector id=flash at state visible</msg>
+<arg>${FLASH_MESSAGE}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.658260" elapsed="0.020370"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-13T18:02:53.754877" level="INFO">Text: ' You logged into a secure area!\n×'</msg>
+<msg time="2026-06-13T18:02:53.755429" level="INFO">${actual} =  You logged into a secure area!
+×</msg>
+<var>${actual}</var>
+<arg>${FLASH_MESSAGE}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.678854" elapsed="0.076618"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${actual}</arg>
+<arg>${expected_text}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.755687" elapsed="0.000447"/>
+</kw>
+<arg>${SUCCESS_MESSAGE}</arg>
+<status status="PASS" start="2026-06-13T18:02:53.657588" elapsed="0.098643"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:53.648831" elapsed="0.107473"/>
+</kw>
+<doc>Successful login with valid credentials</doc>
+<status status="PASS" start="2026-06-13T18:02:52.923623" elapsed="0.832811"/>
+</test>
+<test id="s1-s1-t2" name="TC_002 Connexion Echouee Avec Mot De Passe Invalide" line="16">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-13T18:02:53.909538" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.770229" elapsed="0.139508"/>
+</kw>
+<kw name="When Login With Credentials" owner="keywords">
+<kw name="Go To Login Page" owner="main_page">
+<kw name="Go To" owner="Browser">
+<msg time="2026-06-13T18:02:54.045718" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:53.911015" elapsed="0.134940"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:54.065178" level="INFO">Waited for Element with selector id=username at state visible</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.046359" elapsed="0.018999"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:53.910639" elapsed="0.154838"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:54.067694" level="INFO">Fills the text 'tomsmith' in the given field.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.066208" elapsed="0.011639"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-13T18:02:54.065664" elapsed="0.012328"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:54.080161" level="INFO">Fills the text 'MauvaisMotDePasse' in the given field.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.078779" elapsed="0.014464"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-13T18:02:54.078199" elapsed="0.015183"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-13T18:02:54.095294" level="INFO">Clicks the element 'css=button[type="submit"]'.</msg>
+<arg>${LOGIN_BUTTON}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.094069" elapsed="0.284362"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:54.093574" elapsed="0.285048"/>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<arg>${INVALID_PASSWORD}</arg>
+<status status="PASS" start="2026-06-13T18:02:53.910027" elapsed="0.468764"/>
+</kw>
+<kw name="Then Verify Invalid Password Error" owner="keywords">
+<kw name="Verify Flash Message Contains" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:54.415986" level="INFO">Waited for Element with selector id=flash at state visible</msg>
+<arg>${FLASH_MESSAGE}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.381133" elapsed="0.035082"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-13T18:02:54.440582" level="INFO">Text: ' Your password is invalid!\n×'</msg>
+<msg time="2026-06-13T18:02:54.440749" level="INFO">${actual} =  Your password is invalid!
+×</msg>
+<var>${actual}</var>
+<arg>${FLASH_MESSAGE}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.416435" elapsed="0.024350"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${actual}</arg>
+<arg>${expected_text}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.440989" elapsed="0.000440"/>
+</kw>
+<arg>${INVALID_PASSWORD_MSG}</arg>
+<status status="PASS" start="2026-06-13T18:02:54.380452" elapsed="0.061064"/>
+</kw>
+<kw name="Verify Url Contains" owner="keywords">
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-13T18:02:54.445080" level="INFO">${url} = https://the-internet.herokuapp.com/login</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.442061" elapsed="0.003066"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>${fragment}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.445289" elapsed="0.000404"/>
+</kw>
+<arg>/login</arg>
+<status status="PASS" start="2026-06-13T18:02:54.441670" elapsed="0.004108"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:54.379054" elapsed="0.066789"/>
+</kw>
+<doc>Failed login with invalid password</doc>
+<status status="PASS" start="2026-06-13T18:02:53.763814" elapsed="0.682147"/>
+</test>
+<test id="s1-s1-t3" name="TC_003 Connexion Echouee Avec Nom D Utilisateur Invalide" line="21">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-13T18:02:54.618064" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.458870" elapsed="0.160709"/>
+</kw>
+<kw name="When Login With Credentials" owner="keywords">
+<kw name="Go To Login Page" owner="main_page">
+<kw name="Go To" owner="Browser">
+<msg time="2026-06-13T18:02:54.780991" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.624402" elapsed="0.156765"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:54.800482" level="INFO">Waited for Element with selector id=username at state visible</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.781375" elapsed="0.019292"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:54.622510" elapsed="0.178282"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:54.804342" level="INFO">Fills the text 'mauvaisUser' in the given field.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.802596" elapsed="0.011541"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-13T18:02:54.801137" elapsed="0.013144"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:54.816240" level="INFO">Fills the text 'SuperSecretPassword!' in the given field.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.815025" elapsed="0.013143"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-13T18:02:54.814477" elapsed="0.013841"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-13T18:02:54.830433" level="INFO">Clicks the element 'css=button[type="submit"]'.</msg>
+<arg>${LOGIN_BUTTON}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:54.829220" elapsed="0.289044"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:54.828516" elapsed="0.289939"/>
+</kw>
+<arg>${INVALID_USERNAME}</arg>
+<arg>${VALID_PASSWORD}</arg>
+<status status="PASS" start="2026-06-13T18:02:54.620784" elapsed="0.497772"/>
+</kw>
+<kw name="Then Verify Invalid Username Error" owner="keywords">
+<kw name="Verify Flash Message Contains" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:55.147845" level="INFO">Waited for Element with selector id=flash at state visible</msg>
+<arg>${FLASH_MESSAGE}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.121279" elapsed="0.026768"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-13T18:02:55.178876" level="INFO">Text: ' Your username is invalid!\n×'</msg>
+<msg time="2026-06-13T18:02:55.179045" level="INFO">${actual} =  Your username is invalid!
+×</msg>
+<var>${actual}</var>
+<arg>${FLASH_MESSAGE}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.148262" elapsed="0.030822"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${actual}</arg>
+<arg>${expected_text}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.179284" elapsed="0.000434"/>
+</kw>
+<arg>${INVALID_USERNAME_MSG}</arg>
+<status status="PASS" start="2026-06-13T18:02:55.120663" elapsed="0.059143"/>
+</kw>
+<kw name="Verify Url Contains" owner="keywords">
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-13T18:02:55.183845" level="INFO">${url} = https://the-internet.herokuapp.com/login</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.180370" elapsed="0.003673"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>${fragment}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.184615" elapsed="0.000580"/>
+</kw>
+<arg>/login</arg>
+<status status="PASS" start="2026-06-13T18:02:55.179960" elapsed="0.005353"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:55.119553" elapsed="0.065835"/>
+</kw>
+<doc>Failed login with invalid username</doc>
+<status status="PASS" start="2026-06-13T18:02:54.453140" elapsed="0.732374"/>
+</test>
+<test id="s1-s1-t4" name="TC_004 Tentative De Connexion Avec Champs Vides" line="26">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-13T18:02:55.340264" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.197354" elapsed="0.143306"/>
+</kw>
+<kw name="When Login With Credentials" owner="keywords">
+<kw name="Go To Login Page" owner="main_page">
+<kw name="Go To" owner="Browser">
+<msg time="2026-06-13T18:02:55.487837" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.344160" elapsed="0.144089"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:55.506546" level="INFO">Waited for Element with selector id=username at state visible</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.488549" elapsed="0.018189"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:55.343309" elapsed="0.163557"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:55.509110" level="INFO">Fills the text '' in the given field.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.507637" elapsed="0.013516"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-13T18:02:55.507062" elapsed="0.014236"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:55.523382" level="INFO">Fills the text '' in the given field.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.522062" elapsed="0.009860"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-13T18:02:55.521504" elapsed="0.010567"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-13T18:02:55.534328" level="INFO">Clicks the element 'css=button[type="submit"]'.</msg>
+<arg>${LOGIN_BUTTON}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.532789" elapsed="0.259977"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:55.532269" elapsed="0.260757"/>
+</kw>
+<arg>${EMPTY}</arg>
+<arg>${EMPTY}</arg>
+<status status="PASS" start="2026-06-13T18:02:55.340986" elapsed="0.452161"/>
+</kw>
+<kw name="Then Verify Invalid Username Error" owner="keywords">
+<kw name="Verify Flash Message Contains" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:55.830293" level="INFO">Waited for Element with selector id=flash at state visible</msg>
+<arg>${FLASH_MESSAGE}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.795761" elapsed="0.034743"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-13T18:02:55.855615" level="INFO">Text: ' Your username is invalid!\n×'</msg>
+<msg time="2026-06-13T18:02:55.855975" level="INFO">${actual} =  Your username is invalid!
+×</msg>
+<var>${actual}</var>
+<arg>${FLASH_MESSAGE}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.830730" elapsed="0.025287"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${actual}</arg>
+<arg>${expected_text}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.856220" elapsed="0.000629"/>
+</kw>
+<arg>${INVALID_USERNAME_MSG}</arg>
+<status status="PASS" start="2026-06-13T18:02:55.795034" elapsed="0.061929"/>
+</kw>
+<kw name="Verify Url Contains" owner="keywords">
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-13T18:02:55.861240" level="INFO">${url} = https://the-internet.herokuapp.com/login</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.857735" elapsed="0.003556"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>${fragment}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.861477" elapsed="0.000441"/>
+</kw>
+<arg>/login</arg>
+<status status="PASS" start="2026-06-13T18:02:55.857227" elapsed="0.004783"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:55.793562" elapsed="0.068521"/>
+</kw>
+<doc>Login attempt with empty fields</doc>
+<status status="PASS" start="2026-06-13T18:02:55.192493" elapsed="0.669697"/>
+</test>
+<test id="s1-s1-t5" name="TC_005 Deconnexion Apres Une Connexion Reussie" line="31">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-13T18:02:56.021348" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:55.877927" elapsed="0.143846"/>
+</kw>
+<kw name="Given Login With Credentials" owner="keywords">
+<kw name="Go To Login Page" owner="main_page">
+<kw name="Go To" owner="Browser">
+<msg time="2026-06-13T18:02:56.158099" level="INFO">Successfully opened URL https://the-internet.herokuapp.com/login</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.023985" elapsed="0.134303"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:56.178360" level="INFO">Waited for Element with selector id=username at state visible</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.158484" elapsed="0.020063"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:56.023306" elapsed="0.155367"/>
+</kw>
+<kw name="Enter Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:56.180591" level="INFO">Fills the text 'tomsmith' in the given field.</msg>
+<arg>${USERNAME_INPUT}</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.179395" elapsed="0.011842"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-13T18:02:56.178857" elapsed="0.012525"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-13T18:02:56.193306" level="INFO">Fills the text 'SuperSecretPassword!' in the given field.</msg>
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.192136" elapsed="0.045996"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-13T18:02:56.191581" elapsed="0.046703"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-13T18:02:56.240142" level="INFO">Clicks the element 'css=button[type="submit"]'.</msg>
+<arg>${LOGIN_BUTTON}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.238973" elapsed="0.263730"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:56.238483" elapsed="0.264666"/>
+</kw>
+<arg>${VALID_USERNAME}</arg>
+<arg>${VALID_PASSWORD}</arg>
+<status status="PASS" start="2026-06-13T18:02:56.022081" elapsed="0.481620"/>
+</kw>
+<kw name="And Verify Successful Login" owner="keywords">
+<kw name="Verify Url Contains" owner="keywords">
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-13T18:02:56.515430" level="INFO">${url} = https://the-internet.herokuapp.com/secure</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.508587" elapsed="0.006909"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>${fragment}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.516105" elapsed="0.001594"/>
+</kw>
+<arg>/secure</arg>
+<status status="PASS" start="2026-06-13T18:02:56.507443" elapsed="0.010467"/>
+</kw>
+<kw name="Verify Flash Message Contains" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:56.542372" level="INFO">Waited for Element with selector id=flash at state visible</msg>
+<arg>${FLASH_MESSAGE}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.519724" elapsed="0.022858"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-13T18:02:56.565586" level="INFO">Text: ' You logged into a secure area!\n×'</msg>
+<msg time="2026-06-13T18:02:56.565749" level="INFO">${actual} =  You logged into a secure area!
+×</msg>
+<var>${actual}</var>
+<arg>${FLASH_MESSAGE}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.542813" elapsed="0.022970"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${actual}</arg>
+<arg>${expected_text}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.565972" elapsed="0.000459"/>
+</kw>
+<arg>${SUCCESS_MESSAGE}</arg>
+<status status="PASS" start="2026-06-13T18:02:56.518470" elapsed="0.048051"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:56.504420" elapsed="0.062168"/>
+</kw>
+<kw name="When Logout From Secure Area" owner="keywords">
+<kw name="Click Logout Button" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:56.575283" level="INFO">Waited for Element with selector css=a[href="/logout"] at state visible</msg>
+<arg>${LOGOUT_BUTTON}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.568484" elapsed="0.007003"/>
+</kw>
+<kw name="Click" owner="Browser">
+<msg time="2026-06-13T18:02:56.577027" level="INFO">Clicks the element 'css=a[href="/logout"]'.</msg>
+<arg>${LOGOUT_BUTTON}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.575685" elapsed="0.273540"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:56.567836" elapsed="0.282375"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:56.566748" elapsed="0.285491"/>
+</kw>
+<kw name="Then Verify Successful Logout" owner="keywords">
+<kw name="Verify Url Contains" owner="keywords">
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-13T18:02:56.860941" level="INFO">${url} = https://the-internet.herokuapp.com/login</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.856972" elapsed="0.004021"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>${fragment}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.861178" elapsed="0.000474"/>
+</kw>
+<arg>/login</arg>
+<status status="PASS" start="2026-06-13T18:02:56.855995" elapsed="0.005755"/>
+</kw>
+<kw name="Verify Flash Message Contains" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-13T18:02:56.878487" level="INFO">Waited for Element with selector id=flash at state visible</msg>
+<arg>${FLASH_MESSAGE}</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.862451" elapsed="0.016227"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-13T18:02:56.900011" level="INFO">Text: ' You logged out of the secure area!\n×'</msg>
+<msg time="2026-06-13T18:02:56.900181" level="INFO">${actual} =  You logged out of the secure area!
+×</msg>
+<var>${actual}</var>
+<arg>${FLASH_MESSAGE}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.878882" elapsed="0.021334"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${actual}</arg>
+<arg>${expected_text}</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.900557" elapsed="0.001632"/>
+</kw>
+<arg>${LOGOUT_MESSAGE}</arg>
+<status status="PASS" start="2026-06-13T18:02:56.861921" elapsed="0.040831"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:56.852570" elapsed="0.050564"/>
+</kw>
+<doc>Logout after successful login</doc>
+<status status="PASS" start="2026-06-13T18:02:55.871148" elapsed="1.032128"/>
+</test>
+<doc>Tests for the-internet.herokuapp.com login feature</doc>
+<status status="PASS" start="2026-06-13T18:02:52.897870" elapsed="4.013467"/>
+</suite>
+<kw name="Close Browser" owner="Browser" type="TEARDOWN">
+<msg time="2026-06-13T18:02:58.345090" level="INFO">Closed browser</msg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-13T18:02:56.918837" elapsed="1.426451"/>
+</kw>
+<status status="PASS" start="2026-06-13T18:02:35.034937" elapsed="23.310441"/>
+</suite>
+<statistics>
+<total>
+<stat pass="5" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="5" fail="0" skip="0">Tests</stat>
+<stat name="suite S1781366515249 2" id="s1-s1" pass="5" fail="0" skip="0">Tests.suite S1781366515249 2</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

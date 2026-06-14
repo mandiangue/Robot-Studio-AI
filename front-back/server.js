@@ -47,12 +47,156 @@ const os   = require('os');
 
 // Working directory for test files
 const TESTS_DIR = path.join(__dirname, 'rf_tests');
+let _runStartTs = 0;
+
+// ── Detection Browser/Playwright tolerante a l espacement ────────────────────
+// Force les booleens RF reels pour headless (Playwright exige un bool, pas "False")
+function fixHeadlessBool(c) {
+  let out = c;
+  out = out.replace(/^([ \t]*\$\{HEADLESS\}[ \t]+)(False|false)[ \t]*$/gm, '$1${False}');
+  out = out.replace(/^([ \t]*\$\{HEADLESS\}[ \t]+)(True|true)[ \t]*$/gm, '$1${True}');
+  out = out.replace(/headless=False/g, 'headless=${False}');
+  out = out.replace(/headless=True/g, 'headless=${True}');
+  return out;
+}
+
+// Qualifie l appel library quand un keyword custom Close Browser se rappelle lui-meme
+function fixCloseBrowserAll(c) {
+  return c.replace(/^([ \t]+)Close Browser([ \t]+ALL[ \t]*)$/gm, '$1Browser.Close Browser$2');
+}
+
+// Decoupe tests/tests.robot en tests/feature_<nom>.robot, un par fonctionnalite.
+// Critere de regroupement : tag "feature:<x>" si present, sinon deduit du titre du TC
+// ou de son dernier "Verify". Recopie le bloc *** Settings *** dans chaque fichier.
+function splitTestsByFeature(testsDir, srcName) {
+  const src = path.join(testsDir, srcName || 'tests.robot');
+  if (!fs.existsSync(src)) return 0;
+  let content;
+  try { content = fs.readFileSync(src, 'utf8'); } catch (e) { return 0; }
+
+  const tcIdx = content.indexOf('*** Test Cases ***');
+  if (tcIdx < 0) return 0;
+  const header = content.slice(0, tcIdx).trimEnd();
+  const body = content.slice(tcIdx + '*** Test Cases ***'.length);
+
+  // Decouper en blocs de TC (un TC commence en colonne 0, ligne non vide)
+  const lines = body.split('\n');
+  const blocks = [];
+  let cur = null;
+  for (const ln of lines) {
+    const isHeader = ln.length > 0 && !/^[ \t]/.test(ln) && ln.trim() !== '';
+    if (isHeader) { if (cur) blocks.push(cur); cur = { title: ln.trim(), lines: [ln] }; }
+    else if (cur) { cur.lines.push(ln); }
+  }
+  if (cur) blocks.push(cur);
+  if (blocks.length === 0) return 0;
+
+  const KEYS = [
+    ['checkout',  /\b(checkout|commande|finalis|order|paiement|payment)/i],
+    ['cart',      /\b(cart|panier|basket)/i],
+    ['menu',      /\b(menu|logout|deconnex|deconnect|log\s?out)/i],
+    ['login',     /\b(login|connexion|log\s?in|authentif)/i],
+    ['inventory', /\b(inventory|inventaire|produit|product|tri|sort|catalog)/i],
+  ];
+  const featureOf = (block) => {
+    const text = block.lines.join('\n');
+    const tagM = text.match(/\[Tags\][^\n]*feature:([A-Za-z0-9_\-]+)/i);
+    if (tagM) return tagM[1].toLowerCase();
+    // sinon : dernier "Verify ..." du bloc, sinon le titre
+    // 1) titre du TC en priorite (intention claire), 2) dernier Verify en secours
+    for (const [name, re] of KEYS) { if (re.test(block.title)) return name; }
+    const verifies = text.match(/Verify[^\n]*/gi);
+    const lastVerify = verifies ? verifies[verifies.length - 1] : '';
+    for (const [name, re] of KEYS) { if (re.test(lastVerify)) return name; }
+    return 'general';
+  };
+
+  const groups = {};
+  for (const b of blocks) {
+    const fk = featureOf(b);
+    (groups[fk] = groups[fk] || []).push(b.lines.join('\n').replace(/\s+$/, ''));
+  }
+  const featureNames = Object.keys(groups);
+  if (featureNames.length <= 1) return 0; // une seule feature -> ne pas eclater
+
+  for (const fk of featureNames) {
+    const fileBody = header + '\n\n*** Test Cases ***\n' + groups[fk].join('\n\n') + '\n';
+    fs.writeFileSync(path.join(testsDir, 'feature_' + fk + '.robot'), fileBody, 'utf8');
+  }
+  try { fs.unlinkSync(src); } catch (e) {}
+  console.log('  [SPLIT] tests.robot -> ' + featureNames.map(n => 'feature_' + n).join(', '));
+  return featureNames.length;
+}
+
+function hasBrowserLib(c) {
+  return /^[ \t]*Library[ \t]+Browser[ \t]*$/m.test(c)
+      || /Fill Text|New Browser|New Page|Wait For Elements State/.test(c);
+}
+// Rend coherente une suite hybride (Library Browser + residus SeleniumLibrary)
+function fixHybridSuite(c, force) {
+  if (!force && !hasBrowserLib(c)) return c;
+  let out = c;
+  out = out.replace(/^Library[ \t]+SeleniumLibrary[^\n]*\n/gm, '');
+  out = out.replace(/^Test Setup[ \t]+Open Browser No Popup[^\n]*$/gm, 'Test Setup        Open Browser Session    ${BASE_URL}');
+  out = out.replace(/^Suite Setup[ \t]+Open Browser No Popup[^\n]*$/gm, 'Suite Setup       Open Browser Session    ${BASE_URL}');
+  return out;
+}
+
+// Rend coherente une suite Selenium contenant des residus Browser/Playwright
+function fixSeleniumSuite(c) {
+  let out = c;
+  out = out.replace(/^Test Teardown[ \t]+Take Screenshot[^\n]*$/gm, 'Test Teardown     Close Browser');
+  out = out.replace(/^([ \t]+)Take Screenshot[ \t]*$/gm, '$1Capture Page Screenshot');
+  out = out.replace(/^Test Setup[ \t]+Open Browser Session[^\n]*$/gm, 'Test Setup      Open Browser No Popup    ${BASE_URL}    ${BROWSER}');
+  out = out.replace(/^Suite Setup[ \t]+Open Browser Session[^\n]*$/gm, 'Suite Setup     Open Browser No Popup    ${BASE_URL}    ${BROWSER}');
+  return out;
+}
+
+// ── Fix old "Open Browser No Popup" Evaluate (bug ordre import modules=) ─────
+function fixOldNoPopup(c) {
+  const lines = c.split('\n');
+  const out = [];
+  for (const ln of lines) {
+    if (ln.includes('get_driver_path') && ln.includes('path.insert')) {
+      out.push('    Evaluate    __import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")    sys');
+      out.push('    ${driver_path}=    Evaluate    __import__("NoPopupOptions").get_driver_path("${browser}")');
+    } else if (ln.includes('get_no_popup_options') && /\sNoPopupOptions\s*$/.test(ln)) {
+      out.push(ln.replace(/\s+NoPopupOptions\s*$/, ''));
+    } else {
+      out.push(ln);
+    }
+  }
+  return fixCloseBrowserAll(fixHeadlessBool(out.join('\n')));
+}
+
 if (!fs.existsSync(TESTS_DIR)) fs.mkdirSync(TESTS_DIR);
 
 // ── POST /api/rf/run ──────────────────────────────────────────
 // Body: { code, filename, headless }
+// ── Inspection DOM (snapshot pour la generation IA) ──────────────────────────
+const _domCache = {};
+app.post('/api/inspect-dom', (req, res) => {
+  const url = ((req.body && req.body.url) || '').trim();
+  if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'url invalide' });
+  const waitS = Math.min(Number((req.body && req.body.wait)) || 2, 10);
+  const hit = _domCache[url];
+  if (hit && Date.now() - hit.ts < 5 * 60 * 1000) return res.json(hit.data);
+  const { execFile: execInspect } = require('child_process');
+  const inspectScript = path.join(__dirname, 'inspect_dom.py');
+  if (!fs.existsSync(inspectScript)) return res.status(500).json({ error: 'inspect_dom.py absent' });
+  execInspect('python', [inspectScript, url, String(waitS)], { timeout: 60000, maxBuffer: 4 * 1024 * 1024 }, (errI, stdoutI, stderrI) => {
+    try {
+      const data = JSON.parse(stdoutI || '{}');
+      if (data && !data.error) _domCache[url] = { ts: Date.now(), data };
+      res.json(data);
+    } catch (eI) {
+      res.status(500).json({ error: 'inspection echouee', details: String(stderrI || errI || eI).slice(0, 500) });
+    }
+  });
+});
+
 app.post('/api/rf/run', async (req, res) => {
-  const { code, filename, headless, browserType } = req.body;
+  const { code, filename, headless, browserType, suiteFilter } = req.body;
   if (!code) return res.status(400).json({ error: "code requis" });
   console.log("[BROWSER] type:", browserType, "headless:", headless);
   console.log("[CODE] first200:", code.slice(0,200).replace(/\n/g,"|"));  console.log("[CODE] hasLibBrowser:", code.includes("Library    Browser"), "hasNewBrowser:", code.includes("New Browser"));
@@ -197,7 +341,7 @@ app.post('/api/rf/run', async (req, res) => {
     if (relPath.includes('tests/')) {
       // Suite Setup Open Browser ... → Suite Setup Open Browser Session    ${BASE_URL}
       content = content.replace(
-        /^(Suite Setup\s+)Open Browser(\s+)(\S+)[^\n]*/gm,
+        /^(Suite Setup\s+)Open Browser(?!\s+(?:Session|No Popup))(\s+)(\S+)[^\n]*/gm,
         '$1Open Browser Session    $3'
       );
       // Test Setup Go To si absent
@@ -218,12 +362,12 @@ app.post('/api/rf/run', async (req, res) => {
     if (headless) {
       finalCode = finalCode.replace(
         /New Browser(\s+)(chromium|chrome|firefox|webkit)/gi,
-        'New Browser$1$2    headless=True'
+        'New Browser$1$2    headless=${True}'
       );
     } else {
       finalCode = finalCode.replace(
         /New Browser(\s+)(chromium|chrome|firefox|webkit)(\s*)$/gim,
-        'New Browser$1$2    headless=False'
+        'New Browser$1$2    headless=${False}'
       );
     }
     // Parser les delimiteurs ***** FILE: et ecrire chaque fichier separement
@@ -241,6 +385,20 @@ app.post('/api/rf/run', async (req, res) => {
         if (!fs.existsSync(dd)) fs.mkdirSync(dd, { recursive: true });
       });
 
+      // Nettoyer les anciens feature_*.robot avant d'ecrire les nouveaux
+      const newFeatureFiles = new Set(
+        fileMatches2.map(m => m[1].trim()).filter(p => p.startsWith('tests/feature_')).map(p => path.basename(p))
+      );
+      const testsDir3 = path.join(runBaseDir, 'tests');
+      if (newFeatureFiles.size > 0 && fs.existsSync(testsDir3)) {
+        fs.readdirSync(testsDir3).forEach(f => {
+          if (f.startsWith('feature_') && f.endsWith('.robot') && !newFeatureFiles.has(f)) {
+            fs.unlinkSync(path.join(testsDir3, f));
+            console.log('  Browser/Playwright: removed old', f);
+          }
+        });
+      }
+
       fileMatches2.forEach((m, idx) => {
         const relPath = m[1].trim();
         let content2 = segments2[idx] || '';
@@ -253,7 +411,22 @@ app.post('/api/rf/run', async (req, res) => {
         if (!fs.existsSync(dir2)) fs.mkdirSync(dir2, { recursive: true });
         fs.writeFileSync(absPath2, content2, 'utf8');
         console.log('  Browser/Playwright: wrote', relPath);
-        if (relPath.includes('tests/') && relPath.endsWith('.robot')) testsFile2 = absPath2;
+        // Si on ecrit tests/tests.robot, supprimer les feature_*.robot
+        if (relPath === 'tests/tests.robot') {
+          const td = path.join(runBaseDir, 'tests');
+          if (fs.existsSync(td)) {
+            fs.readdirSync(td).forEach(f => {
+              if (f.endsWith('.robot') && f !== '__init__.robot' && f !== 'tests.robot') {
+                fs.unlinkSync(path.join(td, f));
+                console.log('  Browser/Playwright: removed old feature file:', f);
+              }
+            });
+          }
+        }
+        if (relPath.includes('tests/') && relPath.endsWith('.robot')) {
+          if (!testsFile2 || testsFile2 === robotFile) testsFile2 = absPath2;
+          else testsFile2 = path.join(runBaseDir, 'tests'); // plusieurs fichiers -> dossier tests/
+        }
       });
 
       // Vérifier que keywords.robot a bien Open Browser Session
@@ -261,7 +434,7 @@ app.post('/api/rf/run', async (req, res) => {
       if (fs.existsSync(kwFile2)) {
         let kw2 = fs.readFileSync(kwFile2, 'utf8');
         if (!kw2.includes('Open Browser Session')) {
-          kw2 += '\n\nOpen Browser Session\n    [Arguments]    ${url}    ${browser}=chromium\n    New Browser    ${browser}    headless=False\n    New Context    acceptDownloads=True\n    New Page       ${url}\n';
+          kw2 += '\n\nOpen Browser Session\n    [Arguments]    ${url}    ${browser}=chromium\n    New Browser    ${browser}    headless=${False}\n    New Context    acceptDownloads=True\n    New Page       ${url}\n';
           fs.writeFileSync(kwFile2, kw2, 'utf8');
           console.log('  Browser/Playwright: added Open Browser Session to keywords.robot');
         }
@@ -274,14 +447,51 @@ app.post('/api/rf/run', async (req, res) => {
       console.log('  Browser/Playwright: wrote single file', robotFile);
     }
 
+    // Nettoyer les fichiers resource Browser (supprimer Suite Setup/Teardown interdits)
+    [path.join(runBaseDir,'resources','keywords.robot'), path.join(runBaseDir,'resources','variables.robot')].forEach(fp => {
+      if (fs.existsSync(fp)) { try { const _c0 = fs.readFileSync(fp, 'utf8'); const _c1 = fixOldNoPopup(_c0); if (_c1 !== _c0) fs.writeFileSync(fp, _c1, 'utf8'); } catch (e) {} finalCleanupRobotFile(fp); }
+    });
+    const pagesDir2 = path.join(runBaseDir, 'resources', 'pages');
+    if (fs.existsSync(pagesDir2)) {
+      fs.readdirSync(pagesDir2).filter(f => f.endsWith('.robot')).forEach(f => {
+        finalCleanupRobotFile(path.join(pagesDir2, f));
+      });
+    }
+
     // Lancer le test directement
     const { execFile: execFileFn } = require('child_process');
     const outputXml2 = outputXml;
+    // Renumeroter les TC globalement dans le bypass Browser
+    const pwTestsDir = path.join(runBaseDir, 'tests');
+    if (fs.existsSync(pwTestsDir)) {
+      // Trier les fichiers dans l'ordre d'apparition dans le code genere
+      const orderedFeatures = fileMatches2
+        .map(m => m[1].trim())
+        .filter(p => p.startsWith('tests/feature_'))
+        .map(p => path.join(runBaseDir, p.replace(/\//g, path.sep)));
+      const allFeatures = orderedFeatures.length > 0 ? orderedFeatures :
+        fs.readdirSync(pwTestsDir).filter(f => f.startsWith('feature_') && f.endsWith('.robot')).sort().map(f => path.join(pwTestsDir, f));
+      if (allFeatures.length > 1) {
+        let pwCounter = 1;
+        allFeatures.forEach(fp => {
+          if (!fs.existsSync(fp)) return;
+          let code = fs.readFileSync(fp, 'utf8');
+          const updated = code.replace(/^(TC_\d+)( .+)$/gm, (m, tc, name) => {
+            return 'TC_' + String(pwCounter++).padStart(3,'0') + name;
+          });
+          if (updated !== code) fs.writeFileSync(fp, updated, 'utf8');
+        });
+        console.log('  [RENUMBER] Browser TC renumbered across', allFeatures.length, 'files');
+      }
+    }
+    if (testsFile2 && testsFile2.endsWith('__init__.robot')) { testsFile2 = path.dirname(testsFile2); console.log('[PW RUN] cible __init__ -> dossier', testsFile2); }
     console.log("[PW RUN] testsFile2:", testsFile2, "| exists:", require("fs").existsSync(testsFile2));
-    const robotArgs2 = ['--outputdir', runBaseDir, '--output', outputXml2, testsFile2];
+    const robotArgs2 = ['--outputdir', runBaseDir, '--output', outputXml2, ...(suiteFilter ? ['--suite', String(suiteFilter)] : []), testsFile2];
+    _runStartTs = Date.now();
     const robotProc2 = execFileFn('robot', robotArgs2, { cwd: runBaseDir },
       (err2, stdout2, stderr2) => {
         _rfProcess = null;
+        if (_manualStop) { try { if (!res.headersSent) res.json({ ok: false, stopped: true, msg: 'Run arrete manuellement' }); } catch(e){} return; }
         try {
           const xmlContent = fs.existsSync(outputXml2) ? fs.readFileSync(outputXml2, 'utf8') : '';
           const results2 = parseRobotOutput(xmlContent, stdout2 || '', stderr2 || '');
@@ -298,8 +508,9 @@ app.post('/api/rf/run', async (req, res) => {
         _rfProcess = null;
       }
     );
-    robotProc2.on('error', (e2) => {
     _rfProcess = robotProc2;
+    robotProc2.on('error', (e2) => {
+      _rfProcess = null;
       res.json({ ok: false, error: 'Robot Framework non trouvé: ' + e2.message });
     });
     return;
@@ -327,7 +538,7 @@ app.post('/api/rf/run', async (req, res) => {
     );
     finalCode = finalCode.replace(
       /New Browser(\s+)(chromium|chrome|firefox)/gi,
-      'New Browser$1$2    headless=True'
+      'New Browser$1$2    headless=${True}'
     );
   } else {
     // Visible mode — inject popup options on all Open Browser calls
@@ -452,10 +663,35 @@ app.post('/api/rf/run', async (req, res) => {
           console.log("[VAR_CONTENT]", injectedFinal.slice(0,200));
           injectedFinal = injectedFinal.replace(/(\${BROWSER}\s+)chrome\b/g, '$1' + browserType);
         }
+        // Nettoyer le nom du keyword Open Browser No Popup si options collees
+        if (relPath.includes('keywords') && injectedFinal.includes('Open Browser No Popup    options=')) {
+          injectedFinal = injectedFinal.replace(/Open Browser No Popup\s+options=[^\n]+\n/g, 'Open Browser No Popup\n');
+        }
         fs.writeFileSync(absPath, injectedFinal, 'utf8');
         console.log('  POM: wrote', relPath, isSuiteBloc ? '(suite bloc)' : '');
       }
-      if (relPath.startsWith('tests/')) execFile = absPath;
+      if (relPath.startsWith('tests/')) {
+        // Supprimer tests.robot si on ecrit des feature_*.robot
+        const oldTests = path.join(TESTS_DIR, 'tests', 'tests.robot');
+        if (relPath.startsWith('tests/feature_') && fs.existsSync(oldTests)) {
+          fs.unlinkSync(oldTests);
+          console.log('  POM: removed tests.robot (replaced by feature_*.robot)');
+        }
+        // Supprimer les feature_*.robot si on ecrit tests.robot
+        if (relPath === 'tests/tests.robot') {
+          const td = path.join(TESTS_DIR, 'tests');
+          if (fs.existsSync(td)) {
+            fs.readdirSync(td).forEach(f => {
+              if (f.startsWith('feature_') && f.endsWith('.robot')) {
+                fs.unlinkSync(path.join(td, f));
+                console.log('  POM: removed old feature file:', f);
+              }
+            });
+          }
+        }
+        if (!execFile) execFile = absPath;
+        else execFile = path.join(TESTS_DIR, 'tests');
+      }
     });
 
     // Fix ALL resource paths + inject Open Browser No Popup keyword
@@ -481,18 +717,18 @@ app.post('/api/rf/run', async (req, res) => {
     const noPopupKw = [
       'Open Browser No Popup',
       '    [Arguments]    ${url}    ${browser}=' + (browserType || 'chrome'),
-      '    ${driver_path}=    Evaluate    __import__("sys").path.insert(0,"${EXECDIR}") or __import__("NoPopupOptions").get_driver_path("${browser}")    sys,NoPopupOptions',
+      '    Evaluate    __import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")    sys',
+      '    ${driver_path}=    Evaluate    __import__("NoPopupOptions").get_driver_path("${browser}")',
+      '    ${opts}=    Evaluate    __import__("NoPopupOptions").get_no_popup_options("${browser}")',
       '    ${is_chrome}=    Evaluate    "${browser}".lower() in ("chrome", "chromium")',
-      '    Run Keyword If    ${is_chrome} and $driver_path    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=' + chromeArgs,
-      '    Run Keyword If    ${is_chrome} and not $driver_path    Open Browser    ${url}    ${browser}    options=' + chromeArgs,
+      '    Run Keyword If    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=${opts}',
       '    Run Keyword Unless    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}',
       '',
       'Dismiss Password Popup',
-      '    [Documentation]    Ferme le popup Chrome "modifier mot de passe" sil apparait',
-      '    ${present}=    Run Keyword And Return Status    Page Should Contain Element    xpath=//div[@role="dialog"]//button[contains(@jsname,"")]',
+      '    [Documentation]    Ferme le popup si present',
+      '    ${present}=    Run Keyword And Return Status    Page Should Contain Element    xpath=//div[@role=\"dialog\"]//button',
       '    Run Keyword If    ${present}    Press Keys    None    ESCAPE',
       '    Sleep    0.2s',
-      '    Execute Javascript    document.activeElement.blur()',
       '',
       'Input Password Field',
       '    [Arguments]    ${locator}    ${value}',
@@ -535,6 +771,7 @@ app.post('/api/rf/run', async (req, res) => {
 
         // Clean keywords.robot — remove Settings block, inject Open Browser No Popup
         if ((f === 'keywords.robot' || f.endsWith('_keywords.robot'))) {
+          { const _fx = fixOldNoPopup(c); if (_fx !== c) { c = _fx; changed = true; console.log('  Fixed old NoPopup Evaluate in', f); } }
           // Remove *** Settings *** block entirely (it breaks keyword loading)
           if (c.includes('*** Settings ***')) {
             c = c.replace(/^\*{3}\s*Settings[^\n]*\n((?:(?!\*{3})[\s\S])*)/m, '');
@@ -610,8 +847,23 @@ app.post('/api/rf/run', async (req, res) => {
     }
 
     // If no tests/ file was generated, auto-create one from keywords
+  // Decoupage automatique par fonctionnalite avant choix de la cible
+  try {
+    const _splitDir = path.join(TESTS_DIR, 'tests');
+    let _srcName = null;
+    if (fs.existsSync(path.join(_splitDir, 'tests.robot'))) {
+      _srcName = 'tests.robot';
+    } else if (fs.existsSync(path.join(_splitDir, 'feature_main.robot'))) {
+      _srcName = 'feature_main.robot';
+    } else {
+      // un unique feature_*.robot multi-fonctionnalites -> on tente quand meme le split
+      const _feats = fs.readdirSync(_splitDir).filter(x => x.startsWith('feature_') && x.endsWith('.robot'));
+      if (_feats.length === 1) _srcName = _feats[0];
+    }
+    /* AUTOSPLIT DISABLED */ // if (_srcName) splitTestsByFeature(_splitDir, _srcName);
+  } catch (eSplit) { console.log('  [SPLIT] skip:', eSplit.message); }
     // Si plusieurs fichiers tests/feature_*.robot existent, lancer le dossier
-    const testsDir = path.join(TESTS_DIR, 'tests');
+    const testsDir = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
     const testFiles = fs.existsSync(testsDir)
       ? fs.readdirSync(testsDir).filter(f => f.endsWith('.robot') && f !== 'tests.robot')
       : [];
@@ -620,7 +872,11 @@ app.post('/api/rf/run', async (req, res) => {
     }
     if (!execFile) {
       const fallback = path.join(TESTS_DIR, 'tests', 'tests.robot');
-      if (fs.existsSync(fallback)) {
+      const _featFiles = (() => { try { return fs.readdirSync(path.join(TESTS_DIR, 'tests')).filter(x => x.startsWith('feature_') && x.endsWith('.robot')); } catch (e) { return []; } })();
+      if (_featFiles.length > 0) {
+        execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
+        console.log('  POM: ' + _featFiles.length + ' feature file(s) -> execution du dossier tests/');
+      } else if (fs.existsSync(fallback)) {
         execFile = fallback;
       } else {
         // Auto-generate tests/tests.robot from keywords found in keywords.robot
@@ -687,7 +943,7 @@ app.post('/api/rf/run', async (req, res) => {
       });
     }
     // Write ChromeOptions helper as RF keyword library
-    const chromeOptFile = path.join(TESTS_DIR, 'NoPopupOptions.py');
+    const chromeOptFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'NoPopupOptions.py');
     fs.writeFileSync(chromeOptFile, `from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -706,7 +962,10 @@ def get_driver_path(browser="chrome"):
     except Exception as e:
         print("webdriver-manager error: " + str(e))
         return None
-def get_no_popup_options():
+def get_no_popup_options(browser="chrome"):
+    browser = (browser or "chrome").lower()
+    if browser not in ("chrome", "chromium"):
+        return None
     opts = Options()
     opts.add_argument('--disable-notifications')
     opts.add_argument('--disable-infobars')
@@ -765,11 +1024,148 @@ def get_no_popup_options():
       console.log('  [BROWSER] replaced with', browserType);
     }
   }
+  // Nettoyer les anciens fichiers feature_*.robot qui ne font pas partie du run actuel
+  const testsCleanDir = path.join(TESTS_DIR, 'tests');
+  if (fs.existsSync(testsCleanDir)) {
+    // Fichiers ecrits dans ce run
+    const writtenFeatures = new Set(
+      fileHeaders
+        .filter(h => h[1].trim().startsWith('tests/feature_'))
+        .map(h => path.basename(h[1].trim()))
+    );
+    fs.readdirSync(testsCleanDir).forEach(f => {
+      if (f.endsWith('.robot') && f !== '__init__.robot' && writtenFeatures.size > 0 && !writtenFeatures.has(f)) {
+        fs.unlinkSync(path.join(testsCleanDir, f));
+        console.log('  POM: removed old feature file:', f);
+      }
+    });
+  }
+
+  // Renumeroter les TC globalement sur disque avant execution
+  const testsDir2 = path.join(TESTS_DIR, 'tests');
+  if (fs.existsSync(testsDir2)) {
+    const featureFiles = fs.readdirSync(testsDir2)
+      .filter(f => f.startsWith('feature_') && f.endsWith('.robot'))
+      .sort()
+      .map(f => path.join(testsDir2, f));
+    if (featureFiles.length > 1) {
+      let globalCounter = 1;
+      featureFiles.forEach(fp => {
+        let code = fs.readFileSync(fp, 'utf8');
+        const updated = code.replace(/^(TC_\d+)( .+)$/gm, (m, tc, name) => {
+          return 'TC_' + String(globalCounter++).padStart(3,'0') + name;
+        });
+        if (updated !== code) fs.writeFileSync(fp, updated, 'utf8');
+      });
+      console.log('  [RENUMBER] TC renumbered globally across', featureFiles.length, 'files');
+    }
+  }
+  // Creer tests/__init__.robot pour Test Setup/Teardown global (mode per-test)
+  // Normaliser la coherence Selenium/Browser au niveau projet avant execution
+  const testsDirHyb = path.join(isSuiteBloc ? runBaseDir : TESTS_DIR, 'tests');
+  const pagesDirHyb = path.join(TESTS_DIR, 'resources', 'pages');
+  let projHyb = '';
+  try {
+    if (fs.existsSync(pagesDirHyb)) fs.readdirSync(pagesDirHyb).forEach(x => { if (x.endsWith('.robot')) projHyb += fs.readFileSync(path.join(pagesDirHyb, x), 'utf8'); });
+    if (fs.existsSync(testsDirHyb)) fs.readdirSync(testsDirHyb).forEach(x => { if (x.endsWith('.robot') && x !== '__init__.robot') projHyb += fs.readFileSync(path.join(testsDirHyb, x), 'utf8'); });
+  } catch (e0) {}
+  const projIsBrowser = hasBrowserLib(projHyb);
+  console.log('  [HYBRID] stack projet:', projIsBrowser ? 'Browser/Playwright' : 'SeleniumLibrary');
+  const varFileHyb = path.join(isSuiteBloc ? runBaseDir : TESTS_DIR, 'resources', 'variables.robot');
+  if (fs.existsSync(varFileHyb)) {
+    try {
+      const v0 = fs.readFileSync(varFileHyb, 'utf8');
+      let v1 = v0;
+      if (projIsBrowser) v1 = v1.replace(/^(\$\{BROWSER\}[ \t]+)chrome[ \t]*$/m, '$1chromium');
+      else v1 = v1.replace(/^(\$\{BROWSER\}[ \t]+)chromium[ \t]*$/m, '$1chrome');
+      v1 = fixHeadlessBool(v1);
+      if (!/^\$\{BASE_URL\}/m.test(v1) && /^\$\{URL\}/m.test(v1)) {
+        v1 = v1.replace(/^(\$\{URL\}[^\n]*\n)/m, '$1${BASE_URL}              ${URL}\n');
+        console.log('  [HYBRID] alias BASE_URL -> URL ajoute');
+      }
+      if (v1 !== v0) { fs.writeFileSync(varFileHyb, v1, 'utf8'); console.log('  [HYBRID] BROWSER normalise'); }
+    } catch (e1) {}
+  }
+  if (fs.existsSync(testsDirHyb)) {
+    fs.readdirSync(testsDirHyb).filter(f => f.endsWith('.robot')).forEach(f => {
+      const fpHyb = path.join(testsDirHyb, f);
+      try {
+        const cHyb = fs.readFileSync(fpHyb, 'utf8');
+        const fHyb = fixCloseBrowserAll(fixHeadlessBool(projIsBrowser ? fixHybridSuite(cHyb, true) : fixSeleniumSuite(cHyb)));
+        if (fHyb !== cHyb) { fs.writeFileSync(fpHyb, fHyb, 'utf8'); console.log('  [HYBRID] cleaned', f); }
+      } catch (eHyb) {}
+    });
+  }
+  const browserSessionMode = req.body.browserSession || 'per-test';
+  const initFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests', '__init__.robot');
+  if (browserSessionMode === 'per-test') {
+    const urlVar = '${BASE_URL}';
+    const _initIsBrowser = (function() {
+      try {
+        let s = '';
+        const pgDir = path.join(TESTS_DIR, 'resources', 'pages');
+        if (fs.existsSync(pgDir)) fs.readdirSync(pgDir).forEach(x => { if (x.endsWith('.robot')) s += fs.readFileSync(path.join(pgDir, x), 'utf8'); });
+        const tDir = path.join(TESTS_DIR, 'tests');
+        if (fs.existsSync(tDir)) fs.readdirSync(tDir).forEach(x => { if (x.endsWith('.robot') && x !== '__init__.robot') s += fs.readFileSync(path.join(tDir, x), 'utf8'); });
+        return hasBrowserLib(s);
+      } catch (e) { return false; }
+    })();
+    const initContent = [
+      '*** Settings ***',
+      'Resource    ../resources/variables.robot',
+      'Resource    ../resources/keywords.robot',
+      _initIsBrowser ? 'Test Setup      Open Browser Session    ' + urlVar : 'Test Setup      Open Browser No Popup    ' + urlVar + '    ${BROWSER}',
+      'Test Teardown   Close Browser',
+      '',
+    ].join('\n');
+    if (!fs.existsSync(initFile)) {
+      fs.writeFileSync(initFile, initContent, 'utf8');
+    }
+    console.log('  POM: created tests/__init__.robot (per-test mode)');
+  // Executer le dossier tests/ pour que __init__.robot soit pris en compte
+  execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
+    // Retirer Test Setup/Teardown des fichiers feature_*.robot
+    const testsDir4 = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
+    if (fs.existsSync(testsDir4)) {
+      fs.readdirSync(testsDir4).filter(f => f.endsWith('.robot') && f !== '__init__.robot').forEach(f => {
+        const fp4 = path.join(testsDir4, f);
+        let c4 = fs.readFileSync(fp4, 'utf8');
+        const before4 = c4;
+        c4 = c4.replace(/^Test Setup[^\n]*\n/gm, '');
+        c4 = c4.replace(/^Test Teardown[^\n]*\n/gm, '');
+        if (c4 !== before4) fs.writeFileSync(fp4, c4, 'utf8');
+      });
+    }
+  } else {
+    // Supprimer __init__.robot si mode suite
+    if (fs.existsSync(initFile)) fs.unlinkSync(initFile);
+  }
+
+  // [SPLIT@EXEC] decoupage par fonctionnalite, point de passage garanti
+  try {
+    const _sd = path.join(TESTS_DIR, 'tests');
+    let _sn = null;
+    if (fs.existsSync(path.join(_sd, 'tests.robot'))) _sn = 'tests.robot';
+    else if (fs.existsSync(path.join(_sd, 'feature_main.robot'))) _sn = 'feature_main.robot';
+    if (_sn) {
+      /* AUTOSPLIT DISABLED */ const _nf = 0;
+      if (_nf > 1) {
+        // si on executait le fichier unique, basculer sur le dossier
+        if (execFile && /(?:tests|feature_main)\.robot$/.test(execFile)) {
+          execFile = _sd;
+          console.log('  [SPLIT@EXEC] cible basculee sur le dossier tests/');
+        }
+      }
+    }
+  } catch (eSE) { console.log('  [SPLIT@EXEC] skip:', eSE.message); }
   console.log('  POM: executing', path.relative(TESTS_DIR, execFile), '| TC count:', tcCount);
 
-    const cmd2 = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
-    _rfProcess = exec(cmd2, { cwd: TESTS_DIR, timeout: 120000 }, (err, stdout, stderr) => {
+    const cmd2 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
+    _runStartTs = Date.now();
+    _manualStop = false;
+    _rfProcess = exec(cmd2, { cwd: ((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), timeout: 120000 }, (err, stdout, stderr) => {
       _rfProcess = null;
+      if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
       if (!fs.existsSync(outputXml)) {
         return res.status(500).json({ error: 'Robot Framework n\'a pas pu démarrer', details: stderr || err?.message || stdout });
       }
@@ -928,9 +1324,12 @@ def get_no_popup_options():
       if (robotFiles.length > 0) {
         const existingTest = path.join(testsDir, robotFiles[0]);
         console.log('  POM: using existing test file:', robotFiles[0]);
-        const cmd3 = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${robotFiles[0]}"`;
+        const cmd3 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${robotFiles[0]}"`;
+        _runStartTs = Date.now();
+        _manualStop = false;
         _rfProcess = exec(cmd3, { cwd: testsDir, timeout: 120000 }, (err, stdout, stderr) => {
           _rfProcess = null;
+          if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
           if (!fs.existsSync(outputXml)) {
             return res.status(500).json({ error: 'Robot Framework n\'a pas pu démarrer', details: stderr || err?.message || stdout });
           }
@@ -952,10 +1351,13 @@ def get_no_popup_options():
   }
 
   console.log('  Exec:', execTarget, 'cwd:', execCwd);
-  const cmd = `robot --nostatusrc --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execTarget}"`;
+  const cmd = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execTarget}"`;
 
+  _runStartTs = Date.now();
+  _manualStop = false;
   _rfProcess = exec(cmd, { cwd: execCwd, timeout: 120000 }, (err, stdout, stderr) => {
     _rfProcess = null;
+    if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
     // Parse output.xml regardless of exit code (tests may fail but XML is generated)
     if (!fs.existsSync(outputXml)) {
       return res.status(500).json({
@@ -1132,7 +1534,7 @@ function parseRobotOutput(xml, stdout, stderr) {
         } catch(e) {}
       }
       try {
-        const pngFiles = allPngs.sort((a, b) => b.time - a.time);
+        const pngFiles = allPngs.filter(f => !_runStartTs || f.time >= _runStartTs).sort((a, b) => b.time - a.time);
 
         if (pngFiles.length > 0) {
           const latestPng = path.join(pngFiles[0].dir, pngFiles[0].name);
@@ -1236,21 +1638,21 @@ function fixSelectors(code) {
 }
 
 function fixResourcePaths(code, fileRelPath) {
-  // Compute absolute base for this file
-  const fileDir = path.join(TESTS_DIR, path.dirname(fileRelPath || '')).replace(/\\/g, '/');
-  const resourcesAbs = path.join(TESTS_DIR, 'resources').replace(/\\/g, '/');
-  const pagesAbs     = path.join(TESTS_DIR, 'resources', 'pages').replace(/\\/g, '/');
-
-  // ../resources/ → absolute (from tests/ subfolder)
-  code = code.replace(/Resource\s+\.\.\/resources\//g,  'Resource    ' + resourcesAbs + '/');
-  code = code.replace(/Resource\s+\.\.\/resources\//g, 'Resource    ' + resourcesAbs + '/');
-  // resources/ -> absolute
-  code = code.replace(/Resource\s+resources\//g, 'Resource    ' + resourcesAbs + '/');
-  code = code.replace(/Resource\s+resources\//g,       'Resource    ' + resourcesAbs + '/');
-  // pages/ → absolute (from resources/ subfolder)
-  code = code.replace(/Resource\s+pages\//g,           'Resource    ' + pagesAbs + '/');
-  // variables.robot alone → absolute
-  code = code.replace(/Resource\s+variables\.robot/g,  'Resource    ' + resourcesAbs + '/variables.robot');
+  // [PORTABILITE] chemins RELATIFS (multi-user) au lieu d'absolus codes en dur.
+  const rel = (fileRelPath || '').replace(/\\/g, '/');
+  const isResourceFile = rel.indexOf('resources/') !== -1;
+  const inPages = rel.indexOf('resources/pages/') !== -1;
+  if (isResourceFile) {
+    const varRef = inPages ? '../variables.robot' : 'variables.robot';
+    code = code.replace(/Resource(\s+)\.\.\/resources\/variables\.robot/g, 'Resource$1' + varRef);
+    code = code.replace(/Resource(\s+)\.\.\/variables\.robot/g, 'Resource$1' + varRef);
+    code = code.replace(/Resource(\s+)variables\.robot/g, 'Resource$1' + varRef);
+    return code;
+  }
+  code = code.replace(/Resource(\s+)\.\.\/\.\.\/resources\//g, 'Resource$1../resources/');
+  code = code.replace(/Resource(\s+)resources\//g, 'Resource$1../resources/');
+  code = code.replace(/Resource(\s+)pages\//g, 'Resource$1../resources/pages/');
+  code = code.replace(/Resource(\s+)variables\.robot/g, 'Resource$1../resources/variables.robot');
   return code;
 }
 
@@ -1480,6 +1882,14 @@ function injectScreenshotOnFailure(code, browserSession) {
     }
     // Remove individual [Teardown] lines to avoid duplicates
     code = code.replace(/^([ \t]+)\[Teardown\][^\n]+$/gm, '');
+    // Injecter Test Setup Open Browser No Popup si pas deja present
+    if (!code.includes('Test Setup') && !code.includes('Suite Setup')) {
+      const urlVar = code.includes('${BASE_URL}') ? '${BASE_URL}' : code.includes('${URL}') ? '${URL}' : '${BASE_URL}';
+      code = code.replace(
+        /(\*\*\* Settings \*\*\*[^\n]*\n)/,
+        '$1Test Setup    Open Browser No Popup    ' + urlVar + '    ${BROWSER}\n'
+      );
+    }
   }
 
   // Detect base URL in this test
@@ -1523,8 +1933,12 @@ function injectScreenshotOnFailure(code, browserSession) {
 
 // ── RF process control ────────────────────────────────────────────────────────
 let _rfProcess = null;
+let _manualStop = false;
 
 app.post('/api/rf/stop', (req, res) => {
+  _manualStop = true;
+  setTimeout(() => { _manualStop = false; }, 5000);
+  console.log('[STOP DEBUG] _rfProcess:', _rfProcess ? ('PID ' + _rfProcess.pid) : 'NULL', '| _runStartTs:', _runStartTs);
   if (_rfProcess) {
     try {
       // Windows: use taskkill to force kill the process tree
@@ -1575,6 +1989,8 @@ function finalCleanupRobotFile(filePath) {
         code = code.replace(re, '');
       });
     } else {
+      // Remplacer Test Teardown Close Browser par Take Screenshot
+      code = code.replace(/^(Test Teardown\s+)(Close Browser|Close Application)\s*$/gm, 'Test Teardown    Take Screenshot');
       // For Browser lib: remove Test Teardown Take Screenshot entirely (page may be closed)
       if (isBrowser) {
         code = code.replace(/^Test Teardown\s+Take Screenshot\s*\n/gm, '');

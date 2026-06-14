@@ -14,9 +14,14 @@ router.get('/all', async (req, res) => {
       Report.find().lean(),
       SuiteReport.find().lean(),
     ]);
+    const tsOf = d => {
+      if (d && d.createdAt) return new Date(d.createdAt).getTime();
+      try { return parseInt(String(d._id).substring(0, 8), 16) * 1000; } catch (e) { return 0; }
+    };
+
     // Reconstruit le format _codeCards attendu par le front
     const cards = [
-      ...codeCards.map(c => ({ type: c.type||'multi', cardId: c.cardId, title: c.title, files: c.files||[] })),
+      ...codeCards.map(c => ({ type: c.type||'multi', cardId: c.cardId, title: c.title, files: c.files||[], _ts: tsOf(c) })),
       ...reports.map(r => {
         // Exclure les screenshots pour reduire la taille de la reponse
         const dataLight = r.data ? {
@@ -27,10 +32,11 @@ router.get('/all', async (req, res) => {
             steps: (t.steps||[]).map(s => ({ ...s, screenshot: undefined }))
           }))
         } : r.data;
-        return { type: 'report', cardId: r.cardId, suiteCardId: r.suiteCardId||null, data: dataLight };
+        return { type: 'report', cardId: r.cardId, suiteCardId: r.suiteCardId||null, data: dataLight, _ts: tsOf(r) };
       }),
-      ...suiteReports.map(s => ({ type: 'suite-report', cardId: s.cardId, suiteTitle: s.suiteTitle, total: s.total, passed: s.passed, failed: s.failed, rate: s.rate, blockNames: s.blockNames||[], blocs: s.blocs||[], tests: s.tests||[], data: s.data, createdAt: s.createdAt })),
+      ...suiteReports.map(s => ({ type: 'suite-report', cardId: s.cardId, suiteTitle: s.suiteTitle, total: s.total, passed: s.passed, failed: s.failed, rate: s.rate, blockNames: s.blockNames||[], blocs: s.blocs||[], tests: s.tests||[], data: s.data, createdAt: s.createdAt, _ts: tsOf(s) })),
     ];
+    cards.sort((a, b) => (a._ts || 0) - (b._ts || 0));
     res.json({ ok: true, cards });
   } catch(e) {
     res.status(500).json({ ok: false, error: e.message });

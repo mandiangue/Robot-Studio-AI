@@ -1,0 +1,1214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-12T14:25:38.600279" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781265114377_2\tests">
+<kw name="Register Keyword To Run On Failure" owner="SeleniumLibrary" type="SETUP">
+<arg>Capture Page Screenshot</arg>
+<doc>Sets the keyword to execute, when a SeleniumLibrary keyword fails.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.956178" elapsed="0.000151"/>
+</kw>
+<suite id="s1-s1" name="suite S1781265114377 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781265114377_2\tests\suite_S1781265114377_2.robot">
+<kw name="Register Keyword To Run On Failure" owner="SeleniumLibrary" type="SETUP">
+<arg>Capture Page Screenshot</arg>
+<doc>Sets the keyword to execute, when a SeleniumLibrary keyword fails.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.962368" elapsed="0.000101"/>
+</kw>
+<test id="s1-s1-t1" name="TC_001 Connexion Avec Utilisateur Problematique" line="12">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.963279" elapsed="0.000099"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.963500" elapsed="0.000084"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.963692" elapsed="0.000063"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.963862" elapsed="0.000060"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.964191" elapsed="0.000119"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.964036" elapsed="0.000330"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:25:38.964512" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.964745" elapsed="0.000097"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="PASS" start="2026-06-12T14:25:38.964477" elapsed="0.000415"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.963046" elapsed="0.001907"/>
+</kw>
+<kw name="Given User Is On Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.965515" elapsed="0.000074"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.965691" elapsed="0.000128"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.965346" elapsed="0.000535"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.965139" elapsed="0.000783"/>
+</kw>
+<kw name="When User Logs In With" owner="keywords">
+<kw name="Login With Credentials" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>${user}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.966459" elapsed="0.000075"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${pass}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.966660" elapsed="0.000069"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${LOGIN_BUTTON}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.966831" elapsed="0.000062"/>
+</kw>
+<arg>${user}</arg>
+<arg>${pass}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.966284" elapsed="0.000660"/>
+</kw>
+<arg>${PROBLEM_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.966072" elapsed="0.000917"/>
+</kw>
+<kw name="Then User Should Be On Inventory Page" owner="keywords">
+<kw name="Verify Inventory Page Displayed" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${INVENTORY_CONTAINER}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.967496" elapsed="0.000205"/>
+</kw>
+<kw name="Location Should Contain" owner="SeleniumLibrary">
+<arg>inventory</arg>
+<doc>Verifies that the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.967921" elapsed="0.000097"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.967332" elapsed="0.000764"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.967138" elapsed="0.001047"/>
+</kw>
+<kw name="Run Keywords" owner="BuiltIn" type="TEARDOWN">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.968842" elapsed="0.000083"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.969052" elapsed="0.000049"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>AND</arg>
+<arg>Close Browser</arg>
+<doc>Executes all the given keywords in a sequence.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.968568" elapsed="0.000759"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.962604" elapsed="0.006806"/>
+</test>
+<test id="s1-s1-t2" name="TC_002 Tri Des Produits Par Prix Decroissant" line="17">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.970796" elapsed="0.000106"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.971027" elapsed="0.000063"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.971452" elapsed="0.000067"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.971624" elapsed="0.000061"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.971955" elapsed="0.000114"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.971797" elapsed="0.000325"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:25:38.972269" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.972479" elapsed="0.000095"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="PASS" start="2026-06-12T14:25:38.972232" elapsed="0.000393"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.970536" elapsed="0.002147"/>
+</kw>
+<kw name="Given User Is On Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.973203" elapsed="0.000053"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.973357" elapsed="0.000123"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.973040" elapsed="0.000497"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.972846" elapsed="0.000731"/>
+</kw>
+<kw name="When User Logs In With" owner="keywords">
+<kw name="Login With Credentials" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>${user}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.974153" elapsed="0.000071"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${pass}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.974328" elapsed="0.000071"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${LOGIN_BUTTON}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.974501" elapsed="0.000059"/>
+</kw>
+<arg>${user}</arg>
+<arg>${pass}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.973972" elapsed="0.000638"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.973720" elapsed="0.000936"/>
+</kw>
+<kw name="Then User Should Be On Inventory Page" owner="keywords">
+<kw name="Verify Inventory Page Displayed" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${INVENTORY_CONTAINER}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.975165" elapsed="0.000110"/>
+</kw>
+<kw name="Location Should Contain" owner="SeleniumLibrary">
+<arg>inventory</arg>
+<doc>Verifies that the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.975383" elapsed="0.000061"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.975001" elapsed="0.000493"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.974804" elapsed="0.000730"/>
+</kw>
+<kw name="When User Selects Sort Option" owner="keywords">
+<kw name="Select Sort Option" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${SORT_DROPDOWN}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.976050" elapsed="0.000114"/>
+</kw>
+<kw name="Select From List By Value" owner="SeleniumLibrary">
+<arg>${SORT_DROPDOWN}</arg>
+<arg>${value}</arg>
+<doc>Selects options from selection list ``locator`` by ``values``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.976272" elapsed="0.000072"/>
+</kw>
+<arg>${value}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.975876" elapsed="0.000522"/>
+</kw>
+<arg>hilo</arg>
+<status status="PASS" start="2026-06-12T14:25:38.975675" elapsed="0.000768"/>
+</kw>
+<kw name="Then Products Should Be Sorted By Price Descending" owner="keywords">
+<kw name="Verify Prices Sorted Descending" owner="main_page">
+<kw name="Get WebElements" owner="SeleniumLibrary">
+<var>@{prices}</var>
+<arg>${INVENTORY_ITEM_PRICE}</arg>
+<doc>Returns a list of WebElement objects matching the ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.977000" elapsed="0.000065"/>
+</kw>
+<kw name="Create List" owner="BuiltIn">
+<var>@{values}</var>
+<doc>Returns a list containing given items.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.977175" elapsed="0.000046"/>
+</kw>
+<for flavor="IN">
+<iter>
+<kw name="Get Text" owner="SeleniumLibrary">
+<var>${txt}</var>
+<arg>${p}</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.977514" elapsed="0.000063"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${num}</var>
+<arg>float("${txt}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.977687" elapsed="0.000062"/>
+</kw>
+<kw name="Append To List">
+<msg time="2026-06-12T14:25:38.979377" level="FAIL">No keyword with name 'Append To List' found.</msg>
+<arg>${values}</arg>
+<arg>${num}</arg>
+<status status="FAIL" start="2026-06-12T14:25:38.979331" elapsed="0.000095">No keyword with name 'Append To List' found.</status>
+</kw>
+<var name="${p}"/>
+<status status="FAIL" start="2026-06-12T14:25:38.977414" elapsed="0.002092">No keyword with name 'Append To List' found.</status>
+</iter>
+<var>${p}</var>
+<value>@{prices}</value>
+<status status="FAIL" start="2026-06-12T14:25:38.977293" elapsed="0.002294">No keyword with name 'Append To List' found.</status>
+</for>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${sorted}</var>
+<arg>sorted(${values}, reverse=True)</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.979715" elapsed="0.000083"/>
+</kw>
+<kw name="Should Be Equal" owner="BuiltIn">
+<arg>${values}</arg>
+<arg>${sorted}</arg>
+<doc>Fails if the given objects are unequal.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.979938" elapsed="0.000073"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:38.976835" elapsed="0.003272">No keyword with name 'Append To List' found.</status>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:38.976591" elapsed="0.003671">No keyword with name 'Append To List' found.</status>
+</kw>
+<kw name="Run Keywords" owner="BuiltIn" type="TEARDOWN">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.980598" elapsed="0.000049"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.980737" elapsed="0.000041"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>AND</arg>
+<arg>Close Browser</arg>
+<doc>Executes all the given keywords in a sequence.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.980462" elapsed="0.000352"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:38.970015" elapsed="0.010854">No keyword with name 'Append To List' found.</status>
+</test>
+<test id="s1-s1-t3" name="TC_003 Ajout De Plusieurs Produits Au Panier" line="24">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.981618" elapsed="0.000087"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.981815" elapsed="0.000061"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.981976" elapsed="0.000058"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.982132" elapsed="0.000057"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.982432" elapsed="0.000105"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.982292" elapsed="0.000297"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:25:38.982725" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.982911" elapsed="0.000094"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="PASS" start="2026-06-12T14:25:38.982694" elapsed="0.000360"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.981423" elapsed="0.001686"/>
+</kw>
+<kw name="Given User Is On Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.984392" elapsed="0.000157"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.984781" elapsed="0.000222"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.983968" elapsed="0.001124"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.983263" elapsed="0.001885"/>
+</kw>
+<kw name="When User Logs In With" owner="keywords">
+<kw name="Login With Credentials" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>${user}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.986056" elapsed="0.000104"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${pass}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.986512" elapsed="0.000131"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${LOGIN_BUTTON}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.986807" elapsed="0.000240"/>
+</kw>
+<arg>${user}</arg>
+<arg>${pass}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.985659" elapsed="0.001565"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.985391" elapsed="0.001890"/>
+</kw>
+<kw name="Then User Should Be On Inventory Page" owner="keywords">
+<kw name="Verify Inventory Page Displayed" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${INVENTORY_CONTAINER}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.988396" elapsed="0.000173"/>
+</kw>
+<kw name="Location Should Contain" owner="SeleniumLibrary">
+<arg>inventory</arg>
+<doc>Verifies that the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.988685" elapsed="0.000062"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.987739" elapsed="0.001062"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.987504" elapsed="0.001336"/>
+</kw>
+<kw name="When User Adds Product To Cart" owner="keywords">
+<kw name="Add Product To Cart" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.989568" elapsed="0.000115"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.989793" elapsed="0.000062"/>
+</kw>
+<arg>${locator}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.989188" elapsed="0.000720"/>
+</kw>
+<arg>${ADD_BACKPACK}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.988988" elapsed="0.000964"/>
+</kw>
+<kw name="And User Adds Product To Cart">
+<msg time="2026-06-12T14:25:38.992751" level="FAIL">No keyword with name 'And User Adds Product To Cart' found. Did you mean:
+    keywords.When User Adds Product To Cart</msg>
+<arg>${ADD_BIKE_LIGHT}</arg>
+<status status="FAIL" start="2026-06-12T14:25:38.992667" elapsed="0.000142">No keyword with name 'And User Adds Product To Cart' found. Did you mean:
+    keywords.When User Adds Product To Cart</status>
+</kw>
+<kw name="And User Adds Product To Cart">
+<msg time="2026-06-12T14:25:38.994463" level="FAIL">No keyword with name 'And User Adds Product To Cart' found. Did you mean:
+    keywords.When User Adds Product To Cart</msg>
+<arg>${ADD_BOLT_TSHIRT}</arg>
+<status status="FAIL" start="2026-06-12T14:25:38.994424" elapsed="0.000192">No keyword with name 'And User Adds Product To Cart' found. Did you mean:
+    keywords.When User Adds Product To Cart</status>
+</kw>
+<kw name="Then Cart Badge Should Show" owner="keywords">
+<kw name="Verify Cart Badge Count" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CART_BADGE}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.995234" elapsed="0.000133"/>
+</kw>
+<kw name="Element Text Should Be" owner="SeleniumLibrary">
+<arg>${CART_BADGE}</arg>
+<arg>${count}</arg>
+<doc>Verifies that element ``locator`` contains exact the text ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.995476" elapsed="0.000069"/>
+</kw>
+<arg>${count}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.995055" elapsed="0.000547"/>
+</kw>
+<arg>3</arg>
+<status status="PASS" start="2026-06-12T14:25:38.994816" elapsed="0.000831"/>
+</kw>
+<kw name="When User Opens Cart" owner="keywords">
+<kw name="Open Cart" owner="main_page">
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${CART_LINK}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.996140" elapsed="0.000064"/>
+</kw>
+<kw name="Wait Until Location Contains" owner="SeleniumLibrary">
+<arg>cart</arg>
+<arg>10s</arg>
+<doc>Waits until the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.996304" elapsed="0.000102"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.995978" elapsed="0.000505"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:38.995791" elapsed="0.000742"/>
+</kw>
+<kw name="Then Cart Should Contain Items" owner="keywords">
+<kw name="Verify Cart Items Count" owner="main_page">
+<kw name="Get WebElements" owner="SeleniumLibrary">
+<var>${items}</var>
+<arg>${CART_ITEM}</arg>
+<doc>Returns a list of WebElement objects matching the ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.997173" elapsed="0.000062"/>
+</kw>
+<kw name="Length Should Be" owner="BuiltIn">
+<arg>${items}</arg>
+<arg>${count}</arg>
+<doc>Verifies that the length of the given item is correct.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.997337" elapsed="0.000067"/>
+</kw>
+<arg>${count}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.996992" elapsed="0.000465"/>
+</kw>
+<arg>3</arg>
+<status status="PASS" start="2026-06-12T14:25:38.996705" elapsed="0.000795"/>
+</kw>
+<kw name="Run Keywords" owner="BuiltIn" type="TEARDOWN">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.997839" elapsed="0.000046"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.997977" elapsed="0.000041"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>AND</arg>
+<arg>Close Browser</arg>
+<doc>Executes all the given keywords in a sequence.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.997704" elapsed="0.000350"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:38.981096" elapsed="0.017010">Several failures occurred:
+
+1) No keyword with name 'And User Adds Product To Cart' found. Did you mean:
+    keywords.When User Adds Product To Cart
+
+2) No keyword with name 'And User Adds Product To Cart' found. Did you mean:
+    keywords.When User Adds Product To Cart</status>
+</test>
+<test id="s1-s1-t4" name="TC_004 Suppression D Un Produit Depuis Le Panier" line="35">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.998867" elapsed="0.000087"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.999063" elapsed="0.000060"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.999223" elapsed="0.000059"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.999382" elapsed="0.000058"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:38.999688" elapsed="0.000110"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="PASS" start="2026-06-12T14:25:38.999546" elapsed="0.000306"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:25:38.999992" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.000185" elapsed="0.000094"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="PASS" start="2026-06-12T14:25:38.999959" elapsed="0.000370"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="PASS" start="2026-06-12T14:25:38.998674" elapsed="0.001712"/>
+</kw>
+<kw name="Given User Is On Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.000887" elapsed="0.000053"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.001040" elapsed="0.000108"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.000728" elapsed="0.000476"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.000539" elapsed="0.000707"/>
+</kw>
+<kw name="When User Logs In With" owner="keywords">
+<kw name="Login With Credentials" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>${user}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.001768" elapsed="0.000069"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${pass}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.001944" elapsed="0.000067"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${LOGIN_BUTTON}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.002112" elapsed="0.000059"/>
+</kw>
+<arg>${user}</arg>
+<arg>${pass}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.001594" elapsed="0.000668"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.001390" elapsed="0.000919"/>
+</kw>
+<kw name="Then User Should Be On Inventory Page" owner="keywords">
+<kw name="Verify Inventory Page Displayed" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${INVENTORY_CONTAINER}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.003767" elapsed="0.000265"/>
+</kw>
+<kw name="Location Should Contain" owner="SeleniumLibrary">
+<arg>inventory</arg>
+<doc>Verifies that the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.004224" elapsed="0.000082"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.003093" elapsed="0.001277"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.002472" elapsed="0.001945"/>
+</kw>
+<kw name="When User Adds Product To Cart" owner="keywords">
+<kw name="Add Product To Cart" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.005017" elapsed="0.000120"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.005252" elapsed="0.000063"/>
+</kw>
+<arg>${locator}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.004824" elapsed="0.000545"/>
+</kw>
+<arg>${ADD_BACKPACK}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.004597" elapsed="0.000816"/>
+</kw>
+<kw name="And User Opens Cart">
+<msg time="2026-06-12T14:25:39.008321" level="FAIL">No keyword with name 'And User Opens Cart' found.</msg>
+<status status="FAIL" start="2026-06-12T14:25:39.008245" elapsed="0.000133">No keyword with name 'And User Opens Cart' found.</status>
+</kw>
+<kw name="Then Cart Should Contain Items" owner="keywords">
+<kw name="Verify Cart Items Count" owner="main_page">
+<kw name="Get WebElements" owner="SeleniumLibrary">
+<var>${items}</var>
+<arg>${CART_ITEM}</arg>
+<doc>Returns a list of WebElement objects matching the ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.009172" elapsed="0.000073"/>
+</kw>
+<kw name="Length Should Be" owner="BuiltIn">
+<arg>${items}</arg>
+<arg>${count}</arg>
+<doc>Verifies that the length of the given item is correct.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.009360" elapsed="0.000071"/>
+</kw>
+<arg>${count}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.008977" elapsed="0.000514"/>
+</kw>
+<arg>1</arg>
+<status status="PASS" start="2026-06-12T14:25:39.008700" elapsed="0.000837"/>
+</kw>
+<kw name="When User Removes Product From Cart" owner="keywords">
+<kw name="Remove Product From Cart" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.010110" elapsed="0.000131"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.010354" elapsed="0.000063"/>
+</kw>
+<arg>${locator}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.009929" elapsed="0.000544"/>
+</kw>
+<arg>${REMOVE_BACKPACK_CART}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.009705" elapsed="0.000814"/>
+</kw>
+<kw name="Then Cart Should Be Empty" owner="keywords">
+<kw name="Verify Cart Badge Not Visible" owner="main_page">
+<kw name="Wait Until Page Does Not Contain Element" owner="SeleniumLibrary">
+<arg>${CART_BADGE}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` disappears from the current page.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.011026" elapsed="0.000111"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.010862" elapsed="0.000336"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.010664" elapsed="0.000575"/>
+</kw>
+<kw name="Run Keywords" owner="BuiltIn" type="TEARDOWN">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.011567" elapsed="0.000047"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.011706" elapsed="0.000041"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>AND</arg>
+<arg>Close Browser</arg>
+<doc>Executes all the given keywords in a sequence.</doc>
+<status status="PASS" start="2026-06-12T14:25:39.011432" elapsed="0.000351"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:38.998346" elapsed="0.013490">No keyword with name 'And User Opens Cart' found.</status>
+</test>
+<test id="s1-s1-t5" name="TC_005 Validation Du Formulaire De Checkout Avec Champs Vides" line="45">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.012624" elapsed="0.000095"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.012827" elapsed="0.000061"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.012989" elapsed="0.000059"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.013146" elapsed="0.000057"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.013451" elapsed="0.000112"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="PASS" start="2026-06-12T14:25:39.013309" elapsed="0.000306"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:25:39.013758" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.013953" elapsed="0.000095"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="PASS" start="2026-06-12T14:25:39.013723" elapsed="0.000375"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.012430" elapsed="0.001778"/>
+</kw>
+<kw name="Given User Is On Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.014719" elapsed="0.000054"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.014873" elapsed="0.000105"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.014561" elapsed="0.000473"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.014371" elapsed="0.000704"/>
+</kw>
+<kw name="When User Logs In With" owner="keywords">
+<kw name="Login With Credentials" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>${user}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.015593" elapsed="0.000070"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${pass}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.015766" elapsed="0.000066"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${LOGIN_BUTTON}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.015933" elapsed="0.000058"/>
+</kw>
+<arg>${user}</arg>
+<arg>${pass}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.015422" elapsed="0.000619"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.015216" elapsed="0.000869"/>
+</kw>
+<kw name="Then User Should Be On Inventory Page" owner="keywords">
+<kw name="Verify Inventory Page Displayed" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${INVENTORY_CONTAINER}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.016581" elapsed="0.000108"/>
+</kw>
+<kw name="Location Should Contain" owner="SeleniumLibrary">
+<arg>inventory</arg>
+<doc>Verifies that the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.016796" elapsed="0.000061"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.016418" elapsed="0.000490"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.016232" elapsed="0.000716"/>
+</kw>
+<kw name="When User Adds Product To Cart" owner="keywords">
+<kw name="Add Product To Cart" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.017450" elapsed="0.000107"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${locator}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.017665" elapsed="0.000059"/>
+</kw>
+<arg>${locator}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.017283" elapsed="0.000491"/>
+</kw>
+<arg>${ADD_BACKPACK}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.017088" elapsed="0.000728"/>
+</kw>
+<kw name="And User Opens Cart">
+<msg time="2026-06-12T14:25:39.022383" level="FAIL">No keyword with name 'And User Opens Cart' found.</msg>
+<status status="FAIL" start="2026-06-12T14:25:39.022219" elapsed="0.000274">No keyword with name 'And User Opens Cart' found.</status>
+</kw>
+<kw name="And User Starts Checkout">
+<msg time="2026-06-12T14:25:39.024632" level="FAIL">No keyword with name 'And User Starts Checkout' found. Did you mean:
+    keywords.When User Starts Checkout</msg>
+<status status="FAIL" start="2026-06-12T14:25:39.024568" elapsed="0.000115">No keyword with name 'And User Starts Checkout' found. Did you mean:
+    keywords.When User Starts Checkout</status>
+</kw>
+<kw name="And User Clicks Continue">
+<msg time="2026-06-12T14:25:39.026318" level="FAIL">No keyword with name 'And User Clicks Continue' found. Did you mean:
+    keywords.When User Clicks Continue</msg>
+<status status="FAIL" start="2026-06-12T14:25:39.026281" elapsed="0.000075">No keyword with name 'And User Clicks Continue' found. Did you mean:
+    keywords.When User Clicks Continue</status>
+</kw>
+<kw name="Then Error Message Should Contain" owner="keywords">
+<kw name="Verify Error Message Contains" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${ERROR_MESSAGE}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.026967" elapsed="0.000169"/>
+</kw>
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<arg>${ERROR_MESSAGE}</arg>
+<arg>${text}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.027304" elapsed="0.000119"/>
+</kw>
+<arg>${text}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.026777" elapsed="0.000732"/>
+</kw>
+<arg>First Name is required</arg>
+<status status="PASS" start="2026-06-12T14:25:39.026541" elapsed="0.001017"/>
+</kw>
+<kw name="Run Keywords" owner="BuiltIn" type="TEARDOWN">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.027924" elapsed="0.000049"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.028067" elapsed="0.000041"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>AND</arg>
+<arg>Close Browser</arg>
+<doc>Executes all the given keywords in a sequence.</doc>
+<status status="PASS" start="2026-06-12T14:25:39.027783" elapsed="0.000363"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:39.012083" elapsed="0.016117">Several failures occurred:
+
+1) No keyword with name 'And User Opens Cart' found.
+
+2) No keyword with name 'And User Starts Checkout' found. Did you mean:
+    keywords.When User Starts Checkout
+
+3) No keyword with name 'And User Clicks Continue' found. Did you mean:
+    keywords.When User Clicks Continue</status>
+</test>
+<test id="s1-s1-t6" name="TC_006 Finalisation Complete D Une Commande" line="55">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.033953" elapsed="0.000088"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.034151" elapsed="0.000061"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.034314" elapsed="0.000060"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.034471" elapsed="0.000057"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.034781" elapsed="0.000159"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="PASS" start="2026-06-12T14:25:39.034637" elapsed="0.000358"/>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-12T14:25:39.035137" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.040313" elapsed="0.000143"/>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="PASS" start="2026-06-12T14:25:39.035104" elapsed="0.005419"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.033754" elapsed="0.006845"/>
+</kw>
+<kw name="Given User Is On Login Page" owner="keywords">
+<kw name="Open Login Page" owner="main_page">
+<kw name="Go To" owner="SeleniumLibrary">
+<arg>${BASE_URL}</arg>
+<doc>Navigates the current browser window to the provided ``url``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.041538" elapsed="0.000116"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.041819" elapsed="0.000191"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.041222" elapsed="0.000858"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.040792" elapsed="0.001334"/>
+</kw>
+<kw name="When User Logs In With" owner="keywords">
+<kw name="Login With Credentials" owner="main_page">
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${USERNAME_INPUT}</arg>
+<arg>${user}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.042768" elapsed="0.000077"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<arg>${PASSWORD_INPUT}</arg>
+<arg>${pass}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.042966" elapsed="0.000067"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<arg>${LOGIN_BUTTON}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.043138" elapsed="0.000059"/>
+</kw>
+<arg>${user}</arg>
+<arg>${pass}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.042572" elapsed="0.000676"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T14:25:39.042314" elapsed="0.000982"/>
+</kw>
+<kw name="Then User Should Be On Inventory Page" owner="keywords">
+<kw name="Verify Inventory Page Displayed" owner="main_page">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${INVENTORY_CONTAINER}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.043823" elapsed="0.000136"/>
+</kw>
+<kw name="Location Should Contain" owner="SeleniumLibrary">
+<arg>inventory</arg>
+<doc>Verifies that the current URL contains ``expected``.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.044072" elapsed="0.000063"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.043657" elapsed="0.000532"/>
+</kw>
+<status status="PASS" start="2026-06-12T14:25:39.043459" elapsed="0.000770"/>
+</kw>
+<kw name="When User Adds">
+<msg time="2026-06-12T14:25:39.045816" level="FAIL">No keyword with name 'When User Adds' found.</msg>
+<status status="FAIL" start="2026-06-12T14:25:39.045773" elapsed="0.000091">No keyword with name 'When User Adds' found.</status>
+</kw>
+<kw name="Run Keywords" owner="BuiltIn" type="TEARDOWN">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.046206" elapsed="0.000048"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="NOT RUN" start="2026-06-12T14:25:39.046347" elapsed="0.000040"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>AND</arg>
+<arg>Close Browser</arg>
+<doc>Executes all the given keywords in a sequence.</doc>
+<status status="PASS" start="2026-06-12T14:25:39.046067" elapsed="0.000357"/>
+</kw>
+<status status="FAIL" start="2026-06-12T14:25:39.033408" elapsed="0.013070">No keyword with name 'When User Adds' found.</status>
+</test>
+<doc>Tests Main - SauceDemo</doc>
+<status status="FAIL" start="2026-06-12T14:25:38.956433" elapsed="0.090488"/>
+</suite>
+<status status="FAIL" start="2026-06-12T14:25:38.604820" elapsed="0.442804"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="5" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="1" fail="5" skip="0">Tests</stat>
+<stat name="suite S1781265114377 2" id="s1-s1" pass="1" fail="5" skip="0">Tests.suite S1781265114377 2</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-06-12T14:25:38.650450" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781265114377_2\resources\variables.robot' on line 19: Setting variable '${INVENTORY_ITEM_PRICE} css=.inventory_item_price' failed: Invalid variable name '${INVENTORY_ITEM_PRICE} css=.inventory_item_price'.</msg>
+<msg time="2026-06-12T14:25:38.650631" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781265114377_2\resources\variables.robot' on line 25: Setting variable '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack' failed: Invalid variable name '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack'.</msg>
+<msg time="2026-06-12T14:25:38.959162" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781265114377_2\resources\variables.robot' on line 19: Setting variable '${INVENTORY_ITEM_PRICE} css=.inventory_item_price' failed: Invalid variable name '${INVENTORY_ITEM_PRICE} css=.inventory_item_price'.</msg>
+<msg time="2026-06-12T14:25:38.959314" level="ERROR">Error in file 'C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781265114377_2\resources\variables.robot' on line 25: Setting variable '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack' failed: Invalid variable name '${REMOVE_BACKPACK_CART} id=remove-sauce-labs-backpack'.</msg>
+<msg time="2026-06-12T14:25:38.964512" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:25:38.972269" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:25:38.982725" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:25:38.999992" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:25:39.013758" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<msg time="2026-06-12T14:25:39.035137" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+</errors>
+</robot>

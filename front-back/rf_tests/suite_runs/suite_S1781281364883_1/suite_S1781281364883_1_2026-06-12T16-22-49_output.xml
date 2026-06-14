@@ -1,0 +1,1091 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-12T18:22:51.377004" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781281364883_1\tests">
+<kw name="Open Browser Session" owner="keywords" type="SETUP">
+<kw name="New Browser" owner="Browser">
+<msg time="2026-06-12T18:22:51.768508" level="INFO">{"browser": "chromium", "headless": false, "chromiumSandbox": false, "devtools": false, "handleSIGHUP": true, "handleSIGINT": true, "handleSIGTERM": true, "slowMo": 0.0, "timeout": 30000.0, "tracesDir": "C:\\Users\\Landing\\Desktop\\docDev\\robotClaude\\front-back\\rf_tests\\suite_runs\\suite_S1781281364883_1\\browser\\traces\\temp\\af0e9962-c28b-4f32-8319-d64e2aee3456"}</msg>
+<msg time="2026-06-12T18:22:51.829656" level="INFO">Starting Browser process C:\Users\Landing\AppData\Local\Programs\Python\Python313\Lib\site-packages\Browser\wrapper\index.js using at 127.0.0.1:65490</msg>
+<msg time="2026-06-12T18:22:57.675038" level="INFO">Successfully created browser with options: {"browser":"chromium","headless":false,"chromiumSandbox":false,"devtools":false,"handleSIGHUP":true,"handleSIGINT":true,"handleSIGTERM":true,"slowMo":0,"timeout":30000,"tracesDir":"C:\\Users\\Landing\\Desktop\\docDev\\robotClaude\\front-back\\rf_tests\\suite_runs\\suite_S1781281364883_1\\browser\\traces\\temp\\af0e9962-c28b-4f32-8319-d64e2aee3456"}</msg>
+<arg>${browser}</arg>
+<arg>headless=${HEADLESS}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new playwright Browser with specified options.</doc>
+<status status="PASS" start="2026-06-12T18:22:51.766941" elapsed="5.908312"/>
+</kw>
+<kw name="New Context" owner="Browser">
+<msg time="2026-06-12T18:22:57.677904" level="INFO">{
+  "acceptDownloads": true,
+  "bypassCSP": false,
+  "forcedColors": "none",
+  "ignoreHTTPSErrors": false,
+  "javaScriptEnabled": true,
+  "offline": false,
+  "reducedMotion": "no-preference",
+  "serviceWorkers": "allow",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  }
+}</msg>
+<msg time="2026-06-12T18:22:57.692632" level="INFO">Successfully created context. </msg>
+<msg time="2026-06-12T18:22:57.692727" level="INFO">{'acceptDownloads': True, 'bypassCSP': False, 'forcedColors': 'none', 'ignoreHTTPSErrors': False, 'javaScriptEnabled': True, 'offline': False, 'reducedMotion': 'no-preference', 'serviceWorkers': 'allow', 'viewport': {'width': 1280, 'height': 720}}</msg>
+<arg>acceptDownloads=True</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new BrowserContext with specified options.</doc>
+<status status="PASS" start="2026-06-12T18:22:57.675571" elapsed="0.017267"/>
+</kw>
+<kw name="New Page" owner="Browser">
+<msg time="2026-06-12T18:22:59.790497" level="INFO">Successfully initialized new page object and opened url: https://www.saucedemo.com</msg>
+<arg>${url}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Open a new Page.</doc>
+<status status="PASS" start="2026-06-12T18:22:57.693075" elapsed="2.097654"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<status status="PASS" start="2026-06-12T18:22:51.765831" elapsed="8.025032"/>
+</kw>
+<suite id="s1-s1" name="suite S1781281364883 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781281364883_1\tests\suite_S1781281364883_1.robot">
+<test id="s1-s1-t1" name="TC_001 Connexion avec utilisateur problematique" line="11">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-12T18:22:59.879078" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-12T18:22:59.823390" elapsed="0.055889"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Fill Login Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:22:59.885342" level="INFO">Fills the text 'problem_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:22:59.881541" elapsed="0.049934"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-12T18:22:59.880478" elapsed="0.051155"/>
+</kw>
+<kw name="Fill Login Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:22:59.936434" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:22:59.932401" elapsed="0.016425"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-12T18:22:59.931835" elapsed="0.017142"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:22:59.953223" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:22:59.949726" elapsed="0.231295"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:22:59.949179" elapsed="0.231992"/>
+</kw>
+<arg>${PROBLEM_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T18:22:59.879624" elapsed="0.301616"/>
+</kw>
+<kw name="When Verify Products Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:00.194731" level="INFO">Waited for Element with selector css=[data-test="inventory-container"] at state visible</msg>
+<arg>css=[data-test="inventory-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.182082" elapsed="0.012850"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:00.199100" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.195142" elapsed="0.004014"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.199354" elapsed="0.000451"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.181497" elapsed="0.018402"/>
+</kw>
+<kw name="Then Verify Product Images Loaded" owner="keywords">
+<kw name="Get Element Count" owner="Browser">
+<msg time="2026-06-12T18:23:00.209152" level="INFO">${count} = 6</msg>
+<var>${count}</var>
+<arg>css=img.inventory_item_img</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the count of elements found with ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.202335" elapsed="0.006871"/>
+</kw>
+<kw name="Should Be True" owner="BuiltIn">
+<arg>${count} &gt; 0</arg>
+<doc>Fails if the given condition is not true.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.209400" elapsed="0.000877"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.201767" elapsed="0.008623"/>
+</kw>
+<doc>Login with problem_user</doc>
+<status status="PASS" start="2026-06-12T18:22:59.815124" elapsed="0.395410"/>
+</test>
+<test id="s1-s1-t2" name="TC_002 Tri des produits par prix croissant" line="17">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-12T18:23:00.264901" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.226480" elapsed="0.038703"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Fill Login Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.269723" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.267412" elapsed="0.025455"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.266455" elapsed="0.026560"/>
+</kw>
+<kw name="Fill Login Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.295077" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.293818" elapsed="0.013980"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.293225" elapsed="0.014721"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:00.309885" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.308660" elapsed="0.051897"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.308140" elapsed="0.052563"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.265759" elapsed="0.095011"/>
+</kw>
+<kw name="And Verify Products Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:00.370789" level="INFO">Waited for Element with selector css=[data-test="inventory-container"] at state visible</msg>
+<arg>css=[data-test="inventory-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.361542" elapsed="0.009478"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:00.375834" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.371230" elapsed="0.004676"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.376157" elapsed="0.000478"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.360994" elapsed="0.015744"/>
+</kw>
+<kw name="When Sort Products By" owner="keywords">
+<kw name="Select Sort Option" owner="main_page">
+<kw name="Select Options By" owner="Browser">
+<msg time="2026-06-12T18:23:00.379813" level="INFO">Selects the option(s) lohi by attribute SelectAttribute.value from element css=[data-test="product-sort-container"].</msg>
+<arg>css=[data-test="product-sort-container"]</arg>
+<arg>value</arg>
+<arg>${value}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Selects options from select element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.377847" elapsed="0.043489"/>
+</kw>
+<arg>${value}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.377409" elapsed="0.044075"/>
+</kw>
+<arg>lohi</arg>
+<status status="PASS" start="2026-06-12T18:23:00.376925" elapsed="0.044629"/>
+</kw>
+<kw name="Then Verify Prices Sorted Ascending" owner="keywords">
+<kw name="Get All Product Prices" owner="main_page">
+<kw name="Get Elements" owner="Browser">
+<msg time="2026-06-12T18:23:00.431215" level="INFO">Found 6 Locators successfully.</msg>
+<msg time="2026-06-12T18:23:00.431501" level="INFO">${elements} = ['css=.inventory_item_price &gt;&gt; nth=0', 'css=.inventory_item_price &gt;&gt; nth=1', 'css=.inventory_item_price &gt;&gt; nth=2', 'css=.inventory_item_price &gt;&gt; nth=3', 'css=.inventory_item_price &gt;&gt; nth=4', 'css=.inv...</msg>
+<var>${elements}</var>
+<arg>css=.inventory_item_price</arg>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns a reference to Playwright [https://playwright.dev/docs/api/class-locator|Locator]
+for all matched elements by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.422755" elapsed="0.008784"/>
+</kw>
+<kw name="Create List" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.432138" level="INFO">${prices} = []</msg>
+<var>${prices}</var>
+<doc>Returns a list containing given items.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.431731" elapsed="0.000441"/>
+</kw>
+<for flavor="IN">
+<iter>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.453546" level="INFO">Text: '$7.99'</msg>
+<msg time="2026-06-12T18:23:00.453719" level="INFO">${text} = $7.99</msg>
+<var>${text}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.432893" elapsed="0.020863"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.455319" level="INFO">${num} = 7.99</msg>
+<var>${num}</var>
+<arg>float("${text}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.453988" elapsed="0.001379"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.455551" elapsed="0.000412"/>
+</kw>
+<var name="${el}">css=.inventory_item_price &gt;&gt; nth=0</var>
+<status status="PASS" start="2026-06-12T18:23:00.432625" elapsed="0.023399"/>
+</iter>
+<iter>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.473377" level="INFO">Text: '$9.99'</msg>
+<msg time="2026-06-12T18:23:00.473555" level="INFO">${text} = $9.99</msg>
+<var>${text}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.456434" elapsed="0.017163"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.475111" level="INFO">${num} = 9.99</msg>
+<var>${num}</var>
+<arg>float("${text}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.473840" elapsed="0.001326"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.475334" elapsed="0.000534"/>
+</kw>
+<var name="${el}">css=.inventory_item_price &gt;&gt; nth=1</var>
+<status status="PASS" start="2026-06-12T18:23:00.456177" elapsed="0.019822"/>
+</iter>
+<iter>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.501820" level="INFO">Text: '$15.99'</msg>
+<msg time="2026-06-12T18:23:00.502003" level="INFO">${text} = $15.99</msg>
+<var>${text}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.476972" elapsed="0.025067"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.503847" level="INFO">${num} = 15.99</msg>
+<var>${num}</var>
+<arg>float("${text}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.502253" elapsed="0.001649"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.504117" elapsed="0.000625"/>
+</kw>
+<var name="${el}">css=.inventory_item_price &gt;&gt; nth=2</var>
+<status status="PASS" start="2026-06-12T18:23:00.476464" elapsed="0.028372"/>
+</iter>
+<iter>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.528643" level="INFO">Text: '$15.99'</msg>
+<msg time="2026-06-12T18:23:00.528807" level="INFO">${text} = $15.99</msg>
+<var>${text}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.505689" elapsed="0.023152"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.530174" level="INFO">${num} = 15.99</msg>
+<var>${num}</var>
+<arg>float("${text}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.529039" elapsed="0.001181"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.530374" elapsed="0.000388"/>
+</kw>
+<var name="${el}">css=.inventory_item_price &gt;&gt; nth=3</var>
+<status status="PASS" start="2026-06-12T18:23:00.505196" elapsed="0.025629"/>
+</iter>
+<iter>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.546005" level="INFO">Text: '$29.99'</msg>
+<msg time="2026-06-12T18:23:00.546164" level="INFO">${text} = $29.99</msg>
+<var>${text}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.531221" elapsed="0.014975"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.548362" level="INFO">${num} = 29.99</msg>
+<var>${num}</var>
+<arg>float("${text}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.546395" elapsed="0.002024"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.548609" elapsed="0.000537"/>
+</kw>
+<var name="${el}">css=.inventory_item_price &gt;&gt; nth=4</var>
+<status status="PASS" start="2026-06-12T18:23:00.530966" elapsed="0.018263"/>
+</iter>
+<iter>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.563645" level="INFO">Text: '$49.99'</msg>
+<msg time="2026-06-12T18:23:00.563808" level="INFO">${text} = $49.99</msg>
+<var>${text}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.549686" elapsed="0.014157"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.565199" level="INFO">${num} = 49.99</msg>
+<var>${num}</var>
+<arg>float("${text}".replace("$",""))</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.564041" elapsed="0.001206"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.565414" elapsed="0.000376"/>
+</kw>
+<var name="${el}">css=.inventory_item_price &gt;&gt; nth=5</var>
+<status status="PASS" start="2026-06-12T18:23:00.549381" elapsed="0.016470"/>
+</iter>
+<var>${el}</var>
+<value>@{elements}</value>
+<status status="PASS" start="2026-06-12T18:23:00.432261" elapsed="0.133654"/>
+</for>
+<return>
+<value>${prices}</value>
+<status status="PASS" start="2026-06-12T18:23:00.566009" elapsed="0.000212"/>
+</return>
+<msg time="2026-06-12T18:23:00.566400" level="INFO">${prices} = [7.99, 9.99, 15.99, 15.99, 29.99, 49.99]</msg>
+<var>${prices}</var>
+<status status="PASS" start="2026-06-12T18:23:00.422370" elapsed="0.144062"/>
+</kw>
+<kw name="Copy List" owner="Collections">
+<msg time="2026-06-12T18:23:00.567082" level="INFO">${sorted} = [7.99, 9.99, 15.99, 15.99, 29.99, 49.99]</msg>
+<var>${sorted}</var>
+<arg>${prices}</arg>
+<doc>Returns a copy of the given list.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.566549" elapsed="0.000586"/>
+</kw>
+<kw name="Sort List" owner="Collections">
+<arg>${sorted}</arg>
+<doc>Sorts the given list in place.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.567299" elapsed="0.000491"/>
+</kw>
+<kw name="Lists Should Be Equal" owner="Collections">
+<arg>${prices}</arg>
+<arg>${sorted}</arg>
+<doc>Fails if given lists are unequal.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.568041" elapsed="0.000463"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.421773" elapsed="0.146842"/>
+</kw>
+<doc>Sort products price low to high</doc>
+<status status="PASS" start="2026-06-12T18:23:00.219515" elapsed="0.349239"/>
+</test>
+<test id="s1-s1-t3" name="TC_003 Ajout de plusieurs produits au panier" line="24">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-12T18:23:00.620074" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.586965" elapsed="0.034198"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Fill Login Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.626036" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.624543" elapsed="0.022237"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.623648" elapsed="0.023280"/>
+</kw>
+<kw name="Fill Login Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.648936" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.647690" elapsed="0.011721"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.647125" elapsed="0.012443"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:00.661539" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.660311" elapsed="0.059178"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.659766" elapsed="0.060452"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T18:23:00.621485" elapsed="0.099059"/>
+</kw>
+<kw name="And Verify Products Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:00.733392" level="INFO">Waited for Element with selector css=[data-test="inventory-container"] at state visible</msg>
+<arg>css=[data-test="inventory-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.722054" elapsed="0.012083"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:00.738975" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.734442" elapsed="0.004630"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.739351" elapsed="0.000579"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.720980" elapsed="0.019101"/>
+</kw>
+<kw name="When Add Three Products To Cart" owner="keywords">
+<kw name="Click Add To Cart" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:00.743139" level="INFO">Clicks the element 'css=[data-test="add-to-cart-sauce-labs-backpack"]'.</msg>
+<arg>css=[data-test="${data_test}"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.741547" elapsed="0.035379"/>
+</kw>
+<arg>add-to-cart-sauce-labs-backpack</arg>
+<status status="PASS" start="2026-06-12T18:23:00.740971" elapsed="0.036102"/>
+</kw>
+<kw name="Click Add To Cart" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:00.779067" level="INFO">Clicks the element 'css=[data-test="add-to-cart-sauce-labs-bike-light"]'.</msg>
+<arg>css=[data-test="${data_test}"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.777804" elapsed="0.048379"/>
+</kw>
+<arg>add-to-cart-sauce-labs-bike-light</arg>
+<status status="PASS" start="2026-06-12T18:23:00.777270" elapsed="0.049054"/>
+</kw>
+<kw name="Click Add To Cart" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:00.828268" level="INFO">Clicks the element 'css=[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]'.</msg>
+<arg>css=[data-test="${data_test}"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.827033" elapsed="0.049480"/>
+</kw>
+<arg>add-to-cart-sauce-labs-bolt-t-shirt</arg>
+<status status="PASS" start="2026-06-12T18:23:00.826516" elapsed="0.050169"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.740377" elapsed="0.136380"/>
+</kw>
+<kw name="Then Verify Cart Badge Count" owner="keywords">
+<kw name="Get Cart Badge Text" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:00.885440" level="INFO">Waited for Element with selector css=[data-test="shopping-cart-badge"] at state visible</msg>
+<arg>css=[data-test="shopping-cart-badge"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.877929" elapsed="0.007884"/>
+</kw>
+<kw name="Get Text" owner="Browser">
+<msg time="2026-06-12T18:23:00.909914" level="INFO">Text: '3'</msg>
+<msg time="2026-06-12T18:23:00.910076" level="INFO">${text} = 3</msg>
+<var>${text}</var>
+<arg>css=[data-test="shopping-cart-badge"]</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.886051" elapsed="0.024057"/>
+</kw>
+<return>
+<value>${text}</value>
+<status status="PASS" start="2026-06-12T18:23:00.910218" elapsed="0.000304"/>
+</return>
+<msg time="2026-06-12T18:23:00.910705" level="INFO">${text} = 3</msg>
+<var>${text}</var>
+<status status="PASS" start="2026-06-12T18:23:00.877512" elapsed="0.033223"/>
+</kw>
+<kw name="Should Be Equal As Strings" owner="BuiltIn">
+<arg>${text}</arg>
+<arg>${count}</arg>
+<doc>Fails if objects are unequal after converting them to strings.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.910878" elapsed="0.000367"/>
+</kw>
+<arg>3</arg>
+<status status="PASS" start="2026-06-12T18:23:00.876975" elapsed="0.034354"/>
+</kw>
+<kw name="And Verify Cart Items Count" owner="keywords">
+<kw name="Open Cart Page" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:00.913599" level="INFO">Clicks the element 'css=[data-test="shopping-cart-link"]'.</msg>
+<arg>css=[data-test="shopping-cart-link"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.912285" elapsed="0.056023"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:00.979932" level="INFO">Waited for Element with selector css=[data-test="cart-list"] at state visible</msg>
+<arg>css=[data-test="cart-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.968527" elapsed="0.011622"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:00.911935" elapsed="0.068340"/>
+</kw>
+<kw name="Get Element Count" owner="Browser">
+<msg time="2026-06-12T18:23:00.988887" level="INFO">${items} = 3</msg>
+<var>${items}</var>
+<arg>css=.cart_item</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the count of elements found with ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.980439" elapsed="0.008500"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2026-06-12T18:23:00.989977" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<arg>${items}</arg>
+<arg>${count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2026-06-12T18:23:00.989133" elapsed="0.000949"/>
+</kw>
+<arg>3</arg>
+<status status="PASS" start="2026-06-12T18:23:00.911514" elapsed="0.078728"/>
+</kw>
+<doc>Add 3 products to cart</doc>
+<status status="PASS" start="2026-06-12T18:23:00.581498" elapsed="0.408871"/>
+</test>
+<test id="s1-s1-t4" name="TC_004 Suppression d un produit depuis le panier" line="32">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-12T18:23:01.063604" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.003147" elapsed="0.060655"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Fill Login Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:01.066566" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.065277" elapsed="0.022666"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-12T18:23:01.064839" elapsed="0.023373"/>
+</kw>
+<kw name="Fill Login Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:01.090362" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.089073" elapsed="0.010647"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-12T18:23:01.088427" elapsed="0.011547"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:01.103195" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.101090" elapsed="0.086287"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:01.100186" elapsed="0.087334"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T18:23:01.064165" elapsed="0.123422"/>
+</kw>
+<kw name="And Verify Products Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:01.195995" level="INFO">Waited for Element with selector css=[data-test="inventory-container"] at state visible</msg>
+<arg>css=[data-test="inventory-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.188470" elapsed="0.007727"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:01.200018" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.196403" elapsed="0.003669"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:01.201323" elapsed="0.000540"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:01.187808" elapsed="0.014275"/>
+</kw>
+<kw name="And Add One Product To Cart" owner="keywords">
+<kw name="Click Add To Cart" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:01.205007" level="INFO">Clicks the element 'css=[data-test="add-to-cart-sauce-labs-backpack"]'.</msg>
+<msg time="2026-06-12T18:23:11.327895" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-1.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-1.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-12T18:23:11.328073" level="INFO">See also file:///C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1781281364883_1/playwright-log.txt for additional details.</msg>
+<msg time="2026-06-12T18:23:11.328491" level="FAIL">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</msg>
+<arg>css=[data-test="${data_test}"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="FAIL" start="2026-06-12T18:23:01.203304" elapsed="10.137461">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</kw>
+<arg>add-to-cart-sauce-labs-backpack</arg>
+<status status="FAIL" start="2026-06-12T18:23:01.202894" elapsed="10.138107">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</kw>
+<status status="FAIL" start="2026-06-12T18:23:01.202342" elapsed="10.138785">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</kw>
+<kw name="When Remove Product From Cart Page" owner="keywords">
+<status status="NOT RUN" start="2026-06-12T18:23:11.341364" elapsed="0.000272"/>
+</kw>
+<kw name="Then Verify Cart Badge Not Visible" owner="keywords">
+<status status="NOT RUN" start="2026-06-12T18:23:11.341801" elapsed="0.000187"/>
+</kw>
+<doc>Remove product from cart</doc>
+<status status="FAIL" start="2026-06-12T18:23:00.997325" elapsed="10.344846">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</test>
+<test id="s1-s1-t5" name="TC_005 Finalisation d une commande complete" line="40">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-12T18:23:11.396971" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.356329" elapsed="0.041303"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Fill Login Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:11.403089" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.401829" elapsed="0.031743"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-12T18:23:11.401186" elapsed="0.032537"/>
+</kw>
+<kw name="Fill Login Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:11.440078" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.435949" elapsed="0.016212"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-12T18:23:11.434951" elapsed="0.017371"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:11.455514" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.453064" elapsed="0.060998"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:11.452526" elapsed="0.061841"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T18:23:11.399527" elapsed="0.114922"/>
+</kw>
+<kw name="And Verify Products Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:11.525106" level="INFO">Waited for Element with selector css=[data-test="inventory-container"] at state visible</msg>
+<arg>css=[data-test="inventory-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.516187" elapsed="0.009122"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:11.529221" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.525533" elapsed="0.003744"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:11.529480" elapsed="0.000569"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:11.515184" elapsed="0.015071"/>
+</kw>
+<kw name="And Add One Product To Cart" owner="keywords">
+<kw name="Click Add To Cart" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:11.533285" level="INFO">Clicks the element 'css=[data-test="add-to-cart-sauce-labs-backpack"]'.</msg>
+<msg time="2026-06-12T18:23:21.663423" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-2.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-2.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-12T18:23:21.663625" level="INFO">See also file:///C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1781281364883_1/playwright-log.txt for additional details.</msg>
+<msg time="2026-06-12T18:23:21.663793" level="FAIL">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</msg>
+<arg>css=[data-test="${data_test}"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="FAIL" start="2026-06-12T18:23:11.531740" elapsed="10.141857">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</kw>
+<arg>add-to-cart-sauce-labs-backpack</arg>
+<status status="FAIL" start="2026-06-12T18:23:11.531286" elapsed="10.142622">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</kw>
+<status status="FAIL" start="2026-06-12T18:23:11.530665" elapsed="10.143387">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</kw>
+<kw name="When Complete Checkout Process" owner="keywords">
+<arg>${FIRST_NAME}</arg>
+<arg>${LAST_NAME}</arg>
+<arg>${POSTAL_CODE}</arg>
+<status status="NOT RUN" start="2026-06-12T18:23:21.674304" elapsed="0.000258"/>
+</kw>
+<kw name="Then Verify Order Confirmation" owner="keywords">
+<status status="NOT RUN" start="2026-06-12T18:23:21.674760" elapsed="0.000206"/>
+</kw>
+<doc>Complete checkout flow</doc>
+<status status="FAIL" start="2026-06-12T18:23:11.350132" elapsed="10.325013">TimeoutError: locator.click: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+</status>
+</test>
+<test id="s1-s1-t6" name="TC_006 Deconnexion depuis le menu lateral" line="48">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-12T18:23:21.735871" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.693024" elapsed="0.043269"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Fill Login Username" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:21.744828" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.739490" elapsed="0.028079"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-12T18:23:21.738561" elapsed="0.029158"/>
+</kw>
+<kw name="Fill Login Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-12T18:23:21.769745" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.768498" elapsed="0.016089"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-12T18:23:21.767928" elapsed="0.016817"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:21.786943" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.785669" elapsed="0.065828"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:21.784946" elapsed="0.067584"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-12T18:23:21.737779" elapsed="0.114904"/>
+</kw>
+<kw name="And Verify Products Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:21.864342" level="INFO">Waited for Element with selector css=[data-test="inventory-container"] at state visible</msg>
+<arg>css=[data-test="inventory-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.854229" elapsed="0.010339"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:21.868430" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.864786" elapsed="0.003697"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.868697" elapsed="0.000475"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:21.853418" elapsed="0.015857"/>
+</kw>
+<kw name="When Open Menu And Logout" owner="keywords">
+<kw name="Click Menu Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:21.872534" level="INFO">Clicks the element 'id=react-burger-menu-btn'.</msg>
+<arg>id=react-burger-menu-btn</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.870834" elapsed="0.044905"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:21.870241" elapsed="0.045655"/>
+</kw>
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:21.922993" level="INFO">Waited for Element with selector css=[data-test="logout-sidebar-link"] at state visible</msg>
+<arg>css=[data-test="logout-sidebar-link"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.916064" elapsed="0.007132"/>
+</kw>
+<kw name="Click Logout Link" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-12T18:23:21.926091" level="INFO">Clicks the element 'css=[data-test="logout-sidebar-link"]'.</msg>
+<arg>css=[data-test="logout-sidebar-link"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-12T18:23:21.924391" elapsed="0.973853"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:21.923683" elapsed="0.974757"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:21.869472" elapsed="1.029061"/>
+</kw>
+<kw name="Then Verify Login Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-12T18:23:22.906679" level="INFO">Waited for Element with selector css=[data-test="login-button"] at state visible</msg>
+<arg>css=[data-test="login-button"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-12T18:23:22.899386" elapsed="0.007498"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-12T18:23:22.911703" level="INFO">${url} = https://www.saucedemo.com/</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-12T18:23:22.907982" elapsed="0.003775"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>saucedemo.com</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-12T18:23:22.911952" elapsed="0.000460"/>
+</kw>
+<status status="PASS" start="2026-06-12T18:23:22.898834" elapsed="0.013667"/>
+</kw>
+<doc>Logout from side menu</doc>
+<status status="PASS" start="2026-06-12T18:23:21.685095" elapsed="1.227515"/>
+</test>
+<doc>SauceDemo end-to-end tests</doc>
+<status status="FAIL" start="2026-06-12T18:22:59.790955" elapsed="23.128694"/>
+</suite>
+<kw name="Close Browser" owner="Browser" type="TEARDOWN">
+<msg time="2026-06-12T18:23:23.941130" level="INFO">Closed browser</msg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-12T18:23:22.927031" elapsed="1.014337"/>
+</kw>
+<status status="FAIL" start="2026-06-12T18:22:51.379316" elapsed="32.562188"/>
+</suite>
+<statistics>
+<total>
+<stat pass="4" fail="2" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="4" fail="2" skip="0">Tests</stat>
+<stat name="suite S1781281364883 1" id="s1-s1" pass="4" fail="2" skip="0">Tests.suite S1781281364883 1</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

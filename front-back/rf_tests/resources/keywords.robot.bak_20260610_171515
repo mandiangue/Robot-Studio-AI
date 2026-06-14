@@ -1,0 +1,44 @@
+*** Settings ***
+Resource    pages/main_page.robot
+
+*** Keywords ***
+Open Browser No Popup
+    [Arguments]    ${url}    ${browser}=chrome
+    ${driver_path}=    Evaluate    __import__("sys").path.insert(0,"${EXECDIR}") or __import__("NoPopupOptions").get_driver_path("${browser}")    sys,NoPopupOptions
+    ${opts}=    Evaluate    __import__("NoPopupOptions").get_no_popup_options("${browser}")    NoPopupOptions
+    ${is_chrome}=    Evaluate    "${browser}".lower() in ("chrome", "chromium")
+    Run Keyword If    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=${opts}
+    Run Keyword Unless    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}
+
+Login With Valid Credentials
+    Open Login Page
+    Enter Username    ${VALID_USERNAME}
+    Enter Password    ${VALID_PASSWORD}
+    Click Login Button
+
+Login With Invalid Username
+    Open Login Page
+    Enter Username    ${INVALID_USERNAME}
+    Enter Password    ${VALID_PASSWORD}
+    Click Login Button
+
+Login With Invalid Password
+    Open Login Page
+    Enter Username    ${VALID_USERNAME}
+    Enter Password    ${INVALID_PASSWORD}
+    Click Login Button
+
+Logout From Secure Area
+    Click Logout Button
+
+Verify Login Success
+    Verify Successful Login
+
+Verify Username Error
+    Verify Invalid Username Error
+
+Verify Password Error
+    Verify Invalid Password Error
+
+Verify Logout Success
+    Verify Successful Logout

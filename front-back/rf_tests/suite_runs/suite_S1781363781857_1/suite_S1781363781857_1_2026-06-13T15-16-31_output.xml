@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-13T17:16:33.621375" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781363781857_1\tests">
+<kw name="Open Browser No Popup" owner="keywords" type="SETUP">
+<kw name="Evaluate" owner="BuiltIn">
+<arg>__import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-13T17:16:34.055481" elapsed="0.001356"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-13T17:16:34.262019" level="INFO">====== WebDriver manager ======</msg>
+<msg time="2026-06-13T17:16:35.236372" level="INFO">Driver [C:\Users\Landing\.wdm\drivers\chromedriver\win64\148.0.7778.178\chromedriver-win64/chromedriver.exe] found in cache by browser version</msg>
+<msg time="2026-06-13T17:16:35.236771" level="INFO">${driver_path} = C:\Users\Landing\.wdm\drivers\chromedriver\win64\148.0.7778.178\chromedriver-win64/chromedriver.exe</msg>
+<var>${driver_path}</var>
+<arg>__import__("NoPopupOptions").get_driver_path("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-13T17:16:34.057174" elapsed="1.179640"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-13T17:16:35.237773" level="INFO">${opts} = &lt;selenium.webdriver.chrome.options.Options object at 0x000001B9208FA270&gt;</msg>
+<var>${opts}</var>
+<arg>__import__("NoPopupOptions").get_no_popup_options("${browser}")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-13T17:16:35.237011" elapsed="0.000807"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-06-13T17:16:35.238478" level="INFO">${is_chrome} = True</msg>
+<var>${is_chrome}</var>
+<arg>"${browser}".lower() in ("chrome", "chromium")</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-06-13T17:16:35.237968" elapsed="0.000547"/>
+</kw>
+<kw name="Run Keyword If" owner="BuiltIn">
+<kw name="Open Browser" owner="SeleniumLibrary">
+<msg time="2026-06-13T17:16:35.239632" level="WARN">exexcutable_path is being deprecated. Please use service to configure the driver's executable_path as per documentation.</msg>
+<msg time="2026-06-13T17:16:35.239788" level="INFO">Opening browser 'chromium' to base url 'https://the-internet.herokuapp.com/login'.</msg>
+<msg time="2026-06-13T17:16:35.239841" level="INFO">Cannot capture screenshot because no browser is open.</msg>
+<msg time="2026-06-13T17:16:35.239975" level="FAIL">ValueError: chromium is not a supported browser.</msg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="FAIL" start="2026-06-13T17:16:35.238898" elapsed="0.008292">ValueError: chromium is not a supported browser.</status>
+</kw>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<arg>options=${opts}</arg>
+<doc>Runs the given keyword with the given arguments, if ``condition`` is true.</doc>
+<status status="FAIL" start="2026-06-13T17:16:35.238664" elapsed="0.008659">ValueError: chromium is not a supported browser.</status>
+</kw>
+<kw name="Run Keyword Unless" owner="BuiltIn">
+<msg time="2026-06-13T17:16:35.247555" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+<arg>${is_chrome}</arg>
+<arg>Open Browser</arg>
+<arg>${url}</arg>
+<arg>${browser}</arg>
+<arg>executable_path=${driver_path}</arg>
+<doc>*DEPRECATED since RF 5.0. Use Native IF/ELSE or `Run Keyword If` instead.*</doc>
+<status status="NOT RUN" start="2026-06-13T17:16:35.247509" elapsed="0.000183"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<arg>${BROWSER}</arg>
+<status status="FAIL" start="2026-06-13T17:16:34.054155" elapsed="1.193713">ValueError: chromium is not a supported browser.</status>
+</kw>
+<suite id="s1-s1" name="suite S1781363781857 1" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781363781857_1\tests\suite_S1781363781857_1.robot">
+<test id="s1-s1-t1" name="TC_001 — Connexion réussie avec identifiants valides" line="10">
+<status status="FAIL" start="2026-06-13T17:16:35.248481" elapsed="0.000421">Parent suite setup failed:
+ValueError: chromium is not a supported browser.</status>
+</test>
+<test id="s1-s1-t2" name="TC_002 — Échec de connexion avec un identifiant invalide" line="17">
+<status status="FAIL" start="2026-06-13T17:16:35.249143" elapsed="0.000361">Parent suite setup failed:
+ValueError: chromium is not a supported browser.</status>
+</test>
+<test id="s1-s1-t3" name="TC_003 — Échec de connexion avec un mot de passe invalide" line="24">
+<status status="FAIL" start="2026-06-13T17:16:35.249707" elapsed="0.000324">Parent suite setup failed:
+ValueError: chromium is not a supported browser.</status>
+</test>
+<test id="s1-s1-t4" name="TC_004 — Déconnexion après une connexion réussie" line="31">
+<status status="FAIL" start="2026-06-13T17:16:35.250223" elapsed="0.000309">Parent suite setup failed:
+ValueError: chromium is not a supported browser.</status>
+</test>
+<doc>Test suite for login functionality on the-internet.herokuapp.com</doc>
+<status status="FAIL" start="2026-06-13T17:16:35.247965" elapsed="0.002945">Parent suite setup failed:
+ValueError: chromium is not a supported browser.</status>
+</suite>
+<kw name="Close Browser" owner="SeleniumLibrary" type="TEARDOWN">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-13T17:16:35.251591" elapsed="0.000165"/>
+</kw>
+<status status="FAIL" start="2026-06-13T17:16:33.624347" elapsed="1.627466">Suite setup failed:
+ValueError: chromium is not a supported browser.</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="0" fail="4" skip="0">Tests</stat>
+<stat name="suite S1781363781857 1" id="s1-s1" pass="0" fail="4" skip="0">Tests.suite S1781363781857 1</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-06-13T17:16:35.239632" level="WARN">exexcutable_path is being deprecated. Please use service to configure the driver's executable_path as per documentation.</msg>
+<msg time="2026-06-13T17:16:35.247555" level="WARN">Keyword 'BuiltIn.Run Keyword Unless' is deprecated. </msg>
+</errors>
+</robot>
