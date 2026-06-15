@@ -1,0 +1,1147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.3.2 (Python 3.13.7 on win32)" generated="2026-06-14T17:09:22.990529" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781436279659_2\tests">
+<kw name="Open Browser Session" owner="keywords" type="SETUP">
+<kw name="New Browser" owner="Browser">
+<msg time="2026-06-14T17:09:23.376311" level="INFO">{"browser": "chromium", "headless": false, "chromiumSandbox": false, "devtools": false, "handleSIGHUP": true, "handleSIGINT": true, "handleSIGTERM": true, "slowMo": 0.0, "timeout": 30000.0, "tracesDir": "C:\\Users\\Landing\\Desktop\\docDev\\robotClaude\\front-back\\rf_tests\\suite_runs\\suite_S1781436279659_2\\browser\\traces\\temp\\34ab5ee6-ecf7-4d75-a3a5-b9366857bf29"}</msg>
+<msg time="2026-06-14T17:09:23.436144" level="INFO">Starting Browser process C:\Users\Landing\AppData\Local\Programs\Python\Python313\Lib\site-packages\Browser\wrapper\index.js using at 127.0.0.1:58852</msg>
+<msg time="2026-06-14T17:09:37.291135" level="INFO">Successfully created browser with options: {"browser":"chromium","headless":false,"chromiumSandbox":false,"devtools":false,"handleSIGHUP":true,"handleSIGINT":true,"handleSIGTERM":true,"slowMo":0,"timeout":30000,"tracesDir":"C:\\Users\\Landing\\Desktop\\docDev\\robotClaude\\front-back\\rf_tests\\suite_runs\\suite_S1781436279659_2\\browser\\traces\\temp\\34ab5ee6-ecf7-4d75-a3a5-b9366857bf29"}</msg>
+<arg>${browser}</arg>
+<arg>headless=${HEADLESS}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new playwright Browser with specified options.</doc>
+<status status="PASS" start="2026-06-14T17:09:23.374842" elapsed="13.916766"/>
+</kw>
+<kw name="New Context" owner="Browser">
+<msg time="2026-06-14T17:09:37.296628" level="INFO">{
+  "acceptDownloads": true,
+  "bypassCSP": false,
+  "forcedColors": "none",
+  "ignoreHTTPSErrors": false,
+  "javaScriptEnabled": true,
+  "offline": false,
+  "reducedMotion": "no-preference",
+  "serviceWorkers": "allow",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  }
+}</msg>
+<msg time="2026-06-14T17:09:37.320450" level="INFO">Successfully created context. </msg>
+<msg time="2026-06-14T17:09:37.320542" level="INFO">{'acceptDownloads': True, 'bypassCSP': False, 'forcedColors': 'none', 'ignoreHTTPSErrors': False, 'javaScriptEnabled': True, 'offline': False, 'reducedMotion': 'no-preference', 'serviceWorkers': 'allow', 'viewport': {'width': 1280, 'height': 720}}</msg>
+<arg>acceptDownloads=True</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Create a new BrowserContext with specified options.</doc>
+<status status="PASS" start="2026-06-14T17:09:37.291967" elapsed="0.028673"/>
+</kw>
+<kw name="New Page" owner="Browser">
+<msg time="2026-06-14T17:09:41.207488" level="INFO">Successfully initialized new page object and opened url: https://www.saucedemo.com</msg>
+<arg>${url}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Open a new Page.</doc>
+<status status="PASS" start="2026-06-14T17:09:37.320856" elapsed="3.886888"/>
+</kw>
+<arg>${BASE_URL}</arg>
+<status status="PASS" start="2026-06-14T17:09:23.373751" elapsed="17.836344"/>
+</kw>
+<suite id="s1-s1" name="suite S1781436279659 2" source="C:\Users\Landing\Desktop\docDev\robotClaude\front-back\rf_tests\suite_runs\suite_S1781436279659_2\tests\suite_S1781436279659_2.robot">
+<test id="s1-s1-t1" name="TC_001 Connexion Avec Utilisateur Performance Glitch" line="12">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-14T17:09:41.305676" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-14T17:09:41.253045" elapsed="0.052837"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:41.344430" level="INFO">Waited for Element with selector css=[data-test="username"] at state visible</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:41.309950" elapsed="0.034661"/>
+</kw>
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:09:41.346174" level="INFO">Fills the text 'performance_glitch_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:41.344820" elapsed="0.019566"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-14T17:09:41.308821" elapsed="0.055718"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:09:41.366586" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:41.365320" elapsed="0.013795"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-14T17:09:41.364750" elapsed="0.014508"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:09:41.381185" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:41.379995" elapsed="5.107024"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:09:41.379453" elapsed="5.107881"/>
+</kw>
+<arg>${PERFORMANCE_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-14T17:09:41.306800" elapsed="5.180636"/>
+</kw>
+<kw name="Then Verify Inventory Page Loaded" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:46.497708" level="INFO">Waited for Element with selector css=[data-test="inventory-list"] at state visible</msg>
+<arg>css=[data-test="inventory-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=30s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.488330" elapsed="0.009564"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:09:46.501599" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.498099" elapsed="0.003550"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.501829" elapsed="0.000417"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:09:46.487723" elapsed="0.014649"/>
+</kw>
+<doc>Connexion avec performance_glitch_user</doc>
+<status status="PASS" start="2026-06-14T17:09:41.245745" elapsed="5.256753"/>
+</test>
+<test id="s1-s1-t2" name="TC_002 Tri Des Produits Par Prix Decroissant" line="17">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-14T17:09:46.570126" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.515837" elapsed="0.054486"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:46.589467" level="INFO">Waited for Element with selector css=[data-test="username"] at state visible</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.571908" elapsed="0.017753"/>
+</kw>
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:09:46.592275" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.589993" elapsed="0.011736"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-14T17:09:46.571245" elapsed="0.030630"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:09:46.603832" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.602638" elapsed="0.012145"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-14T17:09:46.602075" elapsed="0.012854"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:09:46.616795" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.615646" elapsed="0.067982"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:09:46.615127" elapsed="0.068646"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-14T17:09:46.570607" elapsed="0.113238"/>
+</kw>
+<kw name="And Verify Inventory Page Loaded" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:46.692824" level="INFO">Waited for Element with selector css=[data-test="inventory-list"] at state visible</msg>
+<arg>css=[data-test="inventory-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=30s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.684637" elapsed="0.008383"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:09:46.696488" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.693225" elapsed="0.003314"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.696732" elapsed="0.000430"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:09:46.684081" elapsed="0.013180"/>
+</kw>
+<kw name="When Sort Products By" owner="keywords">
+<kw name="Select Sort Option" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:46.704777" level="INFO">Waited for Element with selector css=[data-test="product-sort-container"] at state visible</msg>
+<arg>css=[data-test="product-sort-container"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.698305" elapsed="0.006653"/>
+</kw>
+<kw name="Select Options By" owner="Browser">
+<msg time="2026-06-14T17:09:46.706841" level="INFO">Selects the option(s) hilo by attribute SelectAttribute.value from element css=[data-test="product-sort-container"].</msg>
+<arg>css=[data-test="product-sort-container"]</arg>
+<arg>value</arg>
+<arg>${value}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Selects options from select element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:46.705161" elapsed="0.040344"/>
+</kw>
+<arg>${value}</arg>
+<status status="PASS" start="2026-06-14T17:09:46.697909" elapsed="0.047749"/>
+</kw>
+<arg>hilo</arg>
+<status status="PASS" start="2026-06-14T17:09:46.697443" elapsed="0.048293"/>
+</kw>
+<kw name="Then Verify Products Sorted Descending By Price" owner="keywords">
+<kw name="Get All Prices" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:56.833643" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-1.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-1.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-14T17:09:56.833850" level="INFO">See also file:///C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1781436279659_2/playwright-log.txt for additional details.</msg>
+<msg time="2026-06-14T17:09:56.834264" level="FAIL">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item_price') resolved to 6 elements:
+    1) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$49.99&lt;/div&gt; aka getByText('$49.99')
+    2) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$29.99&lt;/div&gt; aka getByText('$29.99')
+    3) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(2)
+    4) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(3)
+    5) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$9.99&lt;/div&gt; aka getByText('$9.99')
+    6) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$7.99&lt;/div&gt; aka getByText('$7.99')
+
+Call log:
+  - waiting for locator('.inventory_item_price') to be visible
+</msg>
+<arg>css=.inventory_item_price</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2026-06-14T17:09:46.746970" elapsed="10.099199">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item_price') resolved to 6 elements:
+    1) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$49.99&lt;/div&gt; aka getByText('$49.99')
+    2) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$29.99&lt;/div&gt; aka getByText('$29.99')
+    3) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(2)
+    4) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(3)
+    5) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$9.99&lt;/div&gt; aka getByText('$9.99')
+    6) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$7.99&lt;/div&gt; aka getByText('$7.99')
+
+Call log:
+  - waiting for locator('.inventory_item_price') to be visible
+</status>
+</kw>
+<kw name="Get Elements" owner="Browser">
+<var>${texts}</var>
+<arg>css=.inventory_item_price</arg>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns a reference to Playwright [https://playwright.dev/docs/api/class-locator|Locator]
+for all matched elements by ``selector``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.846458" elapsed="0.000257"/>
+</kw>
+<kw name="Create List" owner="BuiltIn">
+<var>@{prices}</var>
+<doc>Returns a list containing given items.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.846993" elapsed="0.000186"/>
+</kw>
+<for flavor="IN">
+<iter>
+<kw name="Get Text" owner="Browser">
+<var>${t}</var>
+<arg>${el}</arg>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns text attribute of the element found by ``selector``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.847836" elapsed="0.000168"/>
+</kw>
+<kw name="Replace String" owner="String">
+<var>${clean}</var>
+<arg>${t}</arg>
+<arg>$</arg>
+<arg>${EMPTY}</arg>
+<doc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.848135" elapsed="0.000158"/>
+</kw>
+<kw name="Convert To Number" owner="BuiltIn">
+<var>${num}</var>
+<arg>${clean}</arg>
+<doc>Converts the given item to a floating point number.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.848423" elapsed="0.000157"/>
+</kw>
+<kw name="Append To List" owner="Collections">
+<arg>${prices}</arg>
+<arg>${num}</arg>
+<doc>Adds ``values`` to the end of ``list``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.848699" elapsed="0.000163"/>
+</kw>
+<var name="${el}"/>
+<status status="NOT RUN" start="2026-06-14T17:09:56.847567" elapsed="0.001354"/>
+</iter>
+<var>${el}</var>
+<value>@{texts}</value>
+<status status="NOT RUN" start="2026-06-14T17:09:56.847280" elapsed="0.001696"/>
+</for>
+<return>
+<value>${prices}</value>
+<status status="NOT RUN" start="2026-06-14T17:09:56.849053" elapsed="0.000163"/>
+</return>
+<var>@{prices}</var>
+<status status="FAIL" start="2026-06-14T17:09:46.746588" elapsed="10.102781">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item_price') resolved to 6 elements:
+    1) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$49.99&lt;/div&gt; aka getByText('$49.99')
+    2) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$29.99&lt;/div&gt; aka getByText('$29.99')
+    3) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(2)
+    4) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(3)
+    5) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$9.99&lt;/div&gt; aka getByText('$9.99')
+    6) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$7.99&lt;/div&gt; aka getByText('$7.99')
+
+Call log:
+  - waiting for locator('.inventory_item_price') to be visible
+</status>
+</kw>
+<kw name="Copy List" owner="Collections">
+<var>@{sorted_prices}</var>
+<arg>${prices}</arg>
+<doc>Returns a copy of the given list.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.849504" elapsed="0.000160"/>
+</kw>
+<kw name="Sort List" owner="Collections">
+<arg>${sorted_prices}</arg>
+<doc>Sorts the given list in place.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.849781" elapsed="0.000160"/>
+</kw>
+<kw name="Reverse List" owner="Collections">
+<arg>${sorted_prices}</arg>
+<doc>Reverses the given list in place.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.850056" elapsed="0.000152"/>
+</kw>
+<kw name="Lists Should Be Equal" owner="Collections">
+<arg>${prices}</arg>
+<arg>${sorted_prices}</arg>
+<doc>Fails if given lists are unequal.</doc>
+<status status="NOT RUN" start="2026-06-14T17:09:56.850326" elapsed="0.000154"/>
+</kw>
+<status status="FAIL" start="2026-06-14T17:09:46.745970" elapsed="10.104630">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item_price') resolved to 6 elements:
+    1) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$49.99&lt;/div&gt; aka getByText('$49.99')
+    2) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$29.99&lt;/div&gt; aka getByText('$29.99')
+    3) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(2)
+    4) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(3)
+    5) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$9.99&lt;/div&gt; aka getByText('$9.99')
+    6) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$7.99&lt;/div&gt; aka getByText('$7.99')
+
+Call log:
+  - waiting for locator('.inventory_item_price') to be visible
+</status>
+</kw>
+<doc>Tri Price (high to low)</doc>
+<status status="FAIL" start="2026-06-14T17:09:46.510563" elapsed="10.340229">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item_price') resolved to 6 elements:
+    1) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$49.99&lt;/div&gt; aka getByText('$49.99')
+    2) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$29.99&lt;/div&gt; aka getByText('$29.99')
+    3) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(2)
+    4) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$15.99&lt;/div&gt; aka locator('[data-test="inventory-item-price"]').nth(3)
+    5) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$9.99&lt;/div&gt; aka getByText('$9.99')
+    6) &lt;div class="inventory_item_price" data-test="inventory-item-price"&gt;$7.99&lt;/div&gt; aka getByText('$7.99')
+
+Call log:
+  - waiting for locator('.inventory_item_price') to be visible
+</status>
+</test>
+<test id="s1-s1-t3" name="TC_003 Suppression D'Un Produit Depuis Le Panier" line="24">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-14T17:09:56.952278" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-14T17:09:56.864185" elapsed="0.088325"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:56.978098" level="INFO">Waited for Element with selector css=[data-test="username"] at state visible</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:56.953849" elapsed="0.024444"/>
+</kw>
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:09:56.979942" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:56.978485" elapsed="0.012392"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-14T17:09:56.953426" elapsed="0.037670"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:09:56.994902" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:56.993194" elapsed="0.011859"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-14T17:09:56.991445" elapsed="0.013751"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:09:57.007409" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:09:57.005929" elapsed="0.058664"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:09:57.005398" elapsed="0.059477"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-14T17:09:56.952807" elapsed="0.112159"/>
+</kw>
+<kw name="And Verify Inventory Page Loaded" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:09:57.073486" level="INFO">Waited for Element with selector css=[data-test="inventory-list"] at state visible</msg>
+<arg>css=[data-test="inventory-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=30s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:09:57.065951" elapsed="0.007752"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:09:57.077719" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:09:57.073930" elapsed="0.003843"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:09:57.077956" elapsed="0.000417"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:09:57.065234" elapsed="0.013230"/>
+</kw>
+<kw name="And Add First Product To Cart" owner="keywords">
+<kw name="Click First Add To Cart Button" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:07.213817" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-2.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-2.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-14T17:10:07.213997" level="INFO">See also file:///C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1781436279659_2/playwright-log.txt for additional details.</msg>
+<msg time="2026-06-14T17:10:07.214152" level="FAIL">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</msg>
+<arg>css=.inventory_item button</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2026-06-14T17:09:57.079429" elapsed="10.142755">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<kw name="Click" owner="Browser">
+<arg>css=.inventory_item:first-child button</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:10:07.222456" elapsed="0.000266"/>
+</kw>
+<status status="FAIL" start="2026-06-14T17:09:57.079028" elapsed="10.144255">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<status status="FAIL" start="2026-06-14T17:09:57.078635" elapsed="10.144938">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<kw name="When Open Cart" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:07.223810" elapsed="0.000230"/>
+</kw>
+<kw name="And Remove Product From Cart" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:07.224208" elapsed="0.000181"/>
+</kw>
+<kw name="Then Verify Cart Badge Empty" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:07.224547" elapsed="0.000174"/>
+</kw>
+<doc>Retirer un produit du panier</doc>
+<status status="FAIL" start="2026-06-14T17:09:56.859125" elapsed="10.365779">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</test>
+<test id="s1-s1-t4" name="TC_004 Finalisation Complete D'Une Commande" line="33">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-14T17:10:07.300059" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.236983" elapsed="0.070593"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:07.330374" level="INFO">Waited for Element with selector css=[data-test="username"] at state visible</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.309334" elapsed="0.021252"/>
+</kw>
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:10:07.332182" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.330798" elapsed="0.013767"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-14T17:10:07.308828" elapsed="0.035912"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:10:07.347246" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.345663" elapsed="0.012510"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-14T17:10:07.344980" elapsed="0.013353"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:10:07.360810" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.359294" elapsed="0.055826"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:07.358613" elapsed="0.056702"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-14T17:10:07.308102" elapsed="0.107329"/>
+</kw>
+<kw name="And Verify Inventory Page Loaded" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:07.423624" level="INFO">Waited for Element with selector css=[data-test="inventory-list"] at state visible</msg>
+<arg>css=[data-test="inventory-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=30s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.416390" elapsed="0.007475"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:10:07.427328" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.424100" elapsed="0.003280"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:10:07.427638" elapsed="0.000435"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:07.415725" elapsed="0.012447"/>
+</kw>
+<kw name="And Add First Product To Cart" owner="keywords">
+<kw name="Click First Add To Cart Button" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:17.508572" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-3.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-3.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-14T17:10:17.508761" level="INFO">See also file:///C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1781436279659_2/playwright-log.txt for additional details.</msg>
+<msg time="2026-06-14T17:10:17.508920" level="FAIL">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</msg>
+<arg>css=.inventory_item button</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2026-06-14T17:10:07.429131" elapsed="10.087934">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<kw name="Click" owner="Browser">
+<arg>css=.inventory_item:first-child button</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:10:17.517336" elapsed="0.000230"/>
+</kw>
+<status status="FAIL" start="2026-06-14T17:10:07.428761" elapsed="10.088977">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<status status="FAIL" start="2026-06-14T17:10:07.428352" elapsed="10.089529">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<kw name="And Open Cart" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:17.518205" elapsed="0.000190"/>
+</kw>
+<kw name="When Proceed To Checkout" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:17.518538" elapsed="0.000162"/>
+</kw>
+<kw name="And Fill Checkout Information" owner="keywords">
+<arg>${FIRST_NAME}</arg>
+<arg>${LAST_NAME}</arg>
+<arg>${POSTAL_CODE}</arg>
+<status status="NOT RUN" start="2026-06-14T17:10:17.518854" elapsed="0.000161"/>
+</kw>
+<kw name="And Continue Checkout" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:17.519164" elapsed="0.000160"/>
+</kw>
+<kw name="And Finish Checkout" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:17.519462" elapsed="0.000160"/>
+</kw>
+<kw name="Then Verify Order Confirmation" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:17.519769" elapsed="0.000159"/>
+</kw>
+<doc>Process complet de commande</doc>
+<status status="FAIL" start="2026-06-14T17:10:07.231977" elapsed="10.288111">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</test>
+<test id="s1-s1-t5" name="TC_005 Validation Des Champs Obligatoires Lors Du Checkout" line="45">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-14T17:10:17.575205" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.532499" elapsed="0.046833"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:17.598572" level="INFO">Waited for Element with selector css=[data-test="username"] at state visible</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.581340" elapsed="0.017440"/>
+</kw>
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:10:17.600288" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.598982" elapsed="0.011763"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-14T17:10:17.580717" elapsed="0.030185"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:10:17.612915" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.611702" elapsed="0.009917"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-14T17:10:17.611110" elapsed="0.010660"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:10:17.624548" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.622507" elapsed="0.060680"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:17.621977" elapsed="0.061404"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-14T17:10:17.579850" elapsed="0.103611"/>
+</kw>
+<kw name="And Verify Inventory Page Loaded" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:17.691124" level="INFO">Waited for Element with selector css=[data-test="inventory-list"] at state visible</msg>
+<arg>css=[data-test="inventory-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=30s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.684399" elapsed="0.006936"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:10:17.694577" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.691545" elapsed="0.003081"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:10:17.694819" elapsed="0.000424"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:17.683701" elapsed="0.011637"/>
+</kw>
+<kw name="And Add First Product To Cart" owner="keywords">
+<kw name="Click First Add To Cart Button" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:27.791653" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="browser/screenshot/fail-screenshot-4.png" target="_blank"&gt;&lt;img src="browser/screenshot/fail-screenshot-4.png" width="800px"/&gt;&lt;/a&gt;</msg>
+<msg time="2026-06-14T17:10:27.791830" level="INFO">See also file:///C:/Users/Landing/Desktop/docDev/robotClaude/front-back/rf_tests/suite_runs/suite_S1781436279659_2/playwright-log.txt for additional details.</msg>
+<msg time="2026-06-14T17:10:27.791968" level="FAIL">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</msg>
+<arg>css=.inventory_item button</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="FAIL" start="2026-06-14T17:10:17.696309" elapsed="10.103491">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<kw name="Click" owner="Browser">
+<arg>css=.inventory_item:first-child button</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="NOT RUN" start="2026-06-14T17:10:27.800059" elapsed="0.000233"/>
+</kw>
+<status status="FAIL" start="2026-06-14T17:10:17.695940" elapsed="10.104516">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<status status="FAIL" start="2026-06-14T17:10:17.695511" elapsed="10.105084">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</kw>
+<kw name="And Open Cart" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:27.800810" elapsed="0.000194"/>
+</kw>
+<kw name="And Proceed To Checkout" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:27.801161" elapsed="0.000180"/>
+</kw>
+<kw name="When Continue Checkout" owner="keywords">
+<status status="NOT RUN" start="2026-06-14T17:10:27.801487" elapsed="0.000167"/>
+</kw>
+<kw name="Then Verify Error Message Contains" owner="keywords">
+<arg>First Name is required</arg>
+<status status="NOT RUN" start="2026-06-14T17:10:27.801812" elapsed="0.000167"/>
+</kw>
+<doc>Champs obligatoires checkout</doc>
+<status status="FAIL" start="2026-06-14T17:10:17.527465" elapsed="10.274698">Error: locator.waitFor: Error: strict mode violation: locator('.inventory_item button') resolved to 6 elements:
+    1) &lt;button id="add-to-cart-sauce-labs-backpack" name="add-to-cart-sauce-labs-backpack" data-test="add-to-cart-sauce-labs-backpack" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-backpack"]')
+    2) &lt;button id="add-to-cart-sauce-labs-bike-light" name="add-to-cart-sauce-labs-bike-light" data-test="add-to-cart-sauce-labs-bike-light" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bike-light"]')
+    3) &lt;button id="add-to-cart-sauce-labs-bolt-t-shirt" name="add-to-cart-sauce-labs-bolt-t-shirt" data-test="add-to-cart-sauce-labs-bolt-t-shirt" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]')
+    4) &lt;button id="add-to-cart-sauce-labs-fleece-jacket" name="add-to-cart-sauce-labs-fleece-jacket" class="btn btn_primary btn_small btn_inventory " data-test="add-to-cart-sauce-labs-fleece-jacket"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-fleece-jacket"]')
+    5) &lt;button id="add-to-cart-sauce-labs-onesie" name="add-to-cart-sauce-labs-onesie" data-test="add-to-cart-sauce-labs-onesie" class="btn btn_primary btn_small btn_inventory "&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-sauce-labs-onesie"]')
+    6) &lt;button class="btn btn_primary btn_small btn_inventory " id="add-to-cart-test.allthethings()-t-shirt-(red)" name="add-to-cart-test.allthethings()-t-shirt-(red)" data-test="add-to-cart-test.allthethings()-t-shirt-(red)"&gt;Add to cart&lt;/button&gt; aka locator('[data-test="add-to-cart-test.allthethings()-t-shirt-(red)"]')
+
+Call log:
+  - waiting for locator('.inventory_item button') to be visible
+</status>
+</test>
+<test id="s1-s1-t6" name="TC_006 Deconnexion Via Le Menu Lateral" line="55">
+<kw name="Go To" owner="Browser" type="SETUP">
+<msg time="2026-06-14T17:10:27.859946" level="INFO">Successfully opened URL https://www.saucedemo.com</msg>
+<arg>${BASE_URL}</arg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Navigates to the given ``url``.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.813543" elapsed="0.046916"/>
+</kw>
+<kw name="Given Login With User" owner="keywords">
+<kw name="Enter Username" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:27.880978" level="INFO">Waited for Element with selector css=[data-test="username"] at state visible</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.862645" elapsed="0.018560"/>
+</kw>
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:10:27.882782" level="INFO">Fills the text 'standard_user' in the given field.</msg>
+<arg>css=[data-test="username"]</arg>
+<arg>${username}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.881411" elapsed="0.010907"/>
+</kw>
+<arg>${username}</arg>
+<status status="PASS" start="2026-06-14T17:10:27.861689" elapsed="0.031194"/>
+</kw>
+<kw name="Enter Password" owner="main_page">
+<kw name="Fill Text" owner="Browser">
+<msg time="2026-06-14T17:10:27.895379" level="INFO">Fills the text 'secret_sauce' in the given field.</msg>
+<arg>css=[data-test="password"]</arg>
+<arg>${password}</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Clears and fills the given ``txt`` into the text field found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.893957" elapsed="0.009924"/>
+</kw>
+<arg>${password}</arg>
+<status status="PASS" start="2026-06-14T17:10:27.893284" elapsed="0.010748"/>
+</kw>
+<kw name="Click Login Button" owner="main_page">
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:10:27.905965" level="INFO">Clicks the element 'css=[data-test="login-button"]'.</msg>
+<arg>css=[data-test="login-button"]</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.904766" elapsed="0.057404"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:27.904231" elapsed="0.058306"/>
+</kw>
+<arg>${STANDARD_USER}</arg>
+<arg>${PASSWORD}</arg>
+<status status="PASS" start="2026-06-14T17:10:27.860854" elapsed="0.101777"/>
+</kw>
+<kw name="And Verify Inventory Page Loaded" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:27.971211" level="INFO">Waited for Element with selector css=[data-test="inventory-list"] at state visible</msg>
+<arg>css=[data-test="inventory-list"]</arg>
+<arg>visible</arg>
+<arg>timeout=30s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.963552" elapsed="0.007877"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:10:27.975060" level="INFO">${url} = https://www.saucedemo.com/inventory.html</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.971647" elapsed="0.003466"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>inventory.html</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.975299" elapsed="0.000415"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:27.962872" elapsed="0.012933"/>
+</kw>
+<kw name="When Open Side Menu" owner="keywords">
+<kw name="Click Menu Button" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:27.983240" level="INFO">Waited for Element with selector id=react-burger-menu-btn at state visible</msg>
+<arg>id=react-burger-menu-btn</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.976736" elapsed="0.006717"/>
+</kw>
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:10:27.984892" level="INFO">Clicks the element 'id=react-burger-menu-btn'.</msg>
+<arg>id=react-burger-menu-btn</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:27.983651" elapsed="0.047830"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:27.976369" elapsed="0.055253"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:27.975968" elapsed="0.055723"/>
+</kw>
+<kw name="And Click Logout Link" owner="keywords">
+<kw name="Click Logout Menu Item" owner="main_page">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:28.038871" level="INFO">Waited for Element with selector id=logout_sidebar_link at state visible</msg>
+<arg>id=logout_sidebar_link</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:28.032790" elapsed="0.006284"/>
+</kw>
+<kw name="Click" owner="Browser">
+<msg time="2026-06-14T17:10:28.040886" level="INFO">Clicks the element 'id=logout_sidebar_link'.</msg>
+<arg>id=logout_sidebar_link</arg>
+<tag>PageContent</tag>
+<tag>Setter</tag>
+<doc>Simulates mouse click on the element found by ``selector``.</doc>
+<status status="PASS" start="2026-06-14T17:10:28.039285" elapsed="0.981329"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:28.032425" elapsed="0.988342"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:28.031902" elapsed="0.988938"/>
+</kw>
+<kw name="Then Verify Login Page Displayed" owner="keywords">
+<kw name="Wait For Elements State" owner="Browser">
+<msg time="2026-06-14T17:10:29.028196" level="INFO">Waited for Element with selector css=[data-test="login-button"] at state visible</msg>
+<arg>css=[data-test="login-button"]</arg>
+<arg>visible</arg>
+<arg>timeout=10s</arg>
+<tag>PageContent</tag>
+<tag>Wait</tag>
+<doc>Waits for the element found by ``selector`` to satisfy state option.</doc>
+<status status="PASS" start="2026-06-14T17:10:29.021613" elapsed="0.006793"/>
+</kw>
+<kw name="Get Url" owner="Browser">
+<msg time="2026-06-14T17:10:29.031684" level="INFO">${url} = https://www.saucedemo.com/</msg>
+<var>${url}</var>
+<tag>Assertion</tag>
+<tag>Getter</tag>
+<tag>PageContent</tag>
+<doc>Returns the current URL.</doc>
+<status status="PASS" start="2026-06-14T17:10:29.028623" elapsed="0.003110"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${url}</arg>
+<arg>saucedemo.com</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2026-06-14T17:10:29.031915" elapsed="0.000414"/>
+</kw>
+<status status="PASS" start="2026-06-14T17:10:29.021066" elapsed="0.011359"/>
+</kw>
+<doc>Logout via menu hamburger</doc>
+<status status="PASS" start="2026-06-14T17:10:27.808762" elapsed="1.223787"/>
+</test>
+<doc>Saucedemo end-to-end tests</doc>
+<status status="FAIL" start="2026-06-14T17:09:41.211328" elapsed="47.827251"/>
+</suite>
+<kw name="Close Browser" owner="Browser" type="TEARDOWN">
+<msg time="2026-06-14T17:10:29.981479" level="INFO">Closed browser</msg>
+<tag>BrowserControl</tag>
+<tag>Setter</tag>
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-06-14T17:10:29.044590" elapsed="0.937114"/>
+</kw>
+<status status="FAIL" start="2026-06-14T17:09:22.993160" elapsed="66.988634"/>
+</suite>
+<statistics>
+<total>
+<stat pass="2" fail="4" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Tests" id="s1" pass="2" fail="4" skip="0">Tests</stat>
+<stat name="suite S1781436279659 2" id="s1-s1" pass="2" fail="4" skip="0">Tests.suite S1781436279659 2</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
