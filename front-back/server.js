@@ -486,7 +486,9 @@ app.post('/api/rf/run', async (req, res) => {
     }
     if (testsFile2 && testsFile2.endsWith('__init__.robot')) { testsFile2 = path.dirname(testsFile2); console.log('[PW RUN] cible __init__ -> dossier', testsFile2); }
     console.log("[PW RUN] testsFile2:", testsFile2, "| exists:", require("fs").existsSync(testsFile2));
-    const robotArgs2 = ['--outputdir', runBaseDir, '--output', outputXml2, ...(suiteFilter ? ['--suite', String(suiteFilter)] : []), testsFile2];
+    // #1 : forcer robot a ecrire le log au nom exact pointe par logUrl (meme outputdir que output.xml)
+    const logFile2 = outputXml2.replace('output.xml', 'log.html');
+    const robotArgs2 = ['--outputdir', runBaseDir, '--output', outputXml2, '--log', logFile2, ...(suiteFilter ? ['--suite', String(suiteFilter)] : []), testsFile2];
     _runStartTs = Date.now();
     const robotProc2 = execFileFn('robot', robotArgs2, { cwd: runBaseDir },
       (err2, stdout2, stderr2) => {
@@ -496,7 +498,6 @@ app.post('/api/rf/run', async (req, res) => {
           const xmlContent = fs.existsSync(outputXml2) ? fs.readFileSync(outputXml2, 'utf8') : '';
           const results2 = parseRobotOutput(xmlContent, stdout2 || '', stderr2 || '');
           results2.outputXml  = outputXml2;
-          const logFile2 = outputXml2.replace('output.xml', 'log.html');
           const relLog2 = logFile2.replace(/\\/g, '/').split('rf_tests/').pop();
           results2.logUrl     = 'http://localhost:3001/rf_tests/' + relLog2;
           results2.logHtml    = logFile2;
