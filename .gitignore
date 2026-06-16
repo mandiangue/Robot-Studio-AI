@@ -12,3 +12,11 @@ __pycache__/
 *.bak
 *.bak_*
 rf_tests/
+
+# captures d'écran (artefacts de run)
+*.png
+
+# logs (artefacts de run)
+*.log
+*.txt
+
