@@ -428,6 +428,7 @@ function buildInlineReport(data) {
   <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap">
     <button class="print-btn" onclick="window.print()">🖨️ Imprimer / Print</button>
     ${data.logUrl ? `<a href="${data.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">📋 Log Robot Framework</a>` : ''}
+    ${(data.isSuite && Array.isArray(data.blocs)) ? data.blocs.filter(b => b.logUrl).map(b => `<a href="${b.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">📋 Log bloc ${b.idx}</a>`).join('') : ''}
     <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">▼ Tout déplier / Expand all</button>
     <button class="print-btn" style="background:transparent;border-color:#1c2a38;color:#94afc8" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='none')">▲ Tout replier / Collapse all</button>
   </div>
@@ -639,6 +640,7 @@ function renderConsolidatedSuiteReport(card) {
     failed:      card.failed  || 0,
     duration:    (card.blocs||[]).reduce((s,b) => s+(b.duration||0), 0),
     tests,
+    blocs:       card.blocs || [],
     runType:     'suite',
     environment: 'RoboTest·AI — Robot Framework',
     reportTitle: 'Rapport de Tests Automatisés',
@@ -691,6 +693,12 @@ function renderConsolidatedSuiteReport_inline() {
   window._suiteBloc_reports = [];
 
   const suiteTitle = window._currentSuiteTitle || suiteReports[0]?.suiteName?.replace(/ \[\d+\/\d+\]$/, '') || 'Suite';
+  // #2 : un lien log par bloc (logUrl renvoyé par le serveur pour chaque bloc)
+  const blocs = suiteReports.map((r, i) => ({
+    idx: i + 1, name: r.suiteName || '',
+    total: r.total || 0, passed: r.passed || 0, failed: r.failed || 0,
+    duration: r.duration || 0, logUrl: r.logUrl || '',
+  }));
   const merged = {
     status:      suiteReports.some(r => r.status === 'FAIL') ? 'FAIL' : 'PASS',
     total:       suiteReports.reduce((s, r) => s + (r.total   || 0), 0),
@@ -706,6 +714,7 @@ function renderConsolidatedSuiteReport_inline() {
     createdAt:   new Date().toISOString(),
     suiteName:   suiteTitle,
     isSuite:     true,
+    blocs,
   };
 
   // Broadcaster la fin de suite dans le live panel
@@ -734,7 +743,7 @@ function renderConsolidatedSuiteReport_inline() {
     suiteTitle,
     total: merged.total, passed: merged.passed, failed: merged.failed,
     rate: merged.total > 0 ? Math.round(merged.passed/merged.total*100) : 0,
-    blocs: suiteReports.map((r,i) => ({idx:i+1,name:r.suiteName||'',total:r.total||0,passed:r.passed||0,failed:r.failed||0,duration:r.duration||0})),
+    blocs,
     blockNames: [],
     tests: merged.tests,
     data: merged,
