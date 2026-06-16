@@ -4,19 +4,16 @@ node_modules/
 # Python
 __pycache__/
 
-# Environment variable
+# Variables d'environnement
 .env
 .env.*
 
-# Fichiers backups
+# Backups
 *.bak
 *.bak_*
+
+# Artefacts de run
 rf_tests/
-
-# captures d'écran (artefacts de run)
-*.png
-
-# logs (artefacts de run)
+*.png                    # ou: selenium-screenshot-*.png si tu versionnes des images
 *.log
-*.txt
-
+playwright-log.txt
