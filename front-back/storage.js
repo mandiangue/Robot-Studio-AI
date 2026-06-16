@@ -242,26 +242,7 @@ function saveTCStore() {
 }
 // ── PulledBlock persistence ──────────────────────────────────────────────────
 
-function _savePulledBlock(blockId, source, files, tagged) {
-  var provider = 'gitlab';
-  if (source && source.toLowerCase().includes('azure')) provider = 'azure';
-  var payload = {
-    blockId:  blockId,
-    source:   source || blockId,
-    provider: provider,
-    files:    files.map(function(f){ return { filename: f.filename, code: f.code, label: f.label||'' }; }),
-    tagged:   true,
-  };
-  fetch('/api/pulledblocks', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(payload),
-  }).catch(function(e){ console.warn('[PulledBlock] save error', e); });
-}
-
-// NOTE découpage : _savePulledBlock existait en double avec des corps DIFFÉRENTS.
-// Les DEUX sont conservées (v2 ci-dessous gagne au runtime, comportement inchangé) — à arbitrer.
-// _patchPulledBlock / _loadPulledBlocks étaient des doublons IDENTIQUES : une seule copie conservée.
+// _patchPulledBlock / _loadPulledBlocks étaient des doublons identiques au découpage : une seule copie conservée.
 function _savePulledBlock(blockId, source, files, tagged) {
   var provider = 'gitlab';
   if (source && source.toLowerCase().includes('azure')) provider = 'azure';
