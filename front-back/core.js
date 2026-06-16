@@ -12,6 +12,27 @@ let chatHistory  = [];   // { role, content }[]
 let isThinking        = false;
 let pendingTestCases  = null; // current block (legacy compat)
 let pendingBlocks     = [];   // [{ blockId, title, pageLabel, cases[] }] — multi-block POM
+
+// _rerenderCardIfRendered — globale : appelée par connectSyncSSE (ci-dessous) ET par connectLive (live.js)
+function _rerenderCardIfRendered(card) {
+  try {
+    if (!card || !card.cardId) return;
+    if (window._rfRunning || window._suiteRunning) return;
+    const el = document.getElementById(card.cardId);
+    if (el && typeof renderResultCard === 'function') {
+      // memoriser la position d origine (le noeud qui suit)
+      const parent = el.parentNode;
+      const nextSibling = el.nextSibling;
+      el.remove();
+      renderResultCard(card.files, card.cardId);
+      // renderResultCard a fait appendChild (en dernier) -> on replace a l origine
+      const fresh = document.getElementById(card.cardId);
+      if (fresh && parent && nextSibling && nextSibling.parentNode === parent) {
+        parent.insertBefore(fresh, nextSibling);
+      }
+    }
+  } catch(e) {}
+}
 // ── Syntax highlight ───────────────────────────────────────────────────────────
 function syntaxHL(code) {
   if (!code) return '';
@@ -565,26 +586,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Connexion SSE permanente pour sync VS Code → UI
   (function connectSyncSSE() {
-function _rerenderCardIfRendered(card) {
-  try {
-    if (!card || !card.cardId) return;
-    if (window._rfRunning || window._suiteRunning) return;
-    const el = document.getElementById(card.cardId);
-    if (el && typeof renderResultCard === 'function') {
-      // memoriser la position d origine (le noeud qui suit)
-      const parent = el.parentNode;
-      const nextSibling = el.nextSibling;
-      el.remove();
-      renderResultCard(card.files, card.cardId);
-      // renderResultCard a fait appendChild (en dernier) -> on replace a l origine
-      const fresh = document.getElementById(card.cardId);
-      if (fresh && parent && nextSibling && nextSibling.parentNode === parent) {
-        parent.insertBefore(fresh, nextSibling);
-      }
-    }
-  } catch(e) {}
-}
-
     const es = new EventSource('http://localhost:3001/api/rf/live-stream');
     es.addEventListener('file-changed', e => {
       const { filepath, content } = JSON.parse(e.data);
