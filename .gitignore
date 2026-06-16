@@ -11,3 +11,4 @@ __pycache__/
 # Fichiers backups
 *.bak
 *.bak_*
+rf_tests/
