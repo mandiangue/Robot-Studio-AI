@@ -499,7 +499,7 @@ app.post('/api/rf/run', async (req, res) => {
           const results2 = parseRobotOutput(xmlContent, stdout2 || '', stderr2 || '');
           results2.outputXml  = outputXml2;
           const relLog2 = logFile2.replace(/\\/g, '/').split('rf_tests/').pop();
-          results2.logUrl     = 'http://localhost:3001/rf_tests/' + relLog2;
+          results2.logUrl     = '/rf_tests/' + relLog2;
           results2.logHtml    = logFile2;
           results2.reportHtml = outputXml2.replace('output.xml', 'report.html');
           res.json({ ok: true, ...results2 });
@@ -1176,7 +1176,7 @@ def get_no_popup_options(browser="chrome"):
         // Add log file URL
         const logFile = safeBase + '_log.html';
         if (fs.existsSync(path.join(TESTS_DIR, logFile))) {
-          results.logUrl  = 'http://localhost:3001/rf_tests/' + logFile;
+          results.logUrl  = '/rf_tests/' + logFile;
           results.logPath = logFile;
         }
         try {
@@ -1339,7 +1339,7 @@ def get_no_popup_options(browser="chrome"):
             const results = parseRobotOutput(xml, stdout, stderr);
             const logFile = safeBase + '_log.html';
             if (fs.existsSync(path.join(TESTS_DIR, logFile))) {
-              results.logUrl  = 'http://localhost:3001/rf_tests/' + logFile;
+              results.logUrl  = '/rf_tests/' + logFile;
               results.logPath = logFile;
             }
             res.json(results);
@@ -1373,7 +1373,7 @@ def get_no_popup_options(browser="chrome"):
       // Add log URL
       const logFile = safeBase + '_log.html';
       if (fs.existsSync(path.join(TESTS_DIR, logFile))) {
-        results.logUrl  = 'http://localhost:3001/rf_tests/' + logFile;
+        results.logUrl  = '/rf_tests/' + logFile;
         results.logPath = logFile;
       }
       // Keep XML for history
