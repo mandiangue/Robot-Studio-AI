@@ -32,7 +32,7 @@ async function treeHandleUpload(event, cardId) {
 
     // Check if file already exists
     if (card.files.find(f => f.filename.endsWith('/' + name) || f.filename === name)) {
-      showConfirmDialog('⚠️ Fichier existant', 'Remplacer <b>' + escHtml(name) + '</b> ?', async () => {
+      showConfirmDialog(t('editor.fileExistsTitle'), t('editor.fileExistsBody').replace('{name}', escHtml(name)), async () => {
         await readAndAddFile(file, name, ext, card, true);
         saveCodeCards();
         const el = document.getElementById(cardId);
@@ -49,7 +49,7 @@ async function treeHandleUpload(event, cardId) {
     saveCodeCards();
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
-    showToast('⬆ ' + count + ' fichier(s) importé(s)');
+    showToast(t('editor.imported').replace('{n}', count));
   }
 
   // Reset input
@@ -112,7 +112,7 @@ function dropCardToSuite(event, groupId) {
       saveSuiteRegistry();
       renderSavedSuites();
       renderSuiteTestList();
-      showToast('✅ ' + name + ' ajouté à la suite');
+      showToast(t('editor.addedToSuite').replace('{name}', name));
       return;
     }
   } catch(e) {}
@@ -129,25 +129,25 @@ function dropCardToSuite(event, groupId) {
 
 // ── Add folder ───────────────────────────────────────────────────────────────
 function treeAddFolder(parentFolder, cardId) {
-  showInputDialog('📁 Nouveau dossier', 'Nom du dossier (ex: pages)', '', name => {
+  showInputDialog(t('editor.newFolderTitle'), t('editor.newFolderLabel'), '', name => {
     if (!name?.trim()) return;
     const folderPath = parentFolder ? parentFolder + '/' + name.trim() : name.trim();
     const card = (window._codeCards||[]).find(c => c.cardId === cardId);
     if (!card) return;
     // Create a placeholder .gitkeep file to materialize the folder
     const keepFile = folderPath + '/.gitkeep';
-    if (card.files.find(f => f.filename === keepFile)) { showToast('⚠️ Dossier déjà existant'); return; }
+    if (card.files.find(f => f.filename === keepFile)) { showToast(t('editor.folderExists')); return; }
     card.files.push({ filename: keepFile, code: '# placeholder' });
     saveCodeCards();
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
-    showToast('📁 Dossier créé : ' + folderPath);
+    showToast(t('editor.folderCreated').replace('{path}', folderPath));
   });
 }
 
 // ── Add file ──────────────────────────────────────────────────────────────────
 function treeAddFile(folder, cardId) {
-  showInputDialog('📄 Nouveau fichier', 'Nom du fichier (ex: new_page.robot)', '', name => {
+  showInputDialog(t('editor.newFileTitle'), t('editor.newFileLabel'), '', name => {
     if (!name?.trim()) return;
   const fullPath = folder ? folder + '/' + name.trim() : name.trim();
   const card = (window._codeCards||[]).find(c => c.cardId === cardId);
@@ -156,7 +156,7 @@ function treeAddFile(folder, cardId) {
     saveCodeCards();
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
-    showToast('📄 Fichier créé : ' + fullPath);
+    showToast(t('editor.fileCreated').replace('{path}', fullPath));
   });
 }
 
@@ -167,7 +167,7 @@ function treeRename(e, idx, cardId) {
   if (!card?.files?.[idx]) return;
   const oldPath = card.files[idx].filename;
   const oldName = oldPath.split('/').pop();
-  showInputDialog('✏️ Renommer', 'Nouveau nom', oldName, newName => {
+  showInputDialog(t('editor.renameTitle'), t('editor.renameLabel'), oldName, newName => {
     if (!newName?.trim() || newName.trim() === oldName) return;
     const parts = oldPath.split('/');
     parts[parts.length-1] = newName.trim();
@@ -175,7 +175,7 @@ function treeRename(e, idx, cardId) {
     saveCodeCards();
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
-    showToast('✏️ Renommé en ' + newName.trim());
+    showToast(t('editor.renamed').replace('{name}', newName.trim()));
   });
 }
 
@@ -184,13 +184,13 @@ function treeDelete(e, idx, cardId) {
   e.stopPropagation();
   const card = (window._codeCards||[]).find(c => c.cardId === cardId);
   if (!card?.files?.[idx]) return;
-  showConfirmDialog('🗑 Supprimer', 'Supprimer <b>' + escHtml(card.files[idx].filename) + '</b> ?', () => {
+  showConfirmDialog(t('editor.deleteTitle'), t('editor.deleteBody').replace('{name}', escHtml(card.files[idx].filename)), () => {
     card.files.splice(idx, 1);
     saveCodeCards();
     deleteFromDB(cardId); // re-sauvegarde la version mise à jour
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
-    showToast('🗑 Fichier supprimé');
+    showToast(t('editor.fileDeleted'));
   });
 }
 
@@ -208,7 +208,7 @@ function treeDropToFolder(e, targetFolder, cardId) {
     // Moving a folder into another folder
     const srcFolder = drag.folder;
     if (targetFolder === srcFolder || targetFolder.startsWith(srcFolder + '/')) {
-      showToast('⚠️ Impossible de déplacer un dossier dans lui-même'); return;
+      showToast(t('editor.cantMoveInto')); return;
     }
     const srcName = srcFolder.split('/').pop();
     const newBase = targetFolder ? targetFolder + '/' + srcName : srcName;
@@ -218,14 +218,14 @@ function treeDropToFolder(e, targetFolder, cardId) {
         ? newBase + f.filename.slice(srcFolder.length)
         : f.filename
     }));
-    showToast('📁 Dossier déplacé vers ' + (targetFolder || 'racine'));
+    showToast(t('editor.folderMoved').replace('{dest}', targetFolder || t('editor.root')));
   } else if (drag.idx !== undefined) {
     // Moving a file into a folder
     const file = card.files[drag.idx];
     if (!file) return;
     const fname = file.filename.split('/').pop();
     file.filename = targetFolder ? targetFolder + '/' + fname : fname;
-    showToast('📄 Fichier déplacé vers ' + (targetFolder || 'racine'));
+    showToast(t('editor.fileMoved').replace('{dest}', targetFolder || t('editor.root')));
   }
 
   saveCodeCards();
@@ -267,7 +267,7 @@ async function downloadAsZip(files, cardId) {
   a.href = URL.createObjectURL(blob);
   a.download = zipName;
   a.click();
-  showToast('⬇️ ' + files.filter(f => !f.filename.endsWith('.gitkeep')).length + ' fichiers téléchargés en ZIP');
+  showToast(t('editor.zipDownloaded').replace('{n}', files.filter(f => !f.filename.endsWith('.gitkeep')).length));
 }
 
 function dlFile(filename, code) {
@@ -305,7 +305,7 @@ function searchInCode(editId, query) {
   const re = new RegExp('(' + escaped + ')', 'gi');
   const matches = [...plain.matchAll(re)];
 
-  if (countEl) countEl.textContent = matches.length ? matches.length + ' résultat(s)' : 'Aucun résultat';
+  if (countEl) countEl.textContent = matches.length ? t('editor.searchCount').replace('{n}', matches.length) : t('editor.searchNone');
 
   // Highlight in innerHTML (escape HTML first)
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -366,7 +366,7 @@ function openCodeMergeSelector(targetCardId, targetFiles) {
     return { cardId: d.id, title: titleEl?.title || d.id, files: [] };
   }).filter(c => c.cardId);
 
-  if (allCards.length === 0) { showToast('⚠️ Aucun autre bloc de code disponible'); return; }
+  if (allCards.length === 0) { showToast(t('editor.mergeNoOther')); return; }
 
   document.getElementById('codeMergeModal')?.remove();
   window._codeMergeCards = allCards; // store for mergeCodeCards
@@ -385,7 +385,7 @@ function openCodeMergeSelector(targetCardId, targetFiles) {
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:4px">🏷️ ${escHtml(title)}</div>
         <div style="font-size:11px;color:var(--text);font-family:'IBM Plex Mono',monospace;margin-bottom:2px">${escHtml(fileList)}</div>
-        <div style="font-size:10px;color:var(--gray)">${(card.files||[]).length} fichier(s)</div>
+        <div style="font-size:10px;color:var(--gray)">${t('editor.filesCount').replace('{n}', (card.files||[]).length)}</div>
       </div>
     </label>`;
   }).join('');
@@ -393,13 +393,13 @@ function openCodeMergeSelector(targetCardId, targetFiles) {
   modal.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px">
       <div style="display:flex;align-items:center;padding:16px 20px;background:var(--card);border-bottom:1px solid var(--border)">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">🔀 Fusionner des blocs de code</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${t('editor.mergeTitle')}</span>
         <button onclick="document.getElementById('codeMergeModal').remove()"
           style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer">✕</button>
       </div>
       <div style="padding:16px 20px;max-height:320px;overflow-y:auto">
         <div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:12px">
-          SÉLECTIONNE LES BLOCS À FUSIONNER DANS CE BLOC
+          ${t('editor.mergeHeader')}
         </div>
         ${rows}
       </div>
@@ -407,12 +407,12 @@ function openCodeMergeSelector(targetCardId, targetFiles) {
         <button id="codeMergeConfirmBtn""
           style="flex:1;background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;
                  padding:10px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
-          🔀 Fusionner la sélection
+          ${t('editor.mergeBtn')}
         </button>
         <button onclick="document.getElementById('codeMergeModal').remove()"
           style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px 16px;
                  border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-          Annuler
+          ${t('editor.mergeCancel')}
         </button>
       </div>
     </div>`;
@@ -429,10 +429,10 @@ function openCodeMergeSelector(targetCardId, targetFiles) {
 
 function mergeCodeCards(targetCardId) {
   const checked = [...document.querySelectorAll('.code-merge-cb:checked')];
-  if (checked.length === 0) { showToast('⚠️ Sélectionne au moins un bloc'); return; }
+  if (checked.length === 0) { showToast(t('editor.mergeCheckOne')); return; }
 
   const targetCard = (window._codeCards||[]).find(c => c.cardId === targetCardId);
-  if (!targetCard) { showToast('⚠️ Bloc cible introuvable'); return; }
+  if (!targetCard) { showToast(t('editor.mergeTargetMissing')); return; }
 
   // Use cards stored when modal was opened (same order as checkboxes)
   const allCards = window._codeMergeCards || [];
@@ -502,7 +502,7 @@ function mergeCodeCards(targetCardId) {
 
   try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
   document.getElementById('codeMergeModal')?.remove();
-  showToast('🔀 ' + checked.length + ' bloc(s) fusionné(s) avec succès !');
+  showToast(t('editor.blocksMerged').replace('{n}', checked.length));
 }
 
 function mergeRobotFiles(code1, code2) {
@@ -536,7 +536,7 @@ function mergeRobotFiles(code1, code2) {
 function treeFolderRename(e, folder, cardId) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
   const oldName = folder.split('/').pop();
-  showInputDialog('✏️ Renommer le dossier', 'Nouveau nom', oldName, newName => {
+  showInputDialog(t('editor.folderRenameTitle'), t('editor.renameLabel'), oldName, newName => {
     if (!newName?.trim() || newName.trim() === oldName) return;
     const card = (window._codeCards||[]).find(c => c.cardId === cardId);
     if (!card) return;
@@ -551,7 +551,7 @@ function treeFolderRename(e, folder, cardId) {
     saveCodeCards();
     const el = document.getElementById(cardId);
     if (el) { el.remove(); renderResultCard(card.files, cardId); }
-    showToast('✏️ Dossier renommé en ' + newName.trim());
+    showToast(t('editor.folderRenamed').replace('{name}', newName.trim()));
   });
 }
 
@@ -561,14 +561,16 @@ function treeFolderDelete(e, folder, cardId) {
   const card = (window._codeCards||[]).find(c => c.cardId === cardId);
   if (!card) return;
   const count = card.files.filter(f => f.filename.startsWith(folder + '/') && !f.filename.endsWith('.gitkeep')).length;
-  showConfirmDialog('🗑 Supprimer le dossier',
-    'Supprimer <b>' + escHtml(folder.split('/').pop()) + '</b>' + (count ? ' et ses <b>' + count + '</b> fichier(s)' : ' (vide)') + ' ?',
+  showConfirmDialog(t('editor.folderDeleteTitle'),
+    t('editor.folderDeleteBody')
+      .replace('{name}', escHtml(folder.split('/').pop()))
+      .replace('{extra}', count ? t('editor.folderDeleteExtra').replace('{n}', count) : t('editor.folderDeleteEmpty')),
     () => {
       card.files = card.files.filter(f => !f.filename.startsWith(folder + '/'));
       saveCodeCards();
       const el = document.getElementById(cardId);
       if (el) { el.remove(); renderResultCard(card.files, cardId); }
-      showToast('🗑 Dossier supprimé');
+      showToast(t('editor.folderDeleted'));
     }
   );
 }

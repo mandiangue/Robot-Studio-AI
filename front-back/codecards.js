@@ -9,7 +9,7 @@
 function openCodeWindow(files) {
   // files = [{ filename, code }]
   const win = window.open('', '_blank');
-  if (!win) { showToast('⚠️ Autorise les popups dans ton navigateur'); return; }
+  if (!win) { showToast(t('codecards.popupBlocked')); return; }
 
   const tabsHtml = files.map((f, i) =>
     `<button class="tab ${i===0?'active':''}" onclick="switchTab(${i})" id="tab-${i}">${f.filename}</button>`
@@ -126,7 +126,7 @@ function renderCodeMsg(code, filename) {
   const title4 = window._lastGeneratedTitle || filename?.replace('.robot','') || 'Code RF';
   window._codeCards.push({ type: 'single', cardId: cardId4, title: title4, files: [{ filename: filename||'test_generated.robot', code: clean }] });
   saveCodeCards();
-  /* SYNC-ON-GEN */ try { window._lastCardId = cardId4; syncCardFilesToDisk(cardId4).then(() => showToast('\ud83d\udcbe Fichier synchronis\u00e9 sur disque')); } catch(e){}
+  /* SYNC-ON-GEN */ try { window._lastCardId = cardId4; syncCardFilesToDisk(cardId4).then(() => showToast(t('codecards.fileSynced'))); } catch(e){}
   // Note: variables.robot snapshot désactivé — les fichiers sont déjà dans card.files
   try { localStorage.setItem('qa_code_cards', JSON.stringify(window._codeCards)); } catch(e) {}
   renderResultCard([{ filename, code: clean }], cardId4);
@@ -521,10 +521,10 @@ function buildFileTree(files, activeTab, cardId) {
       <span class="tree-actions" style="display:flex;gap:2px;margin-left:auto">
         <button data-raction="file-rename" data-ridx="${f.idx}" data-card="${cardId}"
           style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:10px;padding:1px 3px"
-          title="Renommer">✏️</button>
+          data-i18n-title="codecards.tRename" title="Renommer">✏️</button>
         <button data-raction="file-delete" data-ridx="${f.idx}" data-card="${cardId}"
           style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:1px 3px"
-          title="Supprimer">🗑</button>
+          data-i18n-title="codecards.tDelete" title="Supprimer">🗑</button>
       </span>
     </div>`;
   };
@@ -551,21 +551,21 @@ function buildFileTree(files, activeTab, cardId) {
       <span class="tree-folder-actions" style="display:flex;gap:2px;margin-left:auto">
         <button data-raction="folder-rename" data-folder="${escHtml(folder)}" data-card="${cardId}"
           style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:10px;padding:1px 3px"
-          title="Renommer">✏️</button>
+          data-i18n-title="codecards.tRename" title="Renommer">✏️</button>
         <button data-raction="folder-delete" data-folder="${escHtml(folder)}" data-card="${cardId}"
           style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:1px 3px"
-          title="Supprimer">🗑</button>
+          data-i18n-title="codecards.tDelete" title="Supprimer">🗑</button>
       </span>
     </div>`;
   };
 
-  const addFileBtn = (folder) => `<button onclick="treeAddFile('${escHtml(folder)}','${cardId}')"
+  const addFileBtn = (folder) => `<button onclick="treeAddFile('${escHtml(folder)}','${cardId}')" data-i18n="codecards.newFile" data-i18n-title="codecards.tNewFile"
     style="display:flex;align-items:center;gap:4px;padding:2px 8px 2px ${folder?'28px':'16px'};
            background:transparent;border:none;color:rgba(0,212,170,0.5);cursor:pointer;font-size:10px;
            font-family:'IBM Plex Mono',monospace;width:100%;text-align:left"
     title="Nouveau fichier">+ nouveau fichier</button>`;
 
-  const addFolderBtn = (parentFolder) => `<button onclick="treeAddFolder('${escHtml(parentFolder)}','${cardId}')"
+  const addFolderBtn = (parentFolder) => `<button onclick="treeAddFolder('${escHtml(parentFolder)}','${cardId}')" data-i18n="codecards.newFolder" data-i18n-title="codecards.tNewFolder"
     style="display:flex;align-items:center;gap:4px;padding:2px 8px 2px ${parentFolder?'28px':'16px'};
            background:transparent;border:none;color:rgba(168,85,247,0.6);cursor:pointer;font-size:10px;
            font-family:'IBM Plex Mono',monospace;width:100%;text-align:left"
@@ -614,6 +614,24 @@ function treeFolderToggle(e, colKey, cardId) {
   const el = document.getElementById(cardId);
   if (el && card) { el.remove(); renderResultCard(card.files, cardId); }
 }
+// Bascule de langue : retraduit SEULEMENT le toggle (état via emoji) et le compteur d'en-tête.
+// Le reste du chrome est géré par applyI18n(document) ; on n'appelle JAMAIS buildCard ici
+// (préserve onglet actif, éditeur ouvert, textarea non sauvé, cases cochées, _treeCollapsed).
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(() => {
+  document.querySelectorAll('[data-cc-edittoggle]').forEach(b => {
+    b.textContent = b.textContent.includes('👁') ? t('codecards.view') : t('codecards.edit');
+  });
+  document.querySelectorAll('[id^="cc-header-"]').forEach(el => {
+    const cardId = el.id.slice('cc-header-'.length);
+    const card = (window._codeCards||[]).find(c => c.cardId === cardId); if (!card) return;
+    const files = (card.files||[]).filter(f => !f.filename.endsWith('.gitkeep'));
+    el.innerHTML = files.length > 1
+      ? `⠿ ✅ ${t('codecards.filesGenerated').replace('{n}', files.length)}`
+      : `⠿ ✅ 📄 ${escHtml(files[0]?.filename||'')}`;
+  });
+});
+
 function renderResultCard(files, existingCardId) {
   const cardId  = existingCardId || ('result-' + Date.now());
   const isMulti = files.length > 1;
@@ -643,7 +661,7 @@ function renderResultCard(files, existingCardId) {
     const runSelector = isMulti ? `
       <select data-card="${cardId}" data-raction="runselect"
         style="background:var(--code);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 8px;outline:none;min-width:160px">
-        <option value="all">▶ Tous les fichiers</option>
+        <option value="all" data-i18n="codecards.runAll">▶ Tous les fichiers</option>
         ${files.map((f,i) => `<option value="${i}">▶ ${escHtml(f.filename.split('/').pop())}</option>`).join('')}
       </select>` : '';
 
@@ -678,8 +696,8 @@ function renderResultCard(files, existingCardId) {
 
           <!-- Card header -->
           <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap">
-            <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--teal);font-weight:600;cursor:grab" title="Glisser vers la Test Suite">
-              ⠿ ✅ ${isMulti ? files.length + ' fichiers générés' : '📄 ' + escHtml(f.filename)}
+            <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--teal);font-weight:600;cursor:grab" data-i18n-title="codecards.tDrag" title="Glisser vers la Test Suite">
+              <span id="cc-header-${cardId}">⠿ ✅ ${isMulti ? t('codecards.filesGenerated').replace('{n}', files.length) : '📄 ' + escHtml(f.filename)}</span>
             </span>
             ${(() => {
               const card = (window._codeCards||[]).find(c => c.cardId === cardId);
@@ -688,30 +706,30 @@ function renderResultCard(files, existingCardId) {
             })()}
             <div style="display:flex;gap:4px;flex-wrap:nowrap;align-items:center;flex-shrink:0;margin-left:auto">
               ${runSelector}
-              <button data-card="${cardId}" data-raction="toggleedit"
-                style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Éditer le code">✏️ Éditer</button>
-              <button data-card="${cardId}" data-raction="run"
+              <button data-card="${cardId}" data-raction="toggleedit" data-cc-edittoggle data-i18n-title="codecards.tEditCode"
+                style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Éditer le code">${t('codecards.edit')}</button>
+              <button data-card="${cardId}" data-raction="run" data-i18n="codecards.run"
                 style="background:linear-gradient(135deg,#22c55e,#16a34a);border:none;color:#07090f;
                        padding:6px 14px;border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;
                        font-weight:700;cursor:pointer;white-space:nowrap">
                 ▶️ Run
               </button>
-              <button data-card="${cardId}" data-raction="merge-code"
+              <button data-card="${cardId}" data-raction="merge-code" data-i18n="codecards.select" data-i18n-title="codecards.tSelectMerge"
                 style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.3);color:#c084fc;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Sélectionner des blocs à fusionner">☑ Sélectionner</button>
-              <button data-card="${cardId}" data-raction="copy"
-                title="Copier le code" style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">📋</button>
-              <button data-card="${cardId}" data-raction="download"
-                title="Télécharger ce fichier" style="background:rgba(245,158,11,0.08);border:1px solid var(--warn);color:var(--warn);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Télécharger ce fichier">⬇️</button>
-              ${isMulti ? `<button data-card="${cardId}" data-raction="downloadall"
-                title="Télécharger tous les fichiers" style="background:rgba(59,130,246,0.08);border:1px solid #60a5fa;color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Télécharger tous les fichiers">⬇️ Tout</button>` : ''}
-              <button id="tagBtn-${cardId}" onclick="toggleCardTag('${cardId}')"
-                style="background:rgba(0,0,0,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Taguer pour deploy">Tag</button>
-              <button data-card="${cardId}" data-raction="zoom-in"
-                style="background:rgba(0,212,170,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Zoom +">＋</button>
-              <button data-card="${cardId}" data-raction="zoom-out"
-                style="background:rgba(0,212,170,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Zoom -">－</button>
-              <button data-card="${cardId}" data-raction="reset"
-                style="background:rgba(230,57,70,0.08);border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Supprimer">✕</button>
+              <button data-card="${cardId}" data-raction="copy" data-i18n-title="codecards.tCopy"
+                style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">📋</button>
+              <button data-card="${cardId}" data-raction="download" data-i18n-title="codecards.tDownload"
+                style="background:rgba(245,158,11,0.08);border:1px solid var(--warn);color:var(--warn);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">⬇️</button>
+              ${isMulti ? `<button data-card="${cardId}" data-raction="downloadall" data-i18n="codecards.downloadAll" data-i18n-title="codecards.tDownloadAll"
+                style="background:rgba(59,130,246,0.08);border:1px solid #60a5fa;color:#60a5fa;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">⬇️ Tout</button>` : ''}
+              <button id="tagBtn-${cardId}" onclick="toggleCardTag('${cardId}')" data-i18n="codecards.tag" data-i18n-title="codecards.tTag"
+                style="background:rgba(0,0,0,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">Tag</button>
+              <button data-card="${cardId}" data-raction="zoom-in" data-i18n-title="codecards.tZoomIn"
+                style="background:rgba(0,212,170,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer">＋</button>
+              <button data-card="${cardId}" data-raction="zoom-out" data-i18n-title="codecards.tZoomOut"
+                style="background:rgba(0,212,170,0.06);border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer">－</button>
+              <button data-card="${cardId}" data-raction="reset" data-i18n-title="codecards.tReset"
+                style="background:rgba(230,57,70,0.08);border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">✕</button>
             </div>
           </div>
 
@@ -723,11 +741,11 @@ function renderResultCard(files, existingCardId) {
   ondragover="event.preventDefault()"
   ondrop="treeDropToFolder(event,'','${cardId}')">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px 8px;border-bottom:1px solid var(--border);margin-bottom:6px">
-                <span style="font-size:9px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px">ARBORESCENCE</span>
-                <label title="Importer .robot .py .png .jpg"
+                <span data-i18n="codecards.tree" style="font-size:9px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px">ARBORESCENCE</span>
+                <label data-i18n-title="codecards.tImport" title="Importer .robot .py .png .jpg"
                   style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);
                          padding:2px 8px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-                  ⬆ Import
+                  <span data-i18n="codecards.import">⬆ Import</span>
                   <input type="file" multiple accept=".robot,.py,.png,.jpg,.jpeg"
                     style="display:none"
                     onchange="treeHandleUpload(event,'${cardId}')" />
@@ -740,14 +758,14 @@ function renderResultCard(files, existingCardId) {
             <div style="flex:1;min-width:0;display:flex;flex-direction:column">
               <!-- Search bar -->
               <div id="${editId}-search" style="display:none;padding:6px 10px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-                <input id="${editId}-search-input" placeholder="🔍 Rechercher..." type="text"
+                <input id="${editId}-search-input" data-i18n-ph="codecards.searchPh" placeholder="🔍 Rechercher…" type="text"
                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;
                          color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:4px 8px;outline:none"
                   oninput="searchInCode('${editId}', this.value)"
                   onkeydown="if(event.key==='Escape'){document.getElementById('${editId}-search').style.display='none';document.getElementById('${editId}-search-input').value='';searchInCode('${editId}','')}" />
                 <span id="${editId}-search-count" style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;white-space:nowrap"></span>
-                <button onclick="navigateSearch('${editId}',-1)" style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px" title="Précédent">▲</button>
-                <button onclick="navigateSearch('${editId}',1)"  style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px" title="Suivant">▼</button>
+                <button onclick="navigateSearch('${editId}',-1)" style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px" data-i18n-title="codecards.tPrev" title="Précédent">▲</button>
+                <button onclick="navigateSearch('${editId}',1)"  style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px" data-i18n-title="codecards.tNext" title="Suivant">▼</button>
                 <button onclick="document.getElementById('${editId}-search').style.display='none';searchInCode('${editId}','')"
                   style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:14px">✕</button>
               </div>
@@ -766,11 +784,11 @@ function renderResultCard(files, existingCardId) {
                          padding:14px;outline:none;resize:vertical;box-sizing:border-box;white-space:pre;overflow-x:auto"
                   spellcheck="false">${escHtml(rawCode)}</textarea>
                 <div style="display:flex;gap:8px;padding:10px 14px;background:var(--card);border-top:1px solid var(--border)">
-                  <button data-card="${cardId}" data-raction="applyedit" data-editid="${editId}"
+                  <button data-card="${cardId}" data-raction="applyedit" data-editid="${editId}" data-i18n="codecards.apply"
                     style="background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;padding:8px 18px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
                     ✅ Appliquer
                   </button>
-                  <button data-card="${cardId}" data-raction="canceledit" data-editid="${editId}"
+                  <button data-card="${cardId}" data-raction="canceledit" data-editid="${editId}" data-i18n="codecards.cancel"
                     style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:8px 14px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
                     Annuler
                   </button>
@@ -782,6 +800,9 @@ function renderResultCard(files, existingCardId) {
 
         </div>
       </div>`;
+
+    // Synchronise le chrome (data-i18n / -ph / -title) à la langue courante dès le rendu
+    if (window.applyI18n) applyI18n(div);
 
     // Event delegation
     div.onclick = async e => {
@@ -824,7 +845,7 @@ function renderResultCard(files, existingCardId) {
         const isEditing = editor.style.display !== 'none';
         view.style.display   = isEditing ? 'block' : 'none';
         editor.style.display = isEditing ? 'none'  : 'block';
-        btn.textContent = isEditing ? '✏️ Éditer' : '👁 Voir';
+        btn.textContent = isEditing ? t('codecards.edit') : t('codecards.view');
       } else if (action === 'applyedit') {
         const eid = btn.dataset.editid;
         const ta  = document.getElementById(eid + '-ta');
@@ -875,7 +896,7 @@ function renderResultCard(files, existingCardId) {
         }
         // Re-render card to update syntax highlight
         buildCard(activeTab);
-        showToast('✅ Code mis à jour — fichier synchronisé');
+        showToast(t('codecards.codeUpdated'));
       } else if (action === 'canceledit') {
         const eid    = btn.dataset.editid;
         const view   = document.getElementById(eid + '-view');
@@ -911,7 +932,7 @@ function renderResultCard(files, existingCardId) {
         runTestsFromCard(combined, fname);
       } else if (action === 'copy') {
         navigator.clipboard.writeText(files[activeTab].code)
-          .then(() => showToast('📋 Copié !'));
+          .then(() => showToast(t('codecards.copied')));
       } else if (action === 'download') {
         dlFile(files[activeTab].filename, files[activeTab].code);
       } else if (action === 'downloadall') {
@@ -930,7 +951,7 @@ function renderResultCard(files, existingCardId) {
       } else if (action === 'reset') {
         const card = (window._codeCards||[]).find(c => c.cardId === cardId);
         const blockTitle = card?.title || (files[0]?.filename || 'ce bloc');
-        showConfirmDialog('🗑 Supprimer le bloc', 'Supprimer <b>' + escHtml(blockTitle) + '</b> ?', () => {
+        showConfirmDialog(t('codecards.deleteBlockTitle'), t('codecards.deleteBlockBody').replace('{name}', escHtml(blockTitle)), () => {
           window._codeCards = (window._codeCards||[]).filter(c => c.cardId !== cardId);
           // Remove from suiteRegistry
           suiteRegistry = (suiteRegistry||[]).filter(t => t.cardId !== cardId);
