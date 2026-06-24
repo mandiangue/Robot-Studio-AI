@@ -45,22 +45,12 @@
     </div>
     <div class="key-status" id="keyStatus">⬤ no key</div>
     <div style="position:relative" id="langSelectorWrap">
-      <button onclick="toggleLangMenu()" id="langBtn"
-        
-        aria-label="Changer de langue">
+      <button onclick="toggleLang()" id="langBtn"
+        title="FR / EN"
+        aria-label="Changer de langue (FR / EN)">
         <span id="langFlag">🇫🇷</span>
         <span id="langName">FR</span>
-        <span style="font-size:9px;color:var(--gray)">▼</span>
       </button>
-      <div id="langMenu"
-        style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);
-               border:1px solid var(--border);border-radius:10px;overflow:hidden;z-index:100;min-width:150px;
-               box-shadow:0 8px 24px rgba(0,0,0,0.4)">
-        <button onclick="setLang('fr')" class="lang-opt">🇫🇷 Français</button>
-        <button onclick="setLang('en')" class="lang-opt">🇬🇧 English</button>
-        <button onclick="setLang('es')" class="lang-opt">🇪🇸 Español</button>
-        <button onclick="setLang('pt')" class="lang-opt">🇵🇹 Português</button>
-      </div>
     </div>
     <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" aria-label="Changer de thème" title="Changer de thème">🌙</button>
     <button class="clear-btn" onclick="clearChat()" data-i18n="clearChat">✕ reset</button>

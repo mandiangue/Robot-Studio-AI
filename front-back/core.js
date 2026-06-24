@@ -310,95 +310,21 @@ const TRANSLATIONS = {
     history:          '📜 History',
     download:         '⬇️ Download',
   },
-  es: {
-    flag: '🇪🇸', name: 'ES',
-    poweredBy:        'impulsado por Claude',
-    clearChat:        '✕ reset',
-    generation:       '⚡ GENERACIÓN',
-    connections:      '🔗 CONEXIONES',
-    options:          '⚙️ OPCIONES',
-    motto:            '💡 La IA no reemplaza al QA — elimina las partes tediosas para que te centres en lo que importa.',
-    genTestCases:     '📋 Generar casos de prueba',
-    genTestCasesDesc: 'Descripción libre → lista editable',
-    genRFCode:        '⚡ Generar código RF',
-    genRFCodeDesc:    'Casos → archivo .robot',
-    styleBDD:         '📝 Estilo BDD',
-    styleBDDDesc:     'Given / When / Then',
-    azureTitle:       'Azure DevOps',
-    jiraTitle:        'Jira',
-    notConnected:     'no conectado',
-    urlLabel:         'URL del proyecto',
-    tokenLabel:       'Token (PAT)',
-    usNumberLabel:    'Número de US',
-    jiraUrlLabel:     'URL Jira',
-    emailLabel:       'Email',
-    apiTokenLabel:    'Token API',
-    taskNumberLabel:  'Número de tarea',
-    fetchBtn:         'Buscar',
-    connectBtn:       '🔗 Conectar',
-    libLabel:         'LIB',
-    styleLabel:       'ESTILO',
-    modeLabel:        'MODO',
-    browserLabel:     'BROWSER',
-    withBrowser:      '🖥️ Con navegador',
-    withoutBrowser:   '🔇 Sin navegador',
-    inputHint:        '↵ Enviar · ⇧↵ Nueva línea',
-    submitBtn:        'ENVIAR',
-    welcomeTitle:     '👋 ¡Hola! Soy tu **QA Agent** especializado en Robot Framework.',
-    runTests:         '▶️ Ejecutar pruebas',
-    editReport:       '✏️ Editar',
-    history:          '📜 Historial',
-    download:         '⬇️ Descargar',
-  },
-  pt: {
-    flag: '🇵🇹', name: 'PT',
-    poweredBy:        'desenvolvido com Claude',
-    clearChat:        '✕ reset',
-    generation:       '⚡ GERAÇÃO',
-    connections:      '🔗 CONEXÕES',
-    options:          '⚙️ OPÇÕES',
-    motto:            '💡 A IA não substitui o QA — elimina as partes tediosas para que se concentre no que importa.',
-    genTestCases:     '📋 Gerar casos de teste',
-    genTestCasesDesc: 'Descrição livre → lista editável',
-    genRFCode:        '⚡ Gerar código RF',
-    genRFCodeDesc:    'Casos → arquivo .robot',
-    styleBDD:         '📝 Estilo BDD',
-    styleBDDDesc:     'Given / When / Then',
-    azureTitle:       'Azure DevOps',
-    jiraTitle:        'Jira',
-    notConnected:     'não conectado',
-    urlLabel:         'URL do projeto',
-    tokenLabel:       'Token (PAT)',
-    usNumberLabel:    'Número da US',
-    jiraUrlLabel:     'URL Jira',
-    emailLabel:       'Email',
-    apiTokenLabel:    'Token API',
-    taskNumberLabel:  'Número da tarefa',
-    fetchBtn:         'Buscar',
-    connectBtn:       '🔗 Conectar',
-    libLabel:         'LIB',
-    styleLabel:       'ESTILO',
-    modeLabel:        'MODO',
-    browserLabel:     'BROWSER',
-    withBrowser:      '🖥️ Com navegador',
-    withoutBrowser:   '🔇 Sem navegador',
-    inputHint:        '↵ Enviar · ⇧↵ Nova linha',
-    submitBtn:        'ENVIAR',
-    welcomeTitle:     '👋 Olá! Sou o seu **QA Agent** especializado em Robot Framework.',
-    runTests:         '▶️ Executar testes',
-    editReport:       '✏️ Editar',
-    history:          '📜 Histórico',
-    download:         '⬇️ Baixar',
-  },
 };
 
 let currentLang = 'fr';
+
+// Registre de hooks de re-render pour les modules qui rendent hors [data-i18n]
+// (rapports, etc.) : setLang() appelle chaque hook apres avoir retraduit le DOM.
+window.__i18nRerender = window.__i18nRerender || [];
 
 function t(key) {
   return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['fr'][key] || key;
 }
 
 function setLang(lang) {
+  // Deux langues seulement : tout le reste retombe sur fr (ex. ancien 'es'/'pt' en localStorage)
+  if (lang !== 'fr' && lang !== 'en') lang = 'fr';
   currentLang = lang;
   const tr = TRANSLATIONS[lang];
   try { localStorage.setItem('qa_agent_lang', lang); } catch(e) {}
@@ -406,7 +332,6 @@ function setLang(lang) {
   // Update flag + name in button
   document.getElementById('langFlag').textContent = tr.flag;
   document.getElementById('langName').textContent  = tr.name;
-  document.getElementById('langMenu').style.display = 'none';
   document.documentElement.lang = lang;
 
   // Update all data-i18n elements
@@ -430,22 +355,17 @@ function setLang(lang) {
     }
   });
 
+  // Re-render des modules hors [data-i18n] (rapports, etc.)
+  window.__i18nRerender.forEach(fn => { try { fn(currentLang); } catch(e) {} });
+
   // Update document title hint
-  showToast(tr.flag + ' ' + (lang === 'fr' ? 'Français' : lang === 'en' ? 'English' : lang === 'es' ? 'Español' : 'Português'));
+  showToast(tr.flag + ' ' + (lang === 'en' ? 'English' : 'Français'));
 }
 
-function toggleLangMenu() {
-  const menu = document.getElementById('langMenu');
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+// Sélecteur = simple bascule FR <-> EN (plus de menu déroulant)
+function toggleLang() {
+  setLang(currentLang === 'en' ? 'fr' : 'en');
 }
-
-// Close lang menu when clicking outside
-document.addEventListener('click', e => {
-  if (!document.getElementById('langSelectorWrap')?.contains(e.target)) {
-    const menu = document.getElementById('langMenu');
-    if (menu) menu.style.display = 'none';
-  }
-});
 
 // Restore language on load
 document.addEventListener('DOMContentLoaded', () => {
