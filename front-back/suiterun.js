@@ -8,7 +8,7 @@ function addNewSuiteGroup() {
   cleanSuiteRegistry(); // nettoie avant d'afficher
   const cards = (window._codeCards||[]).filter(c => c.type !== 'report' && c.type !== 'suite-report' && c.cardId);
   if (cards.length === 0) {
-    showToast('⚠️ Génère d\'abord du code RF avant de créer une suite');
+    showToast(t('suiterun.genCodeFirst'));
     return;
   }
 
@@ -18,7 +18,7 @@ function addNewSuiteGroup() {
   modal.id = '_suitePickerModal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
 
-  const _fmtDate = (cardId, card) => { let ts=null; const m=String(cardId||'').match(/(\d{10,})/); if(m) ts=parseInt(m[1]); if((!ts||isNaN(ts))&&card&&card.createdAt) ts=new Date(card.createdAt).getTime(); if(!ts||isNaN(ts)) return ''; try { return new Date(ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',',''); } catch(e){ return ''; } };
+  const _fmtDate = (cardId, card) => { let ts=null; const m=String(cardId||'').match(/(\d{10,})/); if(m) ts=parseInt(m[1]); if((!ts||isNaN(ts))&&card&&card.createdAt) ts=new Date(card.createdAt).getTime(); if(!ts||isNaN(ts)) return ''; try { return new Date(ts).toLocaleString(currentLang==='en'?'en-GB':'fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',',''); } catch(e){ return ''; } };
   const rows = cards.map((card, i) => {
     const title = card.title || card.files?.[0]?.filename?.replace('.robot','') || 'Bloc ' + (i+1);
     const fileCount = card.files?.length || 0;
@@ -29,22 +29,22 @@ function addNewSuiteGroup() {
       <input type="checkbox" value="${i}" class="suite-picker-cb" style="accent-color:var(--teal);width:16px;height:16px;cursor:pointer" />
       <div style="flex:1">
         <div style="font-size:13px;font-weight:700;color:var(--text)">${escHtml(title)}</div>
-        <div style="font-size:11px;color:var(--gray)">${fileCount} fichier(s)${dateStr ? ' \u00b7 \ud83d\udd5b ' + dateStr : ''}</div>
+        <div style="font-size:11px;color:var(--gray)">${(fileCount>1?t('suiterun.fileCountMany'):t('suiterun.fileCountOne')).replace('{n}', fileCount)}${dateStr ? ' \u00b7 \ud83d\udd5b ' + dateStr : ''}</div>
       </div>
-      <span onclick="event.preventDefault();event.stopPropagation();this.closest('label').remove()" title="Retirer de la liste" style="cursor:pointer;color:var(--gray);font-size:16px;padding:2px 8px;border-radius:5px;flex-shrink:0" onmouseover="this.style.color='#ff5c5c'" onmouseout="this.style.color='var(--gray)'">\u2715</span>
+      <span onclick="event.preventDefault();event.stopPropagation();this.closest('label').remove()" title="${t('suiterun.removeFromList')}" style="cursor:pointer;color:var(--gray);font-size:16px;padding:2px 8px;border-radius:5px;flex-shrink:0" onmouseover="this.style.color='#ff5c5c'" onmouseout="this.style.color='var(--gray)'">\u2715</span>
     </label>`;
   }).join('');
 
   modal.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:480px">
       <div style="display:flex;align-items:center;padding:16px 20px;background:var(--card);border-bottom:1px solid var(--border)">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">🧪 Créer une suite</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${t('suiterun.createSuiteTitle')}</span>
         <button onclick="document.getElementById('_suitePickerModal').remove()"
           style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer">✕</button>
       </div>
       <div style="padding:14px 20px">
         <div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:12px">
-          SÉLECTIONNE LES BLOCS À INCLURE
+          ${t('suiterun.selectBlocks')}
         </div>
         <div style="max-height:320px;overflow-y:auto">${rows}</div>
       </div>
@@ -52,12 +52,12 @@ function addNewSuiteGroup() {
         <button id="_suitePickerCreate"
           style="flex:1;background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;
                  padding:10px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
-          ✅ Créer la suite
+          ${t('suiterun.createSuiteBtn')}
         </button>
         <button onclick="document.getElementById('_suitePickerModal').remove()"
           style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px 16px;
                  border-radius:8px;font-size:13px;cursor:pointer">
-          Annuler
+          ${t('suiterun.cancel')}
         </button>
       </div>
     </div>`;
@@ -66,7 +66,7 @@ function addNewSuiteGroup() {
 
   document.getElementById('_suitePickerCreate').onclick = () => {
     const checked = [...document.querySelectorAll('.suite-picker-cb:checked')];
-    if (checked.length === 0) { showToast('⚠️ Sélectionne au moins un bloc'); return; }
+    if (checked.length === 0) { showToast(t('suiterun.selectOneBlock')); return; }
 
     const n = savedSuites.length + 1;
     const newSuite = { id: 'S' + Date.now(), title: 'Suite ' + n, testIds: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
@@ -104,7 +104,7 @@ function addNewSuiteGroup() {
     renderSavedSuites();
     renderSuiteTestList();
     modal.remove();
-    showToast('🧪 Suite créée avec ' + checked.length + ' bloc(s)');
+    showToast((checked.length>1?t('suiterun.suiteCreatedMany'):t('suiterun.suiteCreatedOne')).replace('{n}', checked.length));
   };
 }
 
@@ -115,7 +115,7 @@ function updateSuiteGroupTitle(idx, val) {
 function deleteSuiteGroup(idx) {
   const suite = savedSuites[idx];
   if (!suite) return;
-  showConfirmDialog('🗑 Supprimer la suite', 'Supprimer la suite <b>' + escHtml(suite.title) + '</b> ?', () => {
+  showConfirmDialog(t('suiterun.deleteSuiteTitle'), t('suiterun.deleteSuiteBody').replace('{title}', escHtml(suite.title)), () => {
     savedSuites.splice(idx, 1);
     saveSuitesList();
     // Supprimer aussi les suite-reports liés dans MongoDB
@@ -124,7 +124,7 @@ function deleteSuiteGroup(idx) {
     window._codeCards = (window._codeCards||[]).filter(c => !(c.type === 'suite-report' && c.suiteTitle === suite.title));
     saveCodeCards();
     renderSavedSuites();
-    showToast('🗑 Suite supprimée');
+    showToast(t('suiterun.suiteDeleted'));
   });
 }
 
@@ -158,12 +158,12 @@ function stopSuiteGroup(suiteId) {
   if (runBtn)  runBtn.style.display  = 'inline-flex';
   if (stopBtn) stopBtn.style.display = 'none';
   const _stoppedSuite = savedSuites.find(s => s.id === suiteId);
-  showToast('⏹ Suite "' + (_stoppedSuite?.title || suiteId) + '" arrêtée');
+  showToast(t('suiterun.suiteStopped').replace('{title}', _stoppedSuite?.title || suiteId));
 }
 async function runSuiteGroup(idx) {
   if (window._suiteRunning) {
     // Ask user if they want to force restart
-    showToast('⚠️ Une suite est déjà en cours — recharge la page si bloqué');
+    showToast(t('suiterun.suiteAlreadyRunning'));
     return;
   }
   window._suiteRunning = true;
@@ -182,7 +182,7 @@ async function runSuiteGroup(idx) {
       return true;
     });
 
-  if (tests.length === 0) { showToast('⚠️ Aucun test dans cette suite'); return; }
+  if (tests.length === 0) { showToast(t('suiterun.noTestInSuite')); return; }
 
   window._suiteBloc_reports = []; // reset
   window._suiteTotal = tests.length;
@@ -207,7 +207,7 @@ async function runSuiteGroup(idx) {
   suiteProgressDiv.innerHTML =
     '<div class="msg-avatar">🤖</div>' +
     '<div class="msg-body"><div class="msg-bubble" style="padding:10px 14px">' +
-    '<span id="suite-progress-label" style="font-size:13px;font-weight:600">⏳ Suite : ' + escHtml(suite.title) + ' — 0/' + tests.length + '</span>' +
+    '<span id="suite-progress-label" style="font-size:13px;font-weight:600">' + escHtml(t('suiterun.progressStart').replace('{title}', suite.title).replace('{n}', tests.length)) + '</span>' +
     '</div></div>';
   document.getElementById('messages').appendChild(suiteProgressDiv);
   suiteProgressDiv.scrollIntoView({ behavior: 'smooth' });
@@ -216,10 +216,10 @@ async function runSuiteGroup(idx) {
   window._suiteStopped = false;
   try {
   for (let i = 0; i < tests.length; i++) {
-    if (window._suiteStopped) { showToast('⏹ Suite arrêtée'); break; }
+    if (window._suiteStopped) { showToast(window.t('suiterun.suiteStoppedShort')); break; }
     // Update progress label using the specific div for this run
     const lbl = suiteProgressDiv.querySelector('#suite-progress-label');
-    if (lbl) lbl.textContent = '⏳ Suite : ' + suite.title + ' — ' + (i+1) + '/' + tests.length + ' en cours...';
+    if (lbl) lbl.textContent = window.t('suiterun.progressRunning').replace('{title}', suite.title).replace('{i}', i+1).replace('{n}', tests.length);
     const t = tests[i];
 
     const fname = 'suite_' + suite.id + '_' + (i+1) + '.robot';
@@ -288,8 +288,8 @@ async function runSuiteGroup(idx) {
   // Update progress to done
   const finalLbl = suiteProgressDiv.querySelector('#suite-progress-label');
   if (finalLbl) finalLbl.textContent = window._suiteStopped
-    ? '⏹ Suite arrêtée : ' + suite.title + ' — arrêt manuel'
-    : '✅ Suite : ' + suite.title + ' — ' + tests.length + '/' + tests.length + ' terminé';
+    ? t('suiterun.progressManualStop').replace('{title}', suite.title)
+    : t('suiterun.progressDone').replace('{title}', suite.title).replace(/\{n\}/g, tests.length);
 
   // Consolidated report will be rendered by result handler when all blocs complete
   // Fallback: render now if not already rendered
@@ -313,15 +313,15 @@ async function runSuiteGroup(idx) {
   const _stopBtnEnd = document.getElementById('stopBtn-' + suite.id);
   if (_runBtnEnd)  _runBtnEnd.style.display  = 'inline-flex';
   if (_stopBtnEnd) _stopBtnEnd.style.display = 'none';
-  showToast('✅ Suite ' + suite.title + ' terminée — ' + tests.length + ' bloc(s)');
+  showToast((tests.length>1?t('suiterun.suiteFinishedMany'):t('suiterun.suiteFinishedOne')).replace('{title}', suite.title).replace('{n}', tests.length));
 }
 
 
 async function runCheckedSuiteGroups() {
-  if (window._suiteBatchRunning || window._suiteRunning) { showToast('⏳ Une suite est déjà en cours'); return; }
+  if (window._suiteBatchRunning || window._suiteRunning) { showToast(t('suiterun.suiteAlreadyRunning2')); return; }
   // dedup : un meme suiteId ne doit etre lance qu'une fois par clic
   const ids = [...new Set([...document.querySelectorAll('.suite-group-cb:checked')].map(cb => cb.dataset.suiteId))];
-  if (ids.length === 0) { showToast('⚠️ Coche au moins une suite'); return; }
+  if (ids.length === 0) { showToast(t('suiterun.checkOneSuite')); return; }
   window._suiteBatchRunning = true;
   try {
     for (const id of ids) {
@@ -341,7 +341,7 @@ function toggleSuiteTest(suiteIdx, tid) {
   t.enabled = t.enabled === false ? true : false;
   saveSuiteRegistry();
   renderSavedSuites();
-  showToast(t.enabled ? '✅ Activé' : '⬜ Désactivé');
+  showToast(t.enabled ? window.t('suiterun.enabled') : window.t('suiterun.disabled'));
 }
 
 
@@ -420,7 +420,7 @@ function suiteDropReorder(toSi, toTi) {
   renderSavedSuites();
   window._dsi = undefined;
   window._dti = undefined;
-  showToast('🔀 Ordre mis à jour');
+  showToast(t('suiterun.orderUpdated'));
 }
 
 // ── Drag & drop to reorder tests within a suite ───────────────────────────────
@@ -496,9 +496,9 @@ function onSuiteDrop(e, suiteIdx) {
     }
     renderSuiteTestList();
     renderSavedSuites();
-    showToast('🧪 ' + id + ' ajouté à "' + savedSuites[suiteIdx].title + '"');
+    showToast(t('suiterun.addedToSuite').replace('{id}', id).replace('{title}', savedSuites[suiteIdx].title));
   } catch(err) {
-    showToast('⚠️ Drop impossible : ' + err.message);
+    showToast(t('suiterun.dropImpossible') + err.message);
   }
 }
 // ── Suite panel drag resize ───────────────────────────────────────────────────
