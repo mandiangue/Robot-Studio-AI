@@ -193,7 +193,7 @@ window.loadHistory = async function loadHistory() {
     try {
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), 5000);
-      const r = await fetch('http://localhost:3001/api/storage/all', { signal: ctrl.signal });
+      const r = await fetch('/api/storage/all', { signal: ctrl.signal });
       clearTimeout(timeout);
       const d = await r.json();
       if (d.ok && d.cards?.length > 0) {

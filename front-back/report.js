@@ -744,7 +744,7 @@ function renderConsolidatedSuiteReport_inline() {
   };
 
   // Broadcaster la fin de suite dans le live panel
-  fetch('http://localhost:3001/api/rf/live-suite-end', {
+  fetch('/api/rf/live-suite-end', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

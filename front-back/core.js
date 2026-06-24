@@ -124,7 +124,7 @@ function clearChat() {
     } catch(e) {}
     // Vide les collections MongoDB
     try {
-      await fetch('http://localhost:3001/api/storage/clear', { method: 'DELETE' });
+      await fetch('/api/storage/clear', { method: 'DELETE' });
     } catch(e) { console.warn('MongoDB clear error:', e.message); }
     document.getElementById('messages').innerHTML = '';
     showWelcome();
@@ -858,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Poll server every 3s to check if run completed
       const pollInterval = setInterval(async () => {
         try {
-          const resp = await fetch('http://localhost:3001/api/rf/status');
+          const resp = await fetch('/api/rf/status');
           if (!resp.ok) return;
           const data = await resp.json();
           if (data.status === 'idle' && data.results) {
@@ -917,10 +917,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Charger la clé API depuis le serveur (chiffrée dans .env)
   (async () => {
     try {
-      const tokenR = await fetch('http://localhost:3001/api/config/token');
+      const tokenR = await fetch('/api/config/token');
       const tokenD = await tokenR.json();
       const provider = localStorage.getItem('qa_provider') || 'anthropic';
-      const keyR = await fetch(`http://localhost:3001/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
+      const keyR = await fetch(`/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
       if (keyR.ok) {
         const keyD = await keyR.json();
         if (keyD.key) {
@@ -938,7 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Connexion SSE permanente pour sync VS Code → UI
   (function connectSyncSSE() {
-    const es = new EventSource('http://localhost:3001/api/rf/live-stream');
+    const es = new EventSource('/api/rf/live-stream');
     es.addEventListener('file-changed', e => {
       const { filepath, content } = JSON.parse(e.data);
       let updated = false;

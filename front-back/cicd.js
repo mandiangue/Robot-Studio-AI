@@ -128,7 +128,7 @@ async function _cicdPush(provider){
   // ── Étape 1 : git status (diff)
   var diffData = null;
   try {
-    var diffRes = await fetch('http://localhost:3001/api/cicd/diff', {
+    var diffRes = await fetch('/api/cicd/diff', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({provider,url,token,branch,folder,files})
     });
@@ -199,7 +199,7 @@ function _showDiffDialog({added,modified,unchanged,deleted,toPush,provider,url,t
 async function _cicdDoPush(provider,url,token,branch,newBranch,msg,folder,files,statusEl){
   if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">'+escHtml(t('cicd.pushing'))+'</span>';}
   try{
-    var res=await fetch('http://localhost:3001/api/cicd/push',{method:'POST',headers:{'Content-Type':'application/json'},
+    var res=await fetch('/api/cicd/push',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({provider,url,token,branch,newBranch,msg,folder,files})});
     var data=await res.json();
     if(data.ok){if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">'+escHtml(t('cicd.pushSuccess'))+'</span>';showToast(t('cicd.pushedTo').replace('{provider}',provider));}
@@ -215,7 +215,7 @@ async function _cicdPull(provider){
   var _stored={};try{_stored=JSON.parse(localStorage.getItem('cicd_'+provider)||'{}');}catch(e){}
   localStorage.setItem('cicd_'+provider,JSON.stringify({..._stored,url:url,token:token,branch:branch,folder:folder}));
   if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">'+escHtml(t('cicd.fetching'))+'</span>';}
-  try{var res=await fetch('http://localhost:3001/api/cicd/pull',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:provider,url:url,token:token,branch:branch,folder:folder})});var data=await res.json();
+  try{var res=await fetch('/api/cicd/pull',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:provider,url:url,token:token,branch:branch,folder:folder})});var data=await res.json();
   if(data.ok&&data.files&&data.files.length){
     var _repoName=(function(){try{var u=document.getElementById(provider+'_url')?.value?.trim()||'';return u.replace(/\/$/,'').split('/').pop()||provider;}catch(e){return provider;}})();
     var _source=_repoName+' ('+provider+'/'+branch+')';
@@ -231,7 +231,7 @@ async function _cicdJenkinsTrigger(){
   if(!url||!job||!token){showToast('URL, job et token requis');return;}
   localStorage.setItem('cicd_jenkins',JSON.stringify({url:url,job:job,user:user,token:token,params:params}));
   if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Declenchement...</span>';}
-  try{var res=await fetch('http://localhost:3001/api/cicd/jenkins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,job:job,user:user,token:token,params:params})});var data=await res.json();
+  try{var res=await fetch('/api/cicd/jenkins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,job:job,user:user,token:token,params:params})});var data=await res.json();
   if(data.ok){if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">Pipeline declenche!</span>';showToast('Jenkins declenche');}
   else{if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml((data&&data.error)||'Erreur')+'</span>';}}
   catch(e){if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml(e.message)+'</span>';}
@@ -243,7 +243,7 @@ async function _cicdJenkinsPull(){
   var statusEl=null;
   if(!url||!job||!token){showToast('URL, job et token requis');return;}
   if(statusEl){statusEl.style.display='block';statusEl.innerHTML='<span style="color:var(--teal)">Pull artifacts...</span>';}
-  try{var res=await fetch('http://localhost:3001/api/cicd/jenkins-artifacts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,job:job,user:user,token:token,buildNumber:build})});var data=await res.json();
+  try{var res=await fetch('/api/cicd/jenkins-artifacts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,job:job,user:user,token:token,buildNumber:build})});var data=await res.json();
   if(data.ok&&data.files&&data.files.length){_importRFFiles(data.files,'Jenkins #'+(data.buildNumber||'?'));if(statusEl)statusEl.innerHTML='<span style="color:#22c55e">'+data.files.length+' artifact(s)</span>';showToast(data.files.length+' artifacts');}
   else{if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml((data&&data.error)||'Aucun artifact')+'</span>';}}
   catch(e){if(statusEl)statusEl.innerHTML='<span style="color:#DC2626">'+escHtml(e.message)+'</span>';}

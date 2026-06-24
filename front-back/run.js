@@ -48,7 +48,7 @@ async function syncCardFilesToDisk(cardId) {
   if (!card?.files) return;
   await Promise.all(card.files.map(f => {
     if (!f.filename || !f.code) return Promise.resolve();
-    return fetch('http://localhost:3001/api/rf/write-file', {
+    return fetch('/api/rf/write-file', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filepath: f.filename, content: f.code }),
@@ -136,7 +136,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   try {
     const browserType = document.getElementById('optBrowserType')?.value || 'chrome';
     const headless = document.getElementById('optHeadless')?.value === 'headless';
-    const r    = await fetch('http://localhost:3001/api/rf/run', {
+    const r    = await fetch('/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '', suiteFilter: window._runSuiteFilter || null }),
@@ -201,7 +201,7 @@ function pauseTestRun(btn) {
   btn.onclick = () => resumeTestRun(btn);
 
   // Ask server to create a pause flag file
-  fetch('https://robotstudioai.onrender.com/api/rf/pause', { method: 'POST' }).catch(() => {});
+  fetch('/api/rf/pause', { method: 'POST' }).catch(() => {});
 
   const msg = btn.closest('.msg-bubble');
   const info = document.createElement('div');
@@ -220,13 +220,13 @@ function resumeTestRun(btn) {
   btn.style.color = 'var(--warn)';
   btn.onclick = () => pauseTestRun(btn);
   document.getElementById('pauseInfo')?.remove();
-  fetch('https://robotstudioai.onrender.com/api/rf/resume', { method: 'POST' }).catch(() => {});
+  fetch('/api/rf/resume', { method: 'POST' }).catch(() => {});
   showToast(t('run.resumed'));
 }
 
 function stopTestRun() {
   window._suiteStopped = true; // Stop suite loop
-  fetch('http://localhost:3001/api/rf/stop', { method: 'POST' })
+  fetch('/api/rf/stop', { method: 'POST' })
     .then(r => r.json())
     .then(d => {
       if (d.stopped) showToast(t('run.runStoppedToast'));

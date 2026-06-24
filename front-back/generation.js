@@ -603,9 +603,9 @@ const PROVIDER_PLACEHOLDER = {
 
 async function loadApiKeyForProvider(provider) {
   try {
-    const tokenR = await fetch('http://localhost:3001/api/config/token');
+    const tokenR = await fetch('/api/config/token');
     const tokenD = await tokenR.json();
-    const keyR = await fetch(`http://localhost:3001/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
+    const keyR = await fetch(`/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
     if (keyR.ok) {
       const keyD = await keyR.json();
       if (keyD.key) {

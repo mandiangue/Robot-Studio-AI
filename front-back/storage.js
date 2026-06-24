@@ -81,7 +81,7 @@ const LS = {
           // Re-render TC cards — depuis MongoDB en priorité
           let tcStored = localStorage.getItem('qa_tc_store');
           try {
-            const r = await fetch('http://localhost:3001/api/storage/tcstore');
+            const r = await fetch('/api/storage/tcstore');
             const d = await r.json();
             if (d.ok && d.store && Object.keys(d.store).length > 0) {
               tcStored = JSON.stringify(d.store);
@@ -119,7 +119,7 @@ const LS = {
             try {
               const _ctrl = new AbortController();
               const _timeout = setTimeout(() => _ctrl.abort(), 5000);
-              const r = await fetch('http://localhost:3001/api/storage/all', { signal: _ctrl.signal });
+              const r = await fetch('/api/storage/all', { signal: _ctrl.signal });
               clearTimeout(_timeout);
               const d = await r.json();
               if (d.ok && d.cards?.length > 0) {
@@ -197,7 +197,7 @@ const LS = {
 // ── Suppression unifiée MongoDB + localStorage ────────────────────────────────
 function deleteFromDB(cardId) {
   if (!cardId) return;
-  fetch('http://localhost:3001/api/storage/card/' + cardId, { method: 'DELETE' })
+  fetch('/api/storage/card/' + cardId, { method: 'DELETE' })
     .catch(e => console.warn('MongoDB delete error:', e.message));
   // Supprimer aussi de pulledblocks si c'est un bloc pullé
   fetch('/api/pulledblocks/' + encodeURIComponent(cardId), { method: 'DELETE' })
@@ -209,7 +209,7 @@ function deleteTCFromDB() {
 function saveCodeCards() {
   updateStatsBar();
   // Sauvegarde MongoDB (principal)
-  fetch('http://localhost:3001/api/storage/save', {
+  fetch('/api/storage/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ cards: window._codeCards || [] }),
@@ -233,7 +233,7 @@ function saveTCStore() {
     });
     localStorage.setItem('qa_tc_store', JSON.stringify(light));
     // Sauvegarde aussi dans MongoDB
-    fetch('http://localhost:3001/api/storage/tcstore', {
+    fetch('/api/storage/tcstore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ store: light }),

@@ -53,7 +53,7 @@ function registerSuiteTest(filename, code) {
 
 function saveSuiteRegistry() {
   // Sauvegarde aussi dans MongoDB via saveSuitesList
-  fetch('http://localhost:3001/api/storage/suites', {
+  fetch('/api/storage/suites', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ savedSuites, registry: suiteRegistry }),
@@ -684,7 +684,7 @@ function loadSavedSuites() {
 }
 async function loadSuitesFromDB() {
   try {
-    const r = await fetch('http://localhost:3001/api/storage/suites');
+    const r = await fetch('/api/storage/suites');
     const d = await r.json();
     if (d.ok) {
       if (d.savedSuites?.length > 0) savedSuites = d.savedSuites;
@@ -695,7 +695,7 @@ async function loadSuitesFromDB() {
 
 function saveSuitesList() {
   try { localStorage.setItem('qa_named_suites', JSON.stringify(savedSuites)); } catch(e) {}
-  fetch('http://localhost:3001/api/storage/suites', {
+  fetch('/api/storage/suites', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ savedSuites, registry: suiteRegistry }),

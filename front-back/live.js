@@ -6,7 +6,6 @@
 // ══════════════════════════════════════════════════════════════════════════════
 // LIVE PANEL — Workflow en temps réel
 // ══════════════════════════════════════════════════════════════════════════════
-const LIVE_SERVER = 'http://localhost:3001';
 let _liveEvtSource = null;
 let _liveState = { runs: [], suites: [] };
 let _livePanelOpen = false;
@@ -141,7 +140,7 @@ function renderLivePanel() {
 
 function connectLive() {
   if (_liveEvtSource) _liveEvtSource.close();
-  _liveEvtSource = new EventSource(LIVE_SERVER + '/api/rf/live-stream');
+  _liveEvtSource = new EventSource('/api/rf/live-stream');
 
   _liveEvtSource.addEventListener('state', e => {
     _liveState = JSON.parse(e.data);
@@ -230,7 +229,7 @@ function openLivePanel() {
   header.innerHTML = `
     <span id="liveDot" style="width:9px;height:9px;border-radius:50%;background:var(--gray);transition:background .3s"></span>
     <span data-i18n="live.title" style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🤖 LIVE</span>
-    <button data-i18n="live.reset" onclick="fetch('http://localhost:3001/api/rf/live-reset',{method:'POST'}).then(()=>{_liveState={runs:[],suites:[]};renderLivePanel()})"
+    <button data-i18n="live.reset" onclick="fetch('/api/rf/live-reset',{method:'POST'}).then(()=>{_liveState={runs:[],suites:[]};renderLivePanel()})"
       style="background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:3px 9px;border-radius:5px;font-size:10px;font-family:monospace;cursor:pointer;margin-left:auto">🗑 Reset</button>
     <button onclick="document.getElementById('livePanelOverlay').style.display='none';_livePanelOpen=false"
       style="background:transparent;border:none;color:var(--gray);font-size:16px;cursor:pointer;padding:2px 4px" data-i18n-title="live.closeTitle" title="Fermer">✕</button>
