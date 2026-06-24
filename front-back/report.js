@@ -140,10 +140,6 @@ function renderReportCard(data, suiteCardId) {
           </button>` : ''}
           <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
 
-            ${data.logUrl ? `<a href="${data.logUrl}" target="_blank"
-              style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;padding:4px 12px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-              📋 Log RF
-            </a>` : ''}
             <button onclick="openRunHistory()"
               style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;padding:4px 12px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
               📜 Historique (${_reportHistory.length})
