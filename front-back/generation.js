@@ -20,7 +20,7 @@ async function sendMessage() {
   };
   const prefix = keyPrefixes[provider] || '';
   if (!apiKey || (prefix && !apiKey.startsWith(prefix))) {
-    showToast('⚠️ Configure ta clé API ' + provider + ' en haut à droite');
+    showToast(t('gen.configApiKey').replace('{provider}', provider));
     return;
   }
 
@@ -107,7 +107,7 @@ async function processMessage(userText, apiKey) {
 
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur : ${err.message}`);
+    renderAgentMsg(t('gen.errorPrefix') + err.message);
   } finally {
     isThinking = false;
     document.getElementById('sendBtn').disabled = false;
@@ -188,10 +188,10 @@ Format de réponse OBLIGATOIRE — réponds UNIQUEMENT avec cette structure JSON
     // If it's an API error (quota, model not found, etc.) show it clearly
     const msg = err.raw || err.message || '';
     if (msg.includes('quota') || msg.includes('not found') || msg.includes('API') || msg.includes('error') || !msg.startsWith('{')) {
-      renderAgentMsg(`❌ Erreur API : ${msg}`);
+      renderAgentMsg(t('gen.apiErrorPrefix') + msg);
     } else {
       // Fallback: display raw text if JSON parse fails
-      renderAgentMsg(`Voici les cas de tests proposés :\n\n${msg}\n\n💬 Dis **"génère le code RF"** quand tu es prêt.`);
+      renderAgentMsg(t('gen.proposedCases').replace('{msg}', msg));
     }
   }
 }
@@ -202,7 +202,7 @@ async function generateCodeFromCard(cardId, apiKey) {
     return;
   }
   const store = TC_STORE[cardId];
-  if (!store) { showToast('⚠️ Bloc introuvable'); return; }
+  if (!store) { showToast(t('gen.blockNotFound')); return; }
 
   // Ensure pages exist
   if (!store.pages) {
@@ -233,7 +233,7 @@ async function generateCodeFromCard(cardId, apiKey) {
   const effectiveMode = store.pages.length > 1 ? 'multi' : mode;
   if (store.pages.length > 1) {
     // multi mode is default
-    showToast('💡 Mode Multi-fichiers activé automatiquement pour le POM');
+    showToast(t('gen.multiFileAuto'));
   }
 
   // Prevent double generation
@@ -265,7 +265,7 @@ async function generateCodeFromCard(cardId, apiKey) {
     else renderCodeMsg(code, filename);
   } catch(err) {
     hideTyping();
-    renderAgentMsg('❌ Erreur génération : ' + err.message);
+    renderAgentMsg(t('gen.genErrorPrefix') + err.message);
   } finally {
     window._generatingCode = false;
   }
@@ -296,7 +296,7 @@ async function generatePOMFromBlocks(apiKey) {
     renderMultiFileMsg(code);
   } catch(err) {
     hideTyping();
-    renderAgentMsg('❌ Erreur génération POM : ' + err.message);
+    renderAgentMsg(t('gen.pomErrorPrefix') + err.message);
   }
 }
 
@@ -305,11 +305,11 @@ async function generateCodeFromCases(apiKey) {
   // Get key from DOM if not passed (called from sidebar button)
   if (!apiKey) apiKey = document.getElementById('apiKey').value.trim();
   if (!apiKey || false /* provider key check disabled */) {
-    showToast('⚠️ Configure ta clé API ' + getCurrentProvider() + ' en haut à droite');
+    showToast(t('gen.configApiKey').replace('{provider}', getCurrentProvider()));
     return;
   }
   if (!pendingTestCases || window._generatingCode) {
-    if (!pendingTestCases) renderAgentMsg("⚠️ Aucun cas de tests en attente. Décris d'abord ce que tu veux tester.");
+    if (!pendingTestCases) renderAgentMsg(t('gen.noPendingCases'));
     return;
   }
 
@@ -338,7 +338,7 @@ async function generateCodeFromCases(apiKey) {
     else renderCodeMsg(code, filename);
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur génération : ${err.message}`);
+    renderAgentMsg(t('gen.genErrorPrefix') + err.message);
   }
 }
 
@@ -369,7 +369,7 @@ async function generateFromUs(us, apiKey) {
 
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur génération : ${err.message}`);
+    renderAgentMsg(t('gen.genErrorPrefix') + err.message);
   }
 }
 
@@ -427,7 +427,7 @@ function onLibraryChange() {
     const warn = document.createElement('div');
     warn.id = 'libWarning';
     warn.style.cssText = 'margin:8px 6px 0;padding:10px 12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:7px;font-size:11px;color:var(--warn);line-height:1.6';
-    warn.innerHTML = '<div style="display:flex;justify-content:space-between"><span>⚠️ <strong>Appium requis</strong></span><span onclick="this.closest(div.id)" style="cursor:pointer;color:var(--gray)">✕</span></div>Avant de lancer les tests :<br>1. Démarrer Appium Server : <code>appium</code><br>2. Émulateur Android (AVD) ou device USB<br>3. Web mobile : browserName=Chrome (pas d\'APK)<br>4. App native : fournir le chemin APK';
+    warn.innerHTML = t('gen.appiumWarn');
     warn.querySelector('span:last-child').onclick = () => warn.remove();
     document.getElementById('optLibrary')?.closest('.opt-row')?.after(warn);
   } else if (lib === 'RequestsLibrary') {
@@ -436,7 +436,7 @@ function onLibraryChange() {
     const warn = document.createElement('div');
     warn.id = 'libWarning';
     warn.style.cssText = 'margin:8px 6px 0;padding:10px 12px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.3);border-radius:7px;font-size:11px;color:#60a5fa;line-height:1.6';
-    warn.innerHTML = '<div style="display:flex;justify-content:space-between"><span>ℹ️ <strong>API REST</strong> — Aucun navigateur requis.</span><span style="cursor:pointer;color:var(--gray)">✕</span></div>Installe : <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">pip install robotframework-requests</code>';
+    warn.innerHTML = t('gen.apiRestWarn');
     warn.querySelector('span:last-child').onclick = () => warn.remove();
     document.getElementById('optLibrary')?.closest('.opt-row')?.after(warn);
   } else if (lib === 'DatabaseLibrary') {
@@ -445,7 +445,7 @@ function onLibraryChange() {
     const warn = document.createElement('div');
     warn.id = 'libWarning';
     warn.style.cssText = 'margin:8px 6px 0;padding:10px 12px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.3);border-radius:7px;font-size:11px;color:#c084fc;line-height:1.6';
-    warn.innerHTML = '<div style="display:flex;justify-content:space-between"><span>ℹ️ <strong>Base de données</strong> — Aucun navigateur requis.</span><span style="cursor:pointer;color:var(--gray)">✕</span></div>Installe : <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">pip install robotframework-databaselibrary pymysql</code>';
+    warn.innerHTML = t('gen.dbWarn');
     warn.querySelector('span:last-child').onclick = () => warn.remove();
     document.getElementById('optLibrary')?.closest('.opt-row')?.after(warn);
   } else {
@@ -464,17 +464,17 @@ function installLibrary(library) {
   modal.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:480px;overflow:hidden">
       <div style="padding:16px 20px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">📦 Installation de ${library}</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${t('gen.installTitle').replace('{library}', library)}</span>
       </div>
       <div id="installLog" style="padding:16px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;
            color:var(--teal);max-height:240px;overflow-y:auto;min-height:80px;background:var(--code)">
-        ⏳ Démarrage...
+        ${t('gen.starting')}
       </div>
       <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
         <button id="installCloseBtn" onclick="document.getElementById('installModal').remove()" disabled
           style="background:var(--border);border:none;color:var(--gray);padding:8px 20px;border-radius:7px;
                  font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:not-allowed">
-          Fermer
+          ${t('gen.close')}
         </button>
       </div>
     </div>`;
@@ -511,7 +511,7 @@ function installLibrary(library) {
           if (d.done) {
             const btn = document.getElementById('installCloseBtn');
             if (btn) { btn.disabled = false; btn.style.cssText = 'background:var(--teal);border:none;color:#07090f;padding:8px 20px;border-radius:7px;font-size:12px;font-family:\'IBM Plex Mono\',monospace;cursor:pointer;font-weight:700'; }
-            if (d.success) addLog('<span style="color:var(--blue)">✅ Installation terminée ! Relance le test.</span>');
+            if (d.success) addLog('<span style="color:var(--blue)">' + t('gen.installDone') + '</span>');
           }
         } catch(e) {}
       });
@@ -524,11 +524,11 @@ function installLibrary(library) {
 function openLibraryManager() {
   document.getElementById('libManagerModal')?.remove();
   const libs = [
-    { name: 'SeleniumLibrary', desc: 'Tests UI Web (Chrome, Firefox)',    pip: 'robotframework-seleniumlibrary' },
-    { name: 'Browser',         desc: 'Tests UI Web Playwright',           pip: 'robotframework-browser + rfbrowser init' },
-    { name: 'AppiumLibrary',   desc: 'Tests Mobile (Android/iOS)',        pip: 'robotframework-appiumlibrary' },
-    { name: 'RequestsLibrary', desc: 'Tests API REST',                    pip: 'robotframework-requests' },
-    { name: 'DatabaseLibrary', desc: 'Tests Base de données SQL',         pip: 'robotframework-databaselibrary' },
+    { name: 'SeleniumLibrary', desc: t('gen.descWeb'),        pip: 'robotframework-seleniumlibrary' },
+    { name: 'Browser',         desc: t('gen.descPlaywright'), pip: 'robotframework-browser + rfbrowser init' },
+    { name: 'AppiumLibrary',   desc: t('gen.descMobile'),     pip: 'robotframework-appiumlibrary' },
+    { name: 'RequestsLibrary', desc: t('gen.descApi'),        pip: 'robotframework-requests' },
+    { name: 'DatabaseLibrary', desc: t('gen.descDb'),         pip: 'robotframework-databaselibrary' },
   ];
 
   const rows = libs.map(l => `
@@ -543,7 +543,7 @@ function openLibraryManager() {
         style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);
                padding:6px 14px;border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;
                cursor:pointer;white-space:nowrap;flex-shrink:0">
-        📦 Installer
+        ${t('gen.installBtn')}
       </button>
     </div>`).join('');
 
@@ -553,7 +553,7 @@ function openLibraryManager() {
   modal.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px">
       <div style="display:flex;align-items:center;padding:16px 20px;background:var(--card);border-bottom:1px solid var(--border)">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">📦 Gestionnaire de librairies RF</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${t('gen.libManagerTitle')}</span>
         <button onclick="document.getElementById('libManagerModal').remove()"
           style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer">✕</button>
       </div>
@@ -593,11 +593,12 @@ const PROVIDER_MODELS = {
   ],
 };
 
+// Clés i18n (résolues via t() au moment de l'usage pour refléter la langue courante)
 const PROVIDER_PLACEHOLDER = {
-  anthropic: 'Clé API Anthropic...',
-  openai:    'Clé API OpenAI (sk-...)',
-  gemini:    'Clé API Google AI...',
-  mistral:   'Clé API Mistral...',
+  anthropic: 'gen.phAnthropic',
+  openai:    'gen.phOpenai',
+  gemini:    'gen.phGemini',
+  mistral:   'gen.phMistral',
 };
 
 async function loadApiKeyForProvider(provider) {
@@ -610,7 +611,7 @@ async function loadApiKeyForProvider(provider) {
       if (keyD.key) {
         window._serverApiKey = keyD.key;
         const keyEl = document.getElementById('apiKey');
-        if (keyEl) { keyEl.value = ''; keyEl.disabled = true; keyEl.placeholder = '🔒 Clé API configurée dans .env'; }
+        if (keyEl) { keyEl.value = ''; keyEl.disabled = true; keyEl.placeholder = t('gen.apiKeyConfigured'); }
         updateKeyStatus(keyD.key);
         return true;
       }
@@ -619,7 +620,7 @@ async function loadApiKeyForProvider(provider) {
   // Pas de clé en .env
   window._serverApiKey = null;
   const keyEl = document.getElementById('apiKey');
-  if (keyEl) { keyEl.disabled = false; keyEl.placeholder = 'Clé API...'; keyEl.value = localStorage.getItem('qa_agent_key') || ''; }
+  if (keyEl) { keyEl.disabled = false; keyEl.placeholder = t('gen.apiKeyField'); keyEl.value = localStorage.getItem('qa_agent_key') || ''; }
   updateKeyStatus(keyEl?.value || '');
   return false;
 }
@@ -636,7 +637,7 @@ function onProviderChange(provider) {
   localStorage.setItem('qa_agent_model', sel.value);
   // Update placeholder
   const key = document.getElementById('apiKey');
-  if (key) key.placeholder = PROVIDER_PLACEHOLDER[provider] || 'Clé API...';
+  if (key) key.placeholder = t(PROVIDER_PLACEHOLDER[provider] || 'gen.apiKeyField');
   // Remet le statut seulement si pas de clé déjà saisie
   const existingKey = document.getElementById('apiKey')?.value || '';
   if (!existingKey) {
