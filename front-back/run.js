@@ -21,7 +21,7 @@ function addRunButton(code, filename) {
     <button class="run-tests-btn"
       style="background:linear-gradient(135deg,#22c55e,#16a34a);border:none;color:#07090f;padding:10px 20px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px"
       onclick="runTests(${JSON.stringify(code).replace(/"/g,'&quot;')}, '${filename}')">
-      ▶️ Lancer les tests
+      ${t('run.launch')}
     </button>`;
   bubble.appendChild(runBar);
 }
@@ -59,7 +59,7 @@ async function syncCardFilesToDisk(cardId) {
 async function runTestsFromCard(code, filename, suiteCtx) {
   // Bloquer si un run est deja en cours
   if (window._rfRunning && !suiteCtx?.isSuite) {
-    showToast('⏳ Un test est déjà en cours — attends la fin.');
+    showToast(t('run.alreadyRunning'));
     return;
   }
   window._rfRunning = true;
@@ -97,28 +97,29 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   }
   const runType  = detectRunType(code);
   const runTypeLabels = {
-    mobile:   '📱 Run Mobile',
-    api:      '🔌 Run API',
-    database: '🗄️ Run Database',
-    web:      '🔵 Run Web',
+    mobile:   t('run.typeMobile'),
+    api:      t('run.typeApi'),
+    database: t('run.typeDatabase'),
+    web:      t('run.typeWeb'),
   };
-  const runTypeBadge = runTypeLabels[runType] || '🔵 Run Web';
+  const runTypeBadge = runTypeLabels[runType] || t('run.typeWeb');
   const runLabel = isSuiteRun ? '🧪 Suite : **' + suiteCtx.suiteName + '**' : runTypeBadge;
   const runMsgId  = 'runMsg-' + Date.now();
   const runMsgDiv = document.createElement('div');
   runMsgDiv.className = 'msg agent';
   runMsgDiv.id = runMsgId;
+  const _sn = (suiteCtx.tests||[]).length;
   const runLabel2 = isSuiteRun
-    ? '🧪 Suite : <strong>' + escHtml(suiteCtx.suiteName||'') + '</strong> — ' + (suiteCtx.tests||[]).length + ' test(s)'
-    : runTypeBadge + ' Test run';
+    ? (_sn>1?t('run.suiteLabelMany'):t('run.suiteLabelOne')).replace('{name}', '<strong>'+escHtml(suiteCtx.suiteName||'')+'</strong>').replace('{n}', _sn)
+    : runTypeBadge + ' ' + t('run.testRun');
   // Only show "en cours" message for non-suite runs
   if (!isSuiteRun) {
     runMsgDiv.innerHTML =
       '<div class="msg-avatar">🤖</div>' +
       '<div class="msg-body"><div class="msg-bubble" style="padding:10px 14px">' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-      '<span id="' + runMsgId + '-label" style="font-size:13px;font-weight:600">⏳ Test en cours — ' + runLabel2 + '</span>' +
-      '<button onclick="stopTestRun()" style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:3px 10px;border-radius:5px;font-size:11px;font-family:monospace;cursor:pointer">⏹ Stop</button>' +
+      '<span id="' + runMsgId + '-label" style="font-size:13px;font-weight:600">' + t('run.testInProgress').replace('{label}', runLabel2) + '</span>' +
+      '<button onclick="stopTestRun()" style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:3px 10px;border-radius:5px;font-size:11px;font-family:monospace;cursor:pointer">' + t('run.stop') + '</button>' +
       '</div>' +
       '</div></div>';
     localStorage.setItem('qa_active_run', JSON.stringify({ runMsgId, label: runLabel2 }));
@@ -145,7 +146,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
     if (!r.ok) {
-      renderAgentMsg(`❌ Erreur lors du lancement :\n\n${data.error}\n\n${data.details || ''}`);
+      renderAgentMsg(t('run.launchError') + '\n\n' + data.error + '\n\n' + (data.details || ''));
       return;
     }
 
@@ -153,8 +154,9 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     if (!suiteCtx?.isSuite) {
       const icon    = data.status === 'PASS' ? '✅' : '❌';
       const rate    = data.total > 0 ? Math.round(data.passed / data.total * 100) : 0;
-      const summary = `${icon} **${data.status}** — ${data.passed}/${data.total} tests réussis (${rate}%) en ${fmtDuration(data.duration)}`;
-      renderAgentMsg(summary + '\n\nLe rapport complet est disponible ci-dessous 👇');
+      const summary = (data.passed>1?t('run.resultMany'):t('run.resultOne'))
+        .replace('{icon}',icon).replace('{status}',data.status).replace('{p}',data.passed).replace('{tot}',data.total).replace('{rate}',rate).replace('{dur}',fmtDuration(data.duration));
+      renderAgentMsg(summary + '\n\n' + t('run.reportBelow'));
     }
 
     // Note: snapshot variables.robot désactivé après run — évite d'écraser les cartes de suite
@@ -180,9 +182,9 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     hideTyping();
     window._rfRunning = false;
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg('❌ Serveur proxy non démarré.\n\nLance **`node server.js`** dans ton terminal puis réessaie.');
+      renderAgentMsg(t('run.proxyDown'));
     } else {
-      renderAgentMsg(`❌ Erreur : ${err.message}`);
+      renderAgentMsg(t('run.errorPrefix') + err.message);
     }
   }
 }
@@ -192,7 +194,7 @@ let _rfPaused = false;
 
 function pauseTestRun(btn) {
   _rfPaused = true;
-  btn.textContent = '▶️ Reprendre';
+  btn.textContent = t('run.resume');
   btn.style.background = 'rgba(34,197,94,0.12)';
   btn.style.borderColor = 'rgba(34,197,94,0.35)';
   btn.style.color = 'var(--green)';
@@ -205,23 +207,21 @@ function pauseTestRun(btn) {
   const info = document.createElement('div');
   info.id = 'pauseInfo';
   info.style.cssText = 'margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:7px;font-size:12px;font-family:IBM Plex Mono,monospace;color:var(--warn);line-height:1.6';
-  info.innerHTML = '⏸ <strong>Mode debug</strong> — Le test courant se terminera avant de s\'arrêter.<br>' +
-    'Inspecte Chrome DevTools (F12), regarde les logs dans le terminal.<br>' +
-    'Clique <strong>▶️ Reprendre</strong> pour continuer.';
+  info.innerHTML = t('run.debugInfo');
   msg.appendChild(info);
-  showToast('⏸ Pause debug activée');
+  showToast(t('run.pauseActivated'));
 }
 
 function resumeTestRun(btn) {
   _rfPaused = false;
-  btn.textContent = '⏸ Pause';
+  btn.textContent = t('run.pause');
   btn.style.background = 'rgba(245,158,11,0.12)';
   btn.style.borderColor = 'rgba(245,158,11,0.35)';
   btn.style.color = 'var(--warn)';
   btn.onclick = () => pauseTestRun(btn);
   document.getElementById('pauseInfo')?.remove();
   fetch('https://robotstudioai.onrender.com/api/rf/resume', { method: 'POST' }).catch(() => {});
-  showToast('▶️ Reprise');
+  showToast(t('run.resumed'));
 }
 
 function stopTestRun() {
@@ -229,16 +229,16 @@ function stopTestRun() {
   fetch('http://localhost:3001/api/rf/stop', { method: 'POST' })
     .then(r => r.json())
     .then(d => {
-      if (d.stopped) showToast('⏹ Run arrêté');
-      else showToast('⚠️ Aucun run actif');
+      if (d.stopped) showToast(t('run.runStoppedToast'));
+      else showToast(t('run.noActiveRun'));
     })
-    .catch(() => showToast('⚠️ Erreur arrêt — Ctrl+C dans le terminal'));
+    .catch(() => showToast(t('run.stopError')));
   hideTyping();
   window._rfRunning = false;
   var _rm = window._currentRunMsg;
   if (_rm) {
     var _lbl = _rm.querySelector('[id$="-label"]');
-    if (_lbl) _lbl.innerHTML = '⏹ Run stoppé';
+    if (_lbl) _lbl.innerHTML = t('run.runStopped');
     var _btn = _rm.querySelector('button');
     if (_btn) _btn.remove();
   }
@@ -248,7 +248,7 @@ function stopTestRun() {
 // ── Debug mode — add Pause Execution before failed keyword ───────────────────
 async function activateDebugMode() {
   const code = window._lastGeneratedCode;
-  if (!code) { showToast('⚠️ Aucun code trouvé — génère d\'abord un test'); return; }
+  if (!code) { showToast(t('run.noCodeFound')); return; }
 
   // Check if Dialogs library is installed — offer to install if not
   try {
@@ -259,7 +259,7 @@ async function activateDebugMode() {
     });
     const result = await check.json();
     if (!result.installed) {
-      if (confirm('📦 La librairie Dialogs est requise pour le mode debug.\n\nCliquer OK pour l\'installer automatiquement.')) {
+      if (confirm(t('run.dialogsConfirm'))) {
         installLibrary('Dialogs');
         return;
       }
@@ -306,7 +306,7 @@ async function activateDebugMode() {
   const currentMsg = window._currentRunMsg || document.getElementById(window._currentRunMsgId);
   if (currentMsg) currentMsg.remove();
 
-  showToast('🐛 Mode debug activé — Pause Execution ajouté');
+  showToast(t('run.debugActivated'));
 
   const filename = (window._lastGeneratedFile || 'test_generated') + '.robot';
   runTestsFromCard(debugCode, filename);
@@ -317,18 +317,18 @@ async function activateDebugMode() {
 function handleRunBtn(btn) {
   const state = btn.dataset.state;
   if (state === 'stop') {
-    showToast('⏹ Arrêt en cours...');
+    showToast(t('run.stopping'));
     stopTestRun();
     setRunBtn(btn, 'replay');
     const lbl = document.getElementById(btn.dataset.runid + '-label');
-    if (lbl) { lbl.textContent = '⏹ Arrêté'; lbl.style.color = 'var(--gray)'; }
+    if (lbl) { lbl.textContent = t('run.stopped'); lbl.style.color = 'var(--gray)'; }
     localStorage.removeItem('qa_active_run');
   } else {
     const code = window._lastGeneratedCode
       || localStorage.getItem('qa_last_code');
     const file = localStorage.getItem('qa_last_filename')
       || (window._lastGeneratedFile || 'test_generated') + '.robot';
-    if (!code) { showToast('⚠️ Aucun test à rejouer'); return; }
+    if (!code) { showToast(t('run.noReplay')); return; }
     window._lastGeneratedCode = code;
     runTestsFromCard(code, file);
   }
@@ -338,12 +338,12 @@ function setRunBtn(btn, state) {
   if (!btn) return;
   btn.dataset.state = state;
   if (state === 'stop') {
-    btn.textContent = '⏹ Stop';
+    btn.textContent = t('run.stop');
     btn.style.background = 'rgba(220,38,38,0.12)';
     btn.style.border = '1px solid rgba(220,38,38,0.35)';
     btn.style.color = 'var(--red)';
   } else {
-    btn.textContent = '🔁 Replay';
+    btn.textContent = t('run.replay');
     btn.style.background = 'rgba(0,212,170,0.1)';
     btn.style.border = '1px solid var(--teal)';
     btn.style.color = 'var(--teal)';
