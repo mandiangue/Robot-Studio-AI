@@ -108,7 +108,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
   const runMsgDiv = document.createElement('div');
   runMsgDiv.className = 'msg agent';
   runMsgDiv.id = runMsgId;
-  const _sn = (suiteCtx.tests||[]).length;
+  const _sn = (suiteCtx?.tests || []).length;
   const runLabel2 = isSuiteRun
     ? (_sn>1?t('run.suiteLabelMany'):t('run.suiteLabelOne')).replace('{name}', '<strong>'+escHtml(suiteCtx.suiteName||'')+'</strong>').replace('{n}', _sn)
     : runTypeBadge + ' ' + t('run.testRun');

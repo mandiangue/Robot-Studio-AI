@@ -749,6 +749,8 @@ const TRANSLATIONS = {
 };
 
 let currentLang = 'fr';
+// Exposé sur window : lisible par l'iframe dashboard (window.parent.currentLang) et les handlers inline.
+window.currentLang = currentLang;
 
 // Registre de hooks de re-render pour les modules qui rendent hors [data-i18n]
 // (rapports, etc.) : setLang() appelle chaque hook apres avoir retraduit le DOM.
@@ -757,6 +759,8 @@ window.__i18nRerender = window.__i18nRerender || [];
 function t(key) {
   return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['fr'][key] || key;
 }
+// Exposé global explicite : requis par les onclick cross-fichiers (cicd/suites/run...) qui appellent t().
+window.t = t;
 
 // Applique les traductions sur un sous-arbre (document par défaut).
 // Conventions : data-i18n -> textContent ; data-i18n-ph -> placeholder ; data-i18n-title -> title.
@@ -776,6 +780,7 @@ function setLang(lang) {
   // Deux langues seulement : tout le reste retombe sur fr (ex. ancien 'es'/'pt' en localStorage)
   if (lang !== 'fr' && lang !== 'en') lang = 'fr';
   currentLang = lang;
+  window.currentLang = currentLang; // garde window synchro (lu par l'iframe dashboard + handlers inline)
   const tr = TRANSLATIONS[lang];
   try { localStorage.setItem('qa_agent_lang', lang); } catch(e) {}
 
