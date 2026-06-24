@@ -32,7 +32,7 @@ function openCodeWindow(files) {
   }
 
   win.document.write(`<!DOCTYPE html>
-<html lang="fr">
+<html lang="${currentLang}">
 <head>
 <meta charset="UTF-8">
 <title>${files[0].filename}</title>
@@ -59,12 +59,12 @@ function openCodeWindow(files) {
 </head>
 <body>
 <div class="topbar">
-  <h1>🤖 QA AGENT — RÉSULTAT</h1>
+  <h1>${t('popup.title')}</h1>
   <div class="actions">
-    <button class="btn" onclick="copyActive()" title="Copier tous les cas de tests">📋 Copier</button>
-    <button class="btn" onclick="downloadActive()">⬇️ Télécharger</button>
-    <button class="btn" onclick="downloadAll()">⬇️ Tout télécharger</button>
-    <button class="btn red" onclick="resetAll()">🗑️ Reset</button>
+    <button class="btn" onclick="copyActive()" title="${t('popup.tCopyAll')}">${t('popup.copy')}</button>
+    <button class="btn" onclick="downloadActive()">${t('popup.download')}</button>
+    <button class="btn" onclick="downloadAll()">${t('popup.downloadAll')}</button>
+    <button class="btn red" onclick="resetAll()">${t('popup.reset')}</button>
   </div>
 </div>
 <div class="tabs" id="tabs">${tabsHtml}</div>
@@ -81,7 +81,7 @@ function openCodeWindow(files) {
   }
 
   function copyActive() {
-    navigator.clipboard.writeText(FILES[active].code).then(() => toast('📋 Copié !'));
+    navigator.clipboard.writeText(FILES[active].code).then(() => toast(${JSON.stringify(t('popup.copied'))}));
   }
 
   function downloadActive() {
@@ -90,7 +90,7 @@ function openCodeWindow(files) {
 
   function downloadAll() {
     FILES.forEach(f => download(f.filename, f.code));
-    toast('⬇️ ' + FILES.length + ' fichiers téléchargés');
+    toast(${JSON.stringify(t('popup.filesDownloaded'))}.replace('{n}', FILES.length));
   }
 
   function download(filename, code) {
@@ -101,7 +101,7 @@ function openCodeWindow(files) {
   }
 
   function resetAll() {
-    if (confirm('Fermer cette fenêtre ?')) window.close();
+    if (confirm(${JSON.stringify(t('popup.closeConfirm'))})) window.close();
   }
 
   function toast(msg) {
