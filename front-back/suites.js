@@ -765,19 +765,19 @@ function renderSavedSuites() {
       .map(id => suiteRegistry.find(t => t.id === id))
       .filter(Boolean);
 
-    const testsHtml = suiteTests.map((t, ti) => {
+    const testsHtml = suiteTests.map((tc, ti) => {
       // Get code preview (first 3 lines of code)
-      const codeLines = (t.code||'').split('\n').filter(l => l.trim()).slice(0,5);
+      const codeLines = (tc.code||'').split('\n').filter(l => l.trim()).slice(0,5);
       const codePreview = codeLines.map(l => '<div style="font-size:10px;font-family:IBM Plex Mono,monospace;color:#7dd3c8;padding:1px 0">' + escHtml(l) + '</div>').join('');
       const expandId = 'suite-expand-' + si + '-' + ti;
-      const isEnabled = t.enabled !== false;
+      const isEnabled = tc.enabled !== false;
       return `<div class="suite-group-test"
         style="border-bottom:1px solid var(--border);opacity:${isEnabled?'1':'0.5'}">
         <div style="display:flex;align-items:center;gap:8px;padding:7px 10px 7px 20px;cursor:default">
           <span style="color:var(--gray);cursor:grab;font-size:14px;flex-shrink:0" title="${t('suites.reorder')}">⠿</span>
           <span style="background:rgba(0,212,170,0.1);color:var(--teal);font-family:'IBM Plex Mono',monospace;
-                       font-size:9px;padding:1px 6px;border-radius:3px;border:1px solid rgba(0,212,170,0.2);white-space:nowrap">${escHtml(t.id)}</span>
-          <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</span>
+                       font-size:9px;padding:1px 6px;border-radius:3px;border:1px solid rgba(0,212,170,0.2);white-space:nowrap">${escHtml(tc.id)}</span>
+          <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(tc.name)}</span>
 
           <div style="display:flex;flex-direction:column;gap:1px">
             <button onclick="event.stopPropagation();suiteMoveUp('${s.id}',${ti})"
@@ -789,10 +789,10 @@ function renderSavedSuites() {
                      cursor:pointer;font-size:9px;padding:1px 5px;border-radius:3px;line-height:1"
               title="Descendre">▼</button>
           </div>
-          <button onclick="event.stopPropagation();toggleSuiteTest(${si},'${t.id}')"
+          <button onclick="event.stopPropagation();toggleSuiteTest(${si},'${tc.id}')"
             style="background:transparent;border:none;cursor:pointer;font-size:12px;padding:1px 3px"
             title="${isEnabled?t('suites.disable'):t('suites.enable')}">${isEnabled?'✅':'⬜'}</button>
-          <button onclick="removeTestFromSuite(${si},'${t.id}')"
+          <button onclick="removeTestFromSuite(${si},'${tc.id}')"
             style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:11px;padding:1px 4px"
             onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" title="${t('suites.remove')}">✕</button>
         </div>
