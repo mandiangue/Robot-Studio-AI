@@ -446,6 +446,8 @@ function updateConnBadge(platform, connected, label) {
   const badge = document.getElementById(platform + 'Badge');
   const card  = document.getElementById(platform + 'Card');
   const btn   = document.getElementById(platform + 'ConnectLabel');
+  const dc    = document.getElementById(platform + 'DisconnectBtn');
+  if (dc) dc.style.display = connected ? '' : 'none';
   if (!badge) return;
   if (connected) {
     badge.textContent = '✓ ' + (label || 'connecté');

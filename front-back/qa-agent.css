@@ -536,6 +536,7 @@ body::before {
 .action-btn.ghost:hover { border-color: var(--teal); color: var(--white); }
 .action-btn.red-outline { background: transparent; border-color: rgba(230,57,70,0.3); color: var(--red); padding: 9px 12px; width: auto; margin-bottom: 0; }
 .action-btn.red-outline:hover { background: rgba(230,57,70,0.1); }
+#azureDisconnectBtn, #jiraDisconnectBtn { display: none; }
 .action-btn.active { background: rgba(0,212,170,0.18) !important; border-color: var(--teal) !important; color: var(--teal) !important; }
 
 .conn-card {
