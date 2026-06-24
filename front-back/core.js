@@ -445,6 +445,11 @@ const TRANSLATIONS = {
     'run.dialogsConfirm':'📦 La librairie Dialogs est requise pour le mode debug.\n\nCliquer OK pour l\'installer automatiquement.',
     'run.debugActivated':'🐛 Mode debug activé — Pause Execution ajouté',
     'run.stopping':'⏹ Arrêt en cours...', 'run.stopped':'⏹ Arrêté', 'run.noReplay':'⚠️ Aucun test à rejouer',
+    // Live panel (live.js)
+    'live.title':'🤖 LIVE', 'live.reset':'🗑 Reset', 'live.closeTitle':'Fermer',
+    'live.runsSimple':'🔵 RUNS SIMPLES', 'live.suites':'🧪 SUITES',
+    'live.noRun':'Aucun run lancé…', 'live.noSuite':'Aucune suite lancée…', 'live.waiting':'En attente…',
+    'live.running':'⋯ EN COURS', 'live.bloc':'Bloc {n}', 'live.fileChanged':'🔄 Fichier mis à jour depuis VS Code : ',
   },
   en: {
     flag: '🇬🇧', name: 'EN',
@@ -661,6 +666,11 @@ const TRANSLATIONS = {
     'run.dialogsConfirm':'📦 The Dialogs library is required for debug mode.\n\nClick OK to install it automatically.',
     'run.debugActivated':'🐛 Debug mode enabled — Pause Execution added',
     'run.stopping':'⏹ Stopping…', 'run.stopped':'⏹ Stopped', 'run.noReplay':'⚠️ No test to replay',
+    // Live panel (live.js)
+    'live.title':'🤖 LIVE', 'live.reset':'🗑 Reset', 'live.closeTitle':'Close',
+    'live.runsSimple':'🔵 SIMPLE RUNS', 'live.suites':'🧪 SUITES',
+    'live.noRun':'No run started…', 'live.noSuite':'No suite started…', 'live.waiting':'Waiting…',
+    'live.running':'⋯ RUNNING', 'live.bloc':'Block {n}', 'live.fileChanged':'🔄 File updated from VS Code: ',
   },
 };
 

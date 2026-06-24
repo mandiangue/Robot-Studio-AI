@@ -11,6 +11,12 @@ let _liveEvtSource = null;
 let _liveState = { runs: [], suites: [] };
 let _livePanelOpen = false;
 
+// Bascule de langue : reconstruit le panneau Live s'il est ouvert (rebuild depuis _liveState, SSE intact).
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(function(){
+  if (_livePanelOpen && document.getElementById('livePanel')) renderLivePanel();
+});
+
 function fmtLive(ms) {
   if (!ms || ms < 0) return '—';
   if (ms < 1000) return ms + 'ms';
@@ -25,7 +31,7 @@ function shortTC(name) {
 
 function renderLiveTimeline(tests) {
   if (!tests || tests.length === 0) {
-    return '<div style="padding:10px 16px;font-size:12px;color:var(--gray);font-style:italic">En attente...</div>';
+    return '<div style="padding:10px 16px;font-size:12px;color:var(--gray);font-style:italic">'+t('live.waiting')+'</div>';
   }
   let html = '<div style="overflow-x:auto;padding:14px 16px 16px"><div style="display:flex;align-items:center;min-width:max-content">';
   tests.forEach((t, i) => {
@@ -78,16 +84,16 @@ function renderLivePanel() {
 
   // Runs simples
   html += `<div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;padding:10px 14px 6px;border-bottom:1px solid var(--border)">
-    🔵 RUNS SIMPLES <span style="background:var(--card);border:1px solid var(--border);color:var(--teal);padding:1px 7px;border-radius:8px;font-size:9px">${runs.length}</span>
+    ${t('live.runsSimple')} <span style="background:var(--card);border:1px solid var(--border);color:var(--teal);padding:1px 7px;border-radius:8px;font-size:9px">${runs.length}</span>
   </div>`;
 
   if (runs.length === 0) {
-    html += '<div style="padding:16px 14px;font-size:12px;color:var(--gray);font-style:italic">Aucun run lancé...</div>';
+    html += '<div style="padding:16px 14px;font-size:12px;color:var(--gray);font-style:italic">'+t('live.noRun')+'</div>';
   } else {
     [...runs].reverse().forEach(run => {
       const done = run.status==='pass'||run.status==='fail';
       const sc = !done?'var(--teal)':run.status==='pass'?'var(--green)':'var(--red)';
-      const badge = !done?'⋯ EN COURS':run.status==='pass'?'✅ PASS':'❌ FAIL';
+      const badge = !done?t('live.running'):run.status==='pass'?'✅ PASS':'❌ FAIL';
       const passed = (run.tests||[]).filter(t=>t.status==='pass').length;
       const failed = (run.tests||[]).filter(t=>t.status==='fail').length;
       html += `<div style="border-left:3px solid ${sc};margin:8px 10px;background:var(--card);border-radius:0 8px 8px 0">
@@ -105,16 +111,16 @@ function renderLivePanel() {
 
   // Suites
   html += `<div style="font-size:10px;color:var(--gray);letter-spacing:1.5px;padding:10px 14px 6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:6px">
-    🧪 SUITES <span style="background:var(--card);border:1px solid var(--border);color:var(--teal);padding:1px 7px;border-radius:8px;font-size:9px">${suites.length}</span>
+    ${t('live.suites')} <span style="background:var(--card);border:1px solid var(--border);color:var(--teal);padding:1px 7px;border-radius:8px;font-size:9px">${suites.length}</span>
   </div>`;
 
   if (suites.length === 0) {
-    html += '<div style="padding:16px 14px;font-size:12px;color:var(--gray);font-style:italic">Aucune suite lancée...</div>';
+    html += '<div style="padding:16px 14px;font-size:12px;color:var(--gray);font-style:italic">'+t('live.noSuite')+'</div>';
   } else {
     [...suites].reverse().forEach(suite => {
       const done = suite.status==='pass'||suite.status==='fail';
       const sc = !done?'var(--teal)':suite.status==='pass'?'var(--green)':'var(--red)';
-      const badge = !done?'⋯ EN COURS':suite.status==='pass'?'✅ PASS':'❌ FAIL';
+      const badge = !done?t('live.running'):suite.status==='pass'?'✅ PASS':'❌ FAIL';
       html += `<div style="border-left:3px solid ${sc};margin:8px 10px;background:var(--card);border-radius:0 8px 8px 0">
         <div style="display:flex;align-items:center;gap:6px;padding:8px 12px">
           <span style="font-size:13px;color:var(--warn);font-weight:700">${escHtml(suite.title)}</span>
@@ -122,7 +128,7 @@ function renderLivePanel() {
         </div>`;
       (suite.blocs||[]).forEach((bloc, bi) => {
         html += `<div style="padding:2px 12px 0">
-          <div style="font-size:12px;color:#c084fc;padding:3px 0">📁 ${escHtml(bloc.name||('Bloc '+(bi+1)))}</div>
+          <div style="font-size:12px;color:#c084fc;padding:3px 0">📁 ${escHtml(bloc.name||t('live.bloc').replace('{n}', bi+1))}</div>
           ${renderLiveTimeline(bloc.tests||[])}
         </div>`;
       });
@@ -186,7 +192,7 @@ function connectLive() {
     if (updated) {
       saveCodeCards();
       _rerenderCardIfRendered(_changedCard2);
-      showToast('🔄 Fichier mis à jour depuis VS Code : ' + filepath.split('/').pop());
+      showToast(t('live.fileChanged') + filepath.split('/').pop());
     }
   });
 
@@ -223,11 +229,11 @@ function openLivePanel() {
   header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0';
   header.innerHTML = `
     <span id="liveDot" style="width:9px;height:9px;border-radius:50%;background:var(--gray);transition:background .3s"></span>
-    <span style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🤖 LIVE</span>
-    <button onclick="fetch('http://localhost:3001/api/rf/live-reset',{method:'POST'}).then(()=>{_liveState={runs:[],suites:[]};renderLivePanel()})"
+    <span data-i18n="live.title" style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🤖 LIVE</span>
+    <button data-i18n="live.reset" onclick="fetch('http://localhost:3001/api/rf/live-reset',{method:'POST'}).then(()=>{_liveState={runs:[],suites:[]};renderLivePanel()})"
       style="background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:3px 9px;border-radius:5px;font-size:10px;font-family:monospace;cursor:pointer;margin-left:auto">🗑 Reset</button>
     <button onclick="document.getElementById('livePanelOverlay').style.display='none';_livePanelOpen=false"
-      style="background:transparent;border:none;color:var(--gray);font-size:16px;cursor:pointer;padding:2px 4px" title="Fermer">✕</button>
+      style="background:transparent;border:none;color:var(--gray);font-size:16px;cursor:pointer;padding:2px 4px" data-i18n-title="live.closeTitle" title="Fermer">✕</button>
   `;
 
   // Resize handle
@@ -263,6 +269,7 @@ function openLivePanel() {
     if (e.target === overlay) { overlay.style.display='none'; _livePanelOpen=false; }
   });
 
+  if (window.applyI18n) applyI18n(panelEl); // header persistant à la langue courante
   connectLive();
   renderLivePanel();
 
