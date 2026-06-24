@@ -67,57 +67,57 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 
 <div class="topbar">
   <div class="logo"><div class="dot"></div>ROBOTEST STUDIO</div>
-  <span style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace">Dashboard</span>
-  <button onclick="window.print()" style="padding:7px 14px;border:1px solid var(--teal);border-radius:7px;color:var(--teal);background:rgba(0,212,170,0.08);font-size:12px;font-family:IBM Plex Mono,monospace;cursor:pointer">🖨️ Export PDF</button><a href="qa-agent.html" class="back-btn" style="margin-left:8px">← Agent</a>
+  <span data-i18n="dashboard.title" style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace">Dashboard</span>
+  <button onclick="window.print()" data-i18n="dashboard.exportPdf" style="padding:7px 14px;border:1px solid var(--teal);border-radius:7px;color:var(--teal);background:rgba(0,212,170,0.08);font-size:12px;font-family:IBM Plex Mono,monospace;cursor:pointer">🖨️ Export PDF</button><a href="qa-agent.html" class="back-btn" data-i18n="dashboard.backAgent" style="margin-left:8px">← Agent</a>
 </div>
 
 <div class="main">
 
   <!-- KPIs -->
-  <div class="section-title">📊 VUE D'ENSEMBLE</div>
+  <div class="section-title" data-i18n="dashboard.overview">📊 VUE D'ENSEMBLE</div>
   <div class="kpi-grid" id="kpiGrid">
-    <div class="kpi teal"><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-label">RUNS TOTAUX</div></div>
-    <div class="kpi green"><div class="kpi-val" id="kpiPass">0</div><div class="kpi-label">TESTS RÉUSSIS</div></div>
-    <div class="kpi red"><div class="kpi-val" id="kpiFail">0</div><div class="kpi-label">TESTS ÉCHOUÉS</div></div>
-    <div class="kpi warn"><div class="kpi-val" id="kpiRate">—</div><div class="kpi-label">TAUX MOYEN</div></div>
-    <div class="kpi purple"><div class="kpi-val" id="kpiSuites">0</div><div class="kpi-label">SUITES RUNS</div></div>
-    <div class="kpi teal"><div class="kpi-val" id="kpiAvgDur">—</div><div class="kpi-label">DURÉE MOYENNE</div></div>
+    <div class="kpi teal"><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-label" data-i18n="dashboard.kpiTotal">RUNS TOTAUX</div></div>
+    <div class="kpi green"><div class="kpi-val" id="kpiPass">0</div><div class="kpi-label" data-i18n="dashboard.kpiPass">TESTS RÉUSSIS</div></div>
+    <div class="kpi red"><div class="kpi-val" id="kpiFail">0</div><div class="kpi-label" data-i18n="dashboard.kpiFail">TESTS ÉCHOUÉS</div></div>
+    <div class="kpi warn"><div class="kpi-val" id="kpiRate">—</div><div class="kpi-label" data-i18n="dashboard.kpiRate">TAUX MOYEN</div></div>
+    <div class="kpi purple"><div class="kpi-val" id="kpiSuites">0</div><div class="kpi-label" data-i18n="dashboard.kpiSuites">SUITES RUNS</div></div>
+    <div class="kpi teal"><div class="kpi-val" id="kpiAvgDur">—</div><div class="kpi-label" data-i18n="dashboard.kpiAvgDur">DURÉE MOYENNE</div></div>
   </div>
 
   <!-- Charts -->
   <div class="charts-grid">
     <div class="chart-card">
-      <div class="chart-title">📈 Évolution du taux de réussite</div>
+      <div class="chart-title" data-i18n="dashboard.chartRate">📈 Évolution du taux de réussite</div>
       <div class="chart-wrap"><canvas id="chartRate"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">🧪 Tests par run (Pass / Fail)</div>
+      <div class="chart-title" data-i18n="dashboard.chartBars">🧪 Tests par run (Pass / Fail)</div>
       <div class="chart-wrap"><canvas id="chartBars"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">⏱️ Durée des runs</div>
+      <div class="chart-title" data-i18n="dashboard.chartDur">⏱️ Durée des runs</div>
       <div class="chart-wrap"><canvas id="chartDur"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">🍩 Répartition globale</div>
+      <div class="chart-title" data-i18n="dashboard.chartDoughnut">🍩 Répartition globale</div>
       <div class="chart-wrap"><canvas id="chartDoughnut"></canvas></div>
     </div>
   </div>
 
   <!-- Failing tests -->
-  <div class="section-title">🔴 TESTS EN ÉCHEC PERSISTANTS</div>
+  <div class="section-title" data-i18n="dashboard.failingTitle">🔴 TESTS EN ÉCHEC PERSISTANTS</div>
   <div class="failing-grid" id="failingGrid">
-    <div style="color:var(--gray);font-size:13px;font-style:italic">Aucun échec persistant détecté 🎉</div>
+    <div data-i18n="dashboard.noFailing" style="color:var(--gray);font-size:13px;font-style:italic">Aucun échec persistant détecté 🎉</div>
   </div>
 
   <!-- Runs history -->
-  <div class="section-title">📋 HISTORIQUE DES RUNS</div>
+  <div class="section-title" data-i18n="dashboard.historyTitle">📋 HISTORIQUE DES RUNS</div>
   <div style="overflow-x:auto">
     <table class="runs-table">
       <thead>
         <tr>
-          <th>RUN</th><th>TYPE</th><th>DATE</th><th>SUITE</th><th>NOM TEST</th>
-          <th>RÉSULTATS</th><th>TAUX</th><th>DURÉE</th><th>STATUT</th>
+          <th data-i18n="dashboard.thRun">RUN</th><th data-i18n="dashboard.thType">TYPE</th><th data-i18n="dashboard.thDate">DATE</th><th data-i18n="dashboard.thSuite">SUITE</th><th data-i18n="dashboard.thTestName">NOM TEST</th>
+          <th data-i18n="dashboard.thResults">RÉSULTATS</th><th data-i18n="dashboard.thRate">TAUX</th><th data-i18n="dashboard.thDuration">DURÉE</th><th data-i18n="dashboard.thStatus">STATUT</th>
         </tr>
       </thead>
       <tbody id="runsTableBody"></tbody>
@@ -130,6 +130,59 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 // ── Load data from localStorage ───────────────────────────────────────────────
 function fmt(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m'+Math.floor((ms%60000)/1000)+'s'}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── Mini-i18n autonome (iframe isolée : pas d'import de core.js) ────────────────
+const DASH_I18N = {
+  fr: {
+    'dashboard.title':'Dashboard', 'dashboard.exportPdf':'🖨️ Export PDF', 'dashboard.backAgent':'← Agent',
+    'dashboard.overview':'📊 VUE D\'ENSEMBLE',
+    'dashboard.kpiTotal':'RUNS TOTAUX', 'dashboard.kpiPass':'TESTS RÉUSSIS', 'dashboard.kpiFail':'TESTS ÉCHOUÉS',
+    'dashboard.kpiRate':'TAUX MOYEN', 'dashboard.kpiSuites':'SUITES RUNS', 'dashboard.kpiAvgDur':'DURÉE MOYENNE',
+    'dashboard.chartRate':'📈 Évolution du taux de réussite', 'dashboard.chartBars':'🧪 Tests par run (Pass / Fail)',
+    'dashboard.chartDur':'⏱️ Durée des runs', 'dashboard.chartDoughnut':'🍩 Répartition globale',
+    'dashboard.failingTitle':'🔴 TESTS EN ÉCHEC PERSISTANTS', 'dashboard.historyTitle':'📋 HISTORIQUE DES RUNS',
+    'dashboard.noFailing':'Aucun échec persistant détecté 🎉',
+    'dashboard.thRun':'RUN', 'dashboard.thType':'TYPE', 'dashboard.thDate':'DATE', 'dashboard.thSuite':'SUITE',
+    'dashboard.thTestName':'NOM TEST', 'dashboard.thResults':'RÉSULTATS', 'dashboard.thRate':'TAUX',
+    'dashboard.thDuration':'DURÉE', 'dashboard.thStatus':'STATUT',
+    'dashboard.loading':'⏳ Chargement de l\'historique…',
+    'dashboard.emptyHistory':'Aucun run dans l\'historique.', 'dashboard.emptyHistoryLink':'← Retour à l\'agent pour lancer des tests',
+    'dashboard.dsRate':'Taux de réussite %', 'dashboard.dsPassed':'Réussis', 'dashboard.dsFailed':'Échoués',
+    'dashboard.dsSkipped':'Ignorés', 'dashboard.dsDuration':'Durée (s)',
+    'dashboard.lastError':'Dernière erreur :', 'dashboard.since':'Depuis run #',
+    'dashboard.failingOne':'❌ {n} échec consécutif', 'dashboard.failingMany':'❌ {n} échecs consécutifs',
+    'dashboard.runMobile':'Run Mobile', 'dashboard.runApi':'Run API', 'dashboard.runDatabase':'Run Database', 'dashboard.runWeb':'Run Web',
+    'dashboard.pass':'✅ PASS', 'dashboard.fail':'❌ FAIL',
+  },
+  en: {
+    'dashboard.title':'Dashboard', 'dashboard.exportPdf':'🖨️ Export PDF', 'dashboard.backAgent':'← Agent',
+    'dashboard.overview':'📊 OVERVIEW',
+    'dashboard.kpiTotal':'TOTAL RUNS', 'dashboard.kpiPass':'PASSED TESTS', 'dashboard.kpiFail':'FAILED TESTS',
+    'dashboard.kpiRate':'AVG RATE', 'dashboard.kpiSuites':'SUITE RUNS', 'dashboard.kpiAvgDur':'AVG DURATION',
+    'dashboard.chartRate':'📈 Success rate trend', 'dashboard.chartBars':'🧪 Tests per run (Pass / Fail)',
+    'dashboard.chartDur':'⏱️ Run durations', 'dashboard.chartDoughnut':'🍩 Global distribution',
+    'dashboard.failingTitle':'🔴 PERSISTENT FAILING TESTS', 'dashboard.historyTitle':'📋 RUN HISTORY',
+    'dashboard.noFailing':'No persistent failures detected 🎉',
+    'dashboard.thRun':'RUN', 'dashboard.thType':'TYPE', 'dashboard.thDate':'DATE', 'dashboard.thSuite':'SUITE',
+    'dashboard.thTestName':'TEST NAME', 'dashboard.thResults':'RESULTS', 'dashboard.thRate':'RATE',
+    'dashboard.thDuration':'DURATION', 'dashboard.thStatus':'STATUS',
+    'dashboard.loading':'⏳ Loading history…',
+    'dashboard.emptyHistory':'No runs in history.', 'dashboard.emptyHistoryLink':'← Back to the agent to run tests',
+    'dashboard.dsRate':'Success rate %', 'dashboard.dsPassed':'Passed', 'dashboard.dsFailed':'Failed',
+    'dashboard.dsSkipped':'Skipped', 'dashboard.dsDuration':'Duration (s)',
+    'dashboard.lastError':'Last error:', 'dashboard.since':'Since run #',
+    'dashboard.failingOne':'❌ {n} consecutive failure', 'dashboard.failingMany':'❌ {n} consecutive failures',
+    'dashboard.runMobile':'Mobile Run', 'dashboard.runApi':'API Run', 'dashboard.runDatabase':'Database Run', 'dashboard.runWeb':'Web Run',
+    'dashboard.pass':'✅ PASS', 'dashboard.fail':'❌ FAIL',
+  },
+};
+let _dashLang = (function(){ try { return window.parent.currentLang === 'en' ? 'en' : 'fr'; } catch(e) { return 'fr'; } })();
+function tLocal(key){ return (DASH_I18N[_dashLang] && DASH_I18N[_dashLang][key]) || DASH_I18N.fr[key] || key; }
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tLocal(el.getAttribute('data-i18n')); });
+  document.documentElement.lang = _dashLang;
+}
+function dashLoc(){ return _dashLang === 'en' ? 'en-GB' : 'fr-FR'; }
 
 // Combine qa_run_history (runs simples) + suite-reports depuis qa_code_cards
 // Chargement async depuis MongoDB avec retry
@@ -170,13 +223,25 @@ window.loadHistory = async function loadHistory() {
     .sort((a,b) => (b.runNumber||0) - (a.runNumber||0));
 }
 let history = [];
+
+// Empty-state réutilisable (load initial ET bascule de langue)
+function renderEmptyState(){
+  document.getElementById('_dashEmpty')?.remove();
+  document.querySelector('.main')?.insertAdjacentHTML('afterbegin',
+    '<div id="_dashEmpty" style="text-align:center;padding:60px;color:var(--gray);font-size:14px">'+
+    tLocal('dashboard.emptyHistory')+'<br><a href="qa-agent.html" style="color:var(--teal)">'+tLocal('dashboard.emptyHistoryLink')+'</a></div>');
+}
+
 // Init async après DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
+  // Traduit le DOM statique dès le premier paint (langue lue depuis le parent)
+  applyStaticI18n();
+
   // Indicateur de chargement
   const loadingEl = document.createElement('div');
   loadingEl.id = '_dashLoading';
   loadingEl.style.cssText = 'text-align:center;padding:30px;color:var(--gray);font-size:13px;font-family:monospace';
-  loadingEl.textContent = "⏳ Chargement de l historique...";
+  loadingEl.textContent = tLocal('dashboard.loading');
   document.querySelector('.main')?.prepend(loadingEl);
 
   history = await loadHistory();
@@ -185,14 +250,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (li) li.remove();
 
   if (history.length === 0) {
-    document.querySelector('.main')?.insertAdjacentHTML('afterbegin',
-      '<div style="text-align:center;padding:60px;color:var(--gray);font-size:14px">'+
-      'Aucun run dans l\'historique.<br><a href="qa-agent.html" style="color:var(--teal)">← Retour à l\'agent pour lancer des tests</a></div>');
+    renderEmptyState();
     return;
   }
   initDashboard();
 });
 
+const charts = {}; // refs conservées hors de la fonction -> destroy avant recreate (idempotent)
 window.initDashboard = function initDashboard() {
 
 // ── KPIs ──────────────────────────────────────────────────────────────────────
@@ -220,10 +284,11 @@ const defaults = {
 };
 
 // Rate chart
-new Chart(document.getElementById('chartRate'), {
+if (charts.rate) charts.rate.destroy();
+charts.rate = new Chart(document.getElementById('chartRate'), {
   type:'line',
   data:{ labels, datasets:[{
-    label:'Taux de réussite %',
+    label:tLocal('dashboard.dsRate'),
     data: history.map(r => r.total>0?Math.round(r.passed/r.total*100):0),
     borderColor:'#00d4aa', backgroundColor:'rgba(0,212,170,0.1)', tension:.4, fill:true, pointRadius:4
   }]},
@@ -231,30 +296,33 @@ new Chart(document.getElementById('chartRate'), {
 });
 
 // Bars chart
-new Chart(document.getElementById('chartBars'), {
+if (charts.bars) charts.bars.destroy();
+charts.bars = new Chart(document.getElementById('chartBars'), {
   type:'bar',
   data:{ labels, datasets:[
-    { label:'Réussis', data:history.map(r=>r.passed||0), backgroundColor:'rgba(34,197,94,0.7)', borderRadius:4 },
-    { label:'Échoués', data:history.map(r=>r.failed||0), backgroundColor:'rgba(239,68,68,0.7)', borderRadius:4 },
+    { label:tLocal('dashboard.dsPassed'), data:history.map(r=>r.passed||0), backgroundColor:'rgba(34,197,94,0.7)', borderRadius:4 },
+    { label:tLocal('dashboard.dsFailed'), data:history.map(r=>r.failed||0), backgroundColor:'rgba(239,68,68,0.7)', borderRadius:4 },
   ]},
   options:{ ...defaults, scales:{ ...defaults.scales, x:{...defaults.scales.x, stacked:false} } }
 });
 
 // Duration chart
-new Chart(document.getElementById('chartDur'), {
+if (charts.dur) charts.dur.destroy();
+charts.dur = new Chart(document.getElementById('chartDur'), {
   type:'bar',
   data:{ labels, datasets:[{
-    label:'Durée (s)', data:history.map(r=>r.duration?+(r.duration/1000).toFixed(1):0),
+    label:tLocal('dashboard.dsDuration'), data:history.map(r=>r.duration?+(r.duration/1000).toFixed(1):0),
     backgroundColor:history.map(r=>r.isSuite?'rgba(245,158,11,0.7)':'rgba(96,165,250,0.7)'), borderRadius:4
   }]},
   options:{ ...defaults }
 });
 
 // Doughnut
-new Chart(document.getElementById('chartDoughnut'), {
+if (charts.doughnut) charts.doughnut.destroy();
+charts.doughnut = new Chart(document.getElementById('chartDoughnut'), {
   type:'doughnut',
   data:{
-    labels:['Réussis','Échoués','Ignorés'],
+    labels:[tLocal('dashboard.dsPassed'),tLocal('dashboard.dsFailed'),tLocal('dashboard.dsSkipped')],
     datasets:[{ data:[totalPass, totalFail, history.reduce((s,r)=>s+(r.skipped||0),0)],
       backgroundColor:['rgba(34,197,94,0.8)','rgba(239,68,68,0.8)','rgba(245,158,11,0.8)'],
       borderColor:['#22c55e','#ef4444','#f59e0b'], borderWidth:2 }]
@@ -285,10 +353,10 @@ if (persistentFails.length > 0) {
     const lastFail  = runs[runs.length-1].date;
     return `<div class="failing-card">
       <div class="failing-name" title="${esc(name)}">${esc(name)}</div>
-      <div class="failing-meta">Dernière erreur : ${esc(runs[runs.length-1].msg?.slice(0,80)||'—')}</div>
+      <div class="failing-meta">${tLocal('dashboard.lastError')} ${esc(runs[runs.length-1].msg?.slice(0,80)||'—')}</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span class="fail-streak">❌ ${streak} échec${streak>1?'s':''} consécutif${streak>1?'s':''}</span>
-        <span class="failing-since">Depuis run #${runs[0].runNum} · ${esc(firstFail||'—')}</span>
+        <span class="fail-streak">${(streak>1?tLocal('dashboard.failingMany'):tLocal('dashboard.failingOne')).replace('{n}', streak)}</span>
+        <span class="failing-since">${tLocal('dashboard.since')}${runs[0].runNum} · ${esc(firstFail||'—')}</span>
       </div>
     </div>`;
   }).join('');
@@ -297,10 +365,10 @@ if (persistentFails.length > 0) {
 document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(r => {
   const rate = r.total > 0 ? Math.round(r.passed/r.total*100) : 0;
   const runTypeCfg = {
-    mobile:   { icon: '📱', label: 'Run Mobile',   bg: 'rgba(168,85,247,0.15)',  color: '#c084fc',     border: '#c084fc' },
-    api:      { icon: '🔌', label: 'Run API',       bg: 'rgba(59,130,246,0.15)', color: '#60a5fa',     border: '#60a5fa' },
-    database: { icon: '🗄️', label: 'Run Database',  bg: 'rgba(34,197,94,0.15)',  color: '#22c55e',     border: '#22c55e' },
-    web:      { icon: '🔵', label: 'Run Web',       bg: 'rgba(0,212,170,0.1)',   color: 'var(--teal)', border: 'var(--teal)' },
+    mobile:   { icon: '📱', label: tLocal('dashboard.runMobile'),   bg: 'rgba(168,85,247,0.15)',  color: '#c084fc',     border: '#c084fc' },
+    api:      { icon: '🔌', label: tLocal('dashboard.runApi'),       bg: 'rgba(59,130,246,0.15)', color: '#60a5fa',     border: '#60a5fa' },
+    database: { icon: '🗄️', label: tLocal('dashboard.runDatabase'),  bg: 'rgba(34,197,94,0.15)',  color: '#22c55e',     border: '#22c55e' },
+    web:      { icon: '🔵', label: tLocal('dashboard.runWeb'),       bg: 'rgba(0,212,170,0.1)',   color: 'var(--teal)', border: 'var(--teal)' },
   };
   // Detect runType from environment string if not set
   function guessRunType(r) {
@@ -320,8 +388,8 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
         ${rtc.icon} ${rtc.label}
       </span>`;
   const status = r.status === 'PASS'
-    ? `<span class="badge pass">✅ PASS</span>`
-    : `<span class="badge fail">❌ FAIL</span>`;
+    ? `<span class="badge pass">${tLocal('dashboard.pass')}</span>`
+    : `<span class="badge fail">${tLocal('dashboard.fail')}</span>`;
   const suiteName = r.isSuite ? (r.suiteName||'—') : '—';
   // Pour les suites : noms des blocs RF, pour les runs simples : pageTitle
   const testName = r.isSuite
@@ -331,7 +399,7 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
   return `<tr>
     <td style="font-family:'IBM Plex Mono',monospace;color:var(--teal);font-weight:700">#${r.runNumber||'?'}</td>
     <td>${type}</td>
-    <td style="font-size:12px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${esc(r.runDate || (r.runNumber ? new Date(r.runNumber).toLocaleString('fr-FR') : '—'))}</td>
+    <td style="font-size:12px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${esc(r.runDate || (r.runNumber ? new Date(r.runNumber).toLocaleString(dashLoc()) : '—'))}</td>
     <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--warn)" title="${esc(suiteName)}">${esc(suiteName)}</td>
     <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--teal)" title="${esc(testName)}">${esc(testName)}</td>
     <td>
@@ -347,6 +415,14 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
 }).join('');
 }
 }
+
+// ── Bascule de langue déclenchée par le parent (appel cross-frame same-origin) ──
+window.applyDashboardLang = function(lang){
+  _dashLang = (lang === 'en') ? 'en' : 'fr';
+  applyStaticI18n();
+  if (history && history.length) { initDashboard(); } // re-render KPIs/table/cartes + destroy/recreate charts
+  else { renderEmptyState(); }                        // état vide : message traduit
+};
 </script>
 </body>
 </html>

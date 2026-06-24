@@ -3,6 +3,12 @@
 //                closeDashboardPanel, updateStatsBar, restoreStatsBar).
 // ============================================================================
 
+// ── i18n : retraduit l'iframe dashboard à la bascule de langue (registre core.js) ──
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(() => {
+  document.getElementById('dashboardIframe')?.contentWindow?.applyDashboardLang?.(currentLang);
+});
+
 // ── Open dashboard inline ──────────────────────────────────────────────────────
 function openDashboard() {
   const panel = document.getElementById('dashboardPanel');
