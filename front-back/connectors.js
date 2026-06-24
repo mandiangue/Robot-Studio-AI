@@ -3,6 +3,10 @@
 //                 UI Azure/Jira, helpers clé API. Extrait de qa-agent.js.
 // ============================================================================
 
+// Base same-origin du proxy : local -> http://localhost:3001, prod -> Render.
+// (le front et /api/* sont servis par le meme serveur Express)
+const API_BASE = window.location.origin;
+
 // ── API key (attached in DOMContentLoaded below) ──────────────────────────────
 
 function updateKeyStatus(val) {
@@ -495,7 +499,7 @@ async function uiConnectAzure() {
   btn.textContent = '⏳ Connexion...';
 
   try {
-    const r    = await fetch('https://robotstudioai.onrender.com/api/azure/connect', {
+    const r    = await fetch(`${API_BASE}/api/azure/connect`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ azureUrl: url, token }),
@@ -530,7 +534,7 @@ async function uiFetchAzure() {
   if (btn) btn.textContent = '⏳';
 
   try {
-    const r    = await fetch(`https://robotstudioai.onrender.com//api/azure/workitem/${id}`);
+    const r    = await fetch(`${API_BASE}/api/azure/workitem/${id}`);
     const data = await r.json();
     if (!r.ok) { showConnError('azure', '❌ ' + (data.error || `Erreur HTTP ${r.status}`)); return; }
     const apiKey = document.getElementById('apiKey').value.trim();
@@ -573,7 +577,7 @@ async function uiConnectJira() {
   btn.textContent = '⏳ Connexion...';
 
   try {
-    const r    = await fetch('https://robotstudioai.onrender.com/api/jira/connect', {
+    const r    = await fetch(`${API_BASE}/api/jira/connect`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jiraUrl: url, email, token }),
