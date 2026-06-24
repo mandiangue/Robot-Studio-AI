@@ -8,6 +8,18 @@ let suiteRegistry  = [];
 let suiteSchedules = []; // { id, suiteName, tests[], type, datetime, interval, unit, active, nextRun }
 let scheduleTimers = {};
 
+// i18n helpers — la VALUE d'unité reste FR (clé msMap/schedule.unit) ; seul le LABEL est traduit.
+function _suiteUnitLabel(u){ return u==='minutes'?t('suites.unitMinutes'):u==='jours'?t('suites.unitDays'):t('suites.unitHours'); }
+function _suiteLoc(){ return currentLang==='en'?'en-GB':'fr-FR'; }
+
+// Bascule de langue : re-render du panneau suites s'il est ouvert (titres sauvés à chaque frappe -> rebuild sûr).
+// Le modal scheduler est recréé au clic (t() au build) -> pas de re-render ici.
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(function(){
+  var p=document.getElementById('suitePanel');
+  if(p && p.style.display==='flex' && typeof renderSavedSuites==='function') renderSavedSuites();
+});
+
 // ── Register a test when code is generated ────────────────────────────────────
 function generateSuiteId() {
   // Find next available T-number
@@ -36,7 +48,7 @@ function registerSuiteTest(filename, code) {
 
   saveSuiteRegistry();
   renderSuiteTestList();
-  showToast('🧪 ' + id + ' ajouté à la suite');
+  showToast(t('suites.addedToSuite').replace('{id}', id));
 }
 
 function saveSuiteRegistry() {
@@ -129,7 +141,7 @@ function getSelectedTests() {
 // ── Run selected tests ────────────────────────────────────────────────────────
 async function runSuiteSelected() {
   const selected = getSelectedTests();
-  if (selected.length === 0) { showToast('⚠️ Sélectionne au moins un test'); return; }
+  if (selected.length === 0) { showToast(t('suites.selectOneTest')); return; }
 
   const titleEl = document.getElementById('suiteTitleInput') || document.getElementById('suiteNameInput');
   const suiteName = (titleEl?.value || '').trim() || 'Suite sans nom';
@@ -138,7 +150,7 @@ async function runSuiteSelected() {
   const filename  = 'suite_' + suiteName.replace(/\s+/g,'_').toLowerCase();
 
   showTyping();
-  renderAgentMsg(`🧪 Lancement de la suite **${suiteName}** — ${selected.length} test(s)…`);
+  renderAgentMsg((selected.length>1?t('suites.launchingSuiteMany'):t('suites.launchingSuiteOne')).replace('{name}', suiteName).replace('{n}', selected.length));
 
   await runTestsFromCard(combined, filename + '.robot');
 }
@@ -173,23 +185,23 @@ function openScheduler() {
 
   const scheduleRows = suiteSchedules.map((s, i) => `
     <div class="scheduler-slot">
-      <span class="sched-badge ${s.active ? 'active' : 'pending'}">${s.active ? '● Actif' : '○ Inactif'}</span>
+      <span class="sched-badge ${s.active ? 'active' : 'pending'}">${s.active ? t('suites.active') : t('suites.inactive')}</span>
       <div style="flex:1">
         <div style="font-size:12px;color:var(--text);font-weight:600">${escHtml(s.suiteName)}</div>
         <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace">
-          ${s.type === 'once' ? '📅 ' + new Date(s.datetime).toLocaleString('fr-FR') : '🔁 Toutes les ' + s.interval + ' ' + s.unit}
-          · Prochain : ${s.nextRun ? new Date(s.nextRun).toLocaleString('fr-FR') : '—'}
+          ${s.type === 'once' ? '📅 ' + new Date(s.datetime).toLocaleString(_suiteLoc()) : t('suites.everyInterval').replace('{interval}', s.interval).replace('{unit}', _suiteUnitLabel(s.unit))}
+          · ${t('suites.next')} ${s.nextRun ? new Date(s.nextRun).toLocaleString(_suiteLoc()) : '—'}
         </div>
       </div>
       <button onclick="toggleSchedule(${i})"
         style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-        ${s.active ? '⏸ Pause' : '▶️ Activer'}
+        ${s.active ? t('suites.pause') : t('suites.activate')}
       </button>
       <button onclick="stopTestRun();deleteSchedule(${i})"
-        style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="Stopper le run en cours">⏹ Stop</button>
+        style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="${t('suites.stopRunTitle')}">${t('suites.stop')}</button>
       <button onclick="deleteSchedule(${i})"
-        style="background:transparent;border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="Supprimer">✕</button>
-    </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:12px;font-style:italic">Aucun scheduling configuré</div>';
+        style="background:transparent;border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="${t('suites.deleteTitle')}">✕</button>
+    </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:12px;font-style:italic">'+t('suites.noScheduling')+'</div>';
 
   const modal = document.createElement('div');
   modal.id = 'schedulerModal';
@@ -199,26 +211,26 @@ function openScheduler() {
 
       <!-- Header -->
       <div style="display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--card)">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">⏰ Scheduler de suites</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${t('suites.schedulerTitle')}</span>
         <button onclick="document.getElementById('schedulerModal').remove()"
-          style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer" title="Fermer">✕</button>
+          style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer" title="${t('suites.close')}">✕</button>
       </div>
 
       <!-- New schedule form -->
       <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
         <div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:10px">
-          NOUVEAU SCHEDULING
+          ${t('suites.newScheduling')}
         </div>
         <!-- Suite selector -->
         <div style="margin-bottom:12px">
-          <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:6px">SUITE(S) À PROGRAMMER</div>
+          <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:6px">${t('suites.suitesToSchedule')}</div>
           <div style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto">
             ${savedSuites.length === 0
-              ? '<div style="font-size:12px;color:var(--gray);font-style:italic">Aucune suite — crée une suite d\'abord</div>'
+              ? '<div style="font-size:12px;color:var(--gray);font-style:italic">'+t('suites.noSuiteFirst')+'</div>'
               : savedSuites.map(s => `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;cursor:pointer">
                   <input type="checkbox" class="sched-suite-cb" value="${s.id}" ${suiteIds.includes(s.id) ? 'checked' : ''} style="accent-color:var(--teal);width:13px;height:13px" />
                   <span style="font-size:12px;color:var(--text);font-weight:600">${escHtml(s.title)}</span>
-                  <span style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${s.testIds.length} test(s)</span>
+                  <span style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${(s.testIds.length>1?t('suites.testCountMany'):t('suites.testCountOne')).replace('{n}', s.testIds.length)}</span>
                 </label>`).join('')
             }
           </div>
@@ -227,11 +239,11 @@ function openScheduler() {
         <div style="display:flex;gap:10px;margin-bottom:12px">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--teal);
                         background:rgba(0,212,170,0.08);border:1px solid var(--teal);padding:6px 14px;border-radius:6px">
-            <input type="radio" name="schedType" value="once" checked style="accent-color:var(--teal)"> 🔂 Une fois
+            <input type="radio" name="schedType" value="once" checked style="accent-color:var(--teal)"> ${t('suites.once')}
           </label>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--gray);
                         background:var(--card);border:1px solid var(--border);padding:6px 14px;border-radius:6px">
-            <input type="radio" name="schedType" value="repeat" style="accent-color:var(--teal)"> 🔁 Répétition
+            <input type="radio" name="schedType" value="repeat" style="accent-color:var(--teal)"> ${t('suites.repeat')}
           </label>
         </div>
 
@@ -244,35 +256,35 @@ function openScheduler() {
             <span onclick="openDatePicker()"
               style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
                      font-size:16px;cursor:pointer;color:var(--teal);z-index:1"
-              title="Choisir la date">📅</span>
+              title="${t('suites.pickDateTitle')}">📅</span>
           </div>
         </div>
 
         <div id="schedRepeatFields" style="display:none;display:flex;gap:8px;align-items:center">
-          <span style="font-size:13px;color:var(--text)">Toutes les</span>
+          <span style="font-size:13px;color:var(--text)">${t('suites.every')}</span>
           <input type="number" id="schedInterval" value="1" min="1"
             style="background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);
                    padding:7px 10px;font-size:13px;font-family:'IBM Plex Mono',monospace;outline:none;width:70px"/>
           <select id="schedUnit"
             style="background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);
                    padding:7px 10px;font-size:13px;font-family:'IBM Plex Mono',monospace;outline:none">
-            <option value="minutes">minutes</option>
-            <option value="heures" selected>heures</option>
-            <option value="jours">jours</option>
+            <option value="minutes">${t('suites.unitMinutes')}</option>
+            <option value="heures" selected>${t('suites.unitHours')}</option>
+            <option value="jours">${t('suites.unitDays')}</option>
           </select>
         </div>
 
         <button id="schedSubmitBtn"
           style="margin-top:12px;width:100%;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;color:#fff;
                  padding:10px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
-          ⏰ Programmer ce scheduling
+          ${t('suites.scheduleBtn')}
         </button>
       </div>
 
       <!-- Existing schedules -->
       <div style="overflow-y:auto;padding:0 20px;flex:1">
         <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;padding:12px 0 6px">
-          SCHEDULINGS ACTIFS
+          ${t('suites.activeSchedulings')}
         </div>
         ${scheduleRows}
       </div>
@@ -313,15 +325,15 @@ function addSchedule() {
   const tests        = allTestIds.map(id => suiteRegistry.find(t => t.id === id)).filter(Boolean);
   const testIds      = allTestIds;
 
-  if (chosenSuites.length === 0) { showToast('⚠️ Coche au moins une suite'); return; }
-  if (tests.length === 0) { showToast('⚠️ Les suites selectionnees n\'ont pas de tests'); return; }
+  if (chosenSuites.length === 0) { showToast(t('suites.checkOneSuite')); return; }
+  if (tests.length === 0) { showToast(t('suites.selectedNoTests')); return; }
 
   let schedule = { id: 'SC' + Date.now(), suiteName, suiteIds: chosenSuites.map(s => s.id), testIds, type, active: true };
 
   if (type === 'once') {
     const dtInput = document.getElementById('schedDatetime');
     const dt = dtInput?._isoValue || dtInput?.value;
-    if (!dt) { showToast('⚠️ Choisis une date/heure'); return; }
+    if (!dt) { showToast(t('suites.pickDateTime')); return; }
     schedule.datetime = new Date(dt).toISOString();
     schedule.nextRun  = schedule.datetime;
   } else {
@@ -338,7 +350,7 @@ function addSchedule() {
   saveSchedules();
   startScheduleTimer(schedule);
   document.getElementById('schedulerModal')?.remove();
-  showToast(`⏰ Scheduling programmé — ${suiteName}`);
+  showToast(t('suites.schedulingSet').replace('{name}', suiteName));
   openScheduler(); // refresh
 }
 
@@ -371,7 +383,7 @@ function startScheduleTimer(schedule) {
     if (!s || !s.active) return;
 
     // Run each selected suite sequentially
-    showToast(`⏰ Scheduling déclenché : ${s.suiteName}`);
+    showToast(t('suites.schedulingTriggered').replace('{name}', s.suiteName));
     const suiteIdsToRun = s.suiteIds || [];
     for (const suiteId of suiteIdsToRun) {
       const idx = savedSuites.findIndex(suite => suite.id === suiteId);
@@ -463,7 +475,7 @@ function cleanSuiteRegistry() {
 
 function openSuitePanel() {
   const panel = document.getElementById('suitePanel');
-  if (!panel) { showToast('Panneau introuvable — recharge la page'); return; }
+  if (!panel) { showToast(t('suites.panelNotFound')); return; }
 
   // Toggle behaviour
   if (panel.style.display === 'flex') {
@@ -553,7 +565,7 @@ function addCardToSuite(cardId) {
 
   // Check not already added
   if (suiteRegistry.some(r => r.cardId === cardId)) {
-    showToast('⚠️ Ce bloc est déjà dans la suite'); return;
+    showToast(t('suites.alreadyInSuite')); return;
   }
 
   const title = card.title || card.files?.[0]?.filename?.replace('.robot','') || 'Test';
@@ -652,7 +664,7 @@ function addCardToSuite(cardId) {
   saveSuiteRegistry();
   renderSuiteTestList();
   renderAvailableCodeCards(); // refresh to show ✅
-  showToast('✅ ' + title + ' ajouté à la suite');
+  showToast(t('suites.addedToSuiteTitle').replace('{title}', title));
 }
 
 function closeSuitePanel() {
@@ -695,7 +707,7 @@ function saveCurrentSuite() {
   const title   = (titleEl && titleEl.value || '').trim() || 'Suite ' + new Date().toLocaleDateString('fr-FR');
   const checked = document.querySelectorAll('.suite-test-item input[type="checkbox"]:checked');
   const testIds = [...checked].map(cb => cb.closest('.suite-test-item') && cb.closest('.suite-test-item').dataset.tid).filter(Boolean);
-  if (testIds.length === 0) { showToast('Coche au moins un test'); return; }
+  if (testIds.length === 0) { showToast(t('suites.checkOneTestList')); return; }
 
   const existing = savedSuites.findIndex(s => s.title === title);
   const suite = {
@@ -707,7 +719,7 @@ function saveCurrentSuite() {
   if (existing >= 0) savedSuites[existing] = suite; else savedSuites.push(suite);
   saveSuitesList();
   renderSavedSuites();
-  showToast('Suite "' + title + '" sauvegardee (' + testIds.length + ' tests)');
+  showToast((testIds.length>1?t('suites.suiteSavedMany'):t('suites.suiteSavedOne')).replace('{title}', title).replace('{n}', testIds.length));
 }
 
 function loadNamedSuite(suiteId) {
@@ -722,14 +734,14 @@ function loadNamedSuite(suiteId) {
     if (cb) cb.checked = sel;
     el.classList.toggle('selected', sel);
   });
-  showToast('Suite "' + suite.title + '" chargee');
+  showToast(t('suites.suiteLoaded').replace('{title}', suite.title));
 }
 
 function deleteNamedSuite(suiteId) {
   savedSuites = savedSuites.filter(s => s.id !== suiteId);
   saveSuitesList();
   renderSavedSuites();
-  showToast('Suite supprimee');
+  showToast(t('suites.suiteDeleted'));
 }
 
 function renderSavedSuites() {
@@ -737,12 +749,12 @@ function renderSavedSuites() {
   if (!el) return;
 
   let html = '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">';
-  html += '<button onclick="addNewSuiteGroup()" style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:7px 14px;border-radius:6px;font-size:11px;font-family:monospace;cursor:pointer;font-weight:600">+ Nouvelle suite</button>';
-  html += '<button onclick="runCheckedSuiteGroups()" style="background:linear-gradient(135deg,#22c55e,#16a34a);border:none;color:#07090f;padding:7px 14px;border-radius:6px;font-size:11px;font-family:monospace;cursor:pointer;font-weight:700">▶️ Run suite</button>';
+  html += '<button onclick="addNewSuiteGroup()" style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:7px 14px;border-radius:6px;font-size:11px;font-family:monospace;cursor:pointer;font-weight:600">'+t('suites.newSuite')+'</button>';
+  html += '<button onclick="runCheckedSuiteGroups()" style="background:linear-gradient(135deg,#22c55e,#16a34a);border:none;color:#07090f;padding:7px 14px;border-radius:6px;font-size:11px;font-family:monospace;cursor:pointer;font-weight:700">'+t('suites.runSuite')+'</button>';
   html += '</div>';
 
   if (savedSuites.length === 0) {
-    html += '<div style="font-size:11px;color:var(--gray);font-style:italic;padding:8px 4px;text-align:center">Aucune suite — clique "+ Nouvelle suite"</div>';
+    html += '<div style="font-size:11px;color:var(--gray);font-style:italic;padding:8px 4px;text-align:center">'+t('suites.noSuite')+'</div>';
     el.innerHTML = html;
     return;
   }
@@ -762,7 +774,7 @@ function renderSavedSuites() {
       return `<div class="suite-group-test"
         style="border-bottom:1px solid var(--border);opacity:${isEnabled?'1':'0.5'}">
         <div style="display:flex;align-items:center;gap:8px;padding:7px 10px 7px 20px;cursor:default">
-          <span style="color:var(--gray);cursor:grab;font-size:14px;flex-shrink:0" title="Réordonner">⠿</span>
+          <span style="color:var(--gray);cursor:grab;font-size:14px;flex-shrink:0" title="${t('suites.reorder')}">⠿</span>
           <span style="background:rgba(0,212,170,0.1);color:var(--teal);font-family:'IBM Plex Mono',monospace;
                        font-size:9px;padding:1px 6px;border-radius:3px;border:1px solid rgba(0,212,170,0.2);white-space:nowrap">${escHtml(t.id)}</span>
           <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.name)}</span>
@@ -779,13 +791,13 @@ function renderSavedSuites() {
           </div>
           <button onclick="event.stopPropagation();toggleSuiteTest(${si},'${t.id}')"
             style="background:transparent;border:none;cursor:pointer;font-size:12px;padding:1px 3px"
-            title="${isEnabled?'Désactiver':'Activer'}">${isEnabled?'✅':'⬜'}</button>
+            title="${isEnabled?t('suites.disable'):t('suites.enable')}">${isEnabled?'✅':'⬜'}</button>
           <button onclick="removeTestFromSuite(${si},'${t.id}')"
             style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:11px;padding:1px 4px"
-            onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" title="Retirer">✕</button>
+            onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" title="${t('suites.remove')}">✕</button>
         </div>
         <div id="${expandId}" style="display:none;padding:6px 10px 8px 36px;background:rgba(0,0,0,0.2);border-top:1px solid var(--border)">
-          ${codePreview || '<div style="font-size:10px;color:var(--gray);font-style:italic">Pas de code disponible</div>'}
+          ${codePreview || '<div style="font-size:10px;color:var(--gray);font-style:italic">'+t('suites.noCode')+'</div>'}
         </div>
       </div>`;
     }).join('');
@@ -815,45 +827,45 @@ function renderSavedSuites() {
             onfocus="this.style.borderBottomColor='var(--teal)'"
             onblur="this.style.borderBottomColor='transparent'" />
           <span style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;white-space:nowrap">
-            ${suiteTests.length} test${suiteTests.length > 1 ? 's' : ''}
+            ${(suiteTests.length>1?t('suites.testCountMany'):t('suites.testCountOne')).replace('{n}', suiteTests.length)}
           </span>
           <button onclick="runSuiteGroup(${si})" id="runBtn-${s.id}"
-            title="Lancer la suite"
+            title="${t('suites.runSuiteTitle')}"
             style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;
                    padding:4px 10px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">▶️</button>
           <button onclick="stopSuiteGroup('${s.id}')" id="stopBtn-${s.id}"
-            title="Arrêter la suite"
+            title="${t('suites.stopSuiteTitle')}"
             style="display:none;background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);color:var(--red);
                    padding:4px 10px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">⏹</button>
           <select onchange="setSuiteHeadless('${s.id}',this.value)" onclick="event.stopPropagation()"
             style="font-size:10px;background:var(--card);border:1px solid var(--border);color:var(--gray);border-radius:4px;padding:2px 4px;cursor:pointer"
-            title="Mode navigateur pour cette suite">
+            title="${t('suites.browserModeTitle')}">
             <option value="visible" ${(s.headless||'visible')==='visible'?'selected':''}>🖥️</option>
             <option value="headless" ${s.headless==='headless'?'selected':''}>🔇 Headless</option>
           </select>
           <button onclick="deleteSuiteGroup(${si})"
             style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:12px;padding:2px 4px;border-radius:3px"
             onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'"
-            title="Supprimer la suite">✕</button>
+            title="${t('suites.deleteSuiteTitle')}">✕</button>
         </div>
 
         <!-- Tests list -->
-        ${testsHtml || '<div id="dropZone-'+s.id+'" style="padding:14px 20px;font-size:11px;color:var(--gray);font-style:italic;border:2px dashed var(--border);border-radius:8px;margin:8px;text-align:center;transition:all .2s" ondragover="event.preventDefault();this.style.borderColor=\'var(--teal)\';this.style.background=\'rgba(0,212,170,0.05)\'" ondragleave="this.style.borderColor=\'var(--border)\';this.style.background=\'\'" ondrop="dropCardToSuite(event,\''+s.id+'\')">📥 Glisse un bloc de code ici</div>'}
+        ${testsHtml || '<div id="dropZone-'+s.id+'" style="padding:14px 20px;font-size:11px;color:var(--gray);font-style:italic;border:2px dashed var(--border);border-radius:8px;margin:8px;text-align:center;transition:all .2s" ondragover="event.preventDefault();this.style.borderColor=\'var(--teal)\';this.style.background=\'rgba(0,212,170,0.05)\'" ondragleave="this.style.borderColor=\'var(--border)\';this.style.background=\'\'" ondrop="dropCardToSuite(event,\''+s.id+'\')">'+t('suites.dropZone')+'</div>'}
 
         <!-- Add test to suite -->
         ${addOptions ? `<div style="display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);background:rgba(0,0,0,0.1)">
           <select id="addTestSelect_${si}" onclick="event.stopPropagation()"
             style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);
                    padding:5px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;outline:none">
-            <option value="">— Sélectionner un test —</option>
+            <option value="">${t('suites.selectTest')}</option>
             ${addOptions}
           </select>
           <button onclick="addTestToSuite(${si})"
             style="background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.3);color:var(--teal);
                    padding:5px 12px;border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-            + Ajouter
+            ${t('suites.addBtn')}
           </button>
-        </div>` : '<div style="padding:6px 12px;font-size:10px;color:var(--gray);font-style:italic;border-top:1px solid var(--border)">Tous les tests sont dans cette suite</div>'}
+        </div>` : '<div style="padding:6px 12px;font-size:10px;color:var(--gray);font-style:italic;border-top:1px solid var(--border)">'+t('suites.allTestsIn')+'</div>'}
 
       </div>`;
   }).join('');
