@@ -234,20 +234,20 @@ function rebuildCard(cardId) {
     return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--card)">
         <span style="background:rgba(0,212,170,0.15);color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid rgba(0,212,170,0.3);white-space:nowrap;font-weight:700">${tid}</span>
-        <input data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="name" value="${nm}" placeholder="Nom du cas"
+        <input data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="name" value="${nm}" data-i18n-ph="cards.phCaseName" placeholder="Nom du cas"
           style="flex:1;background:transparent;border:none;color:var(--text);font-weight:700;font-size:14px;font-family:'Syne',sans-serif;outline:none;min-width:0" />
         <button data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-action="del-case"
-          style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:#DC2626;width:26px;height:26px;border-radius:4px;font-size:13px;cursor:pointer;flex-shrink:0" title="Supprimer">✕</button>
+          style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:#DC2626;width:26px;height:26px;border-radius:4px;font-size:13px;cursor:pointer;flex-shrink:0" data-i18n-title="cards.tDelete" title="Supprimer">✕</button>
       </div>
       <div style="padding:8px 12px 4px">
-        <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:4px">DESCRIPTION</div>
-        <textarea data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="description" rows="2"
+        <div data-i18n="cards.description" style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:4px">DESCRIPTION</div>
+        <textarea data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="description" rows="2" data-i18n-ph="cards.phCaseDesc" placeholder="Description du cas…"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
           style="width:100%;background:transparent;border:none;border-bottom:1px solid var(--muted);color:#8ab4c4;font-size:13px;font-family:'Syne',sans-serif;outline:none;padding:2px 0 6px;resize:vertical;min-height:36px;line-height:1.6">${desc}</textarea>
       </div>
       <div style="padding:4px 12px 10px">
-        <div style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:4px">RÉSULTAT ATTENDU</div>
-        <textarea data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="expected" rows="1"
+        <div data-i18n="cards.expectedResult" style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:4px">RÉSULTAT ATTENDU</div>
+        <textarea data-card="${cardId}" data-pi="${pi}" data-ci="${idx}" data-field="expected" rows="1" data-i18n-ph="cards.phCaseExpected" placeholder="Résultat attendu…"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
           style="width:100%;background:transparent;border:none;border-bottom:1px solid var(--muted);color:var(--teal);font-size:13px;font-family:'IBM Plex Mono',monospace;outline:none;padding:2px 0 6px;resize:vertical;min-height:28px;line-height:1.6">${exp}</textarea>
       </div>
@@ -260,18 +260,18 @@ function rebuildCard(cardId) {
     const canDel  = storeRef.pages.length > 1;
     return `<div style="margin-bottom:14px;border:1px solid rgba(0,212,170,0.18);border-radius:10px;overflow:hidden">
       <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:rgba(0,212,170,0.05);border-bottom:1px solid rgba(0,212,170,0.15)">
-        <span style="font-size:10px;color:var(--teal);font-family:'IBM Plex Mono',monospace;font-weight:700;flex-shrink:0">📄 PAGE ${pi+1}</span>
-        <input data-card="${cardId}" data-pi="${pi}" data-field="pagelabel" value="${pgLabel}" placeholder="Nom de la page..."
+        <span style="font-size:10px;color:var(--teal);font-family:'IBM Plex Mono',monospace;font-weight:700;flex-shrink:0"><span data-i18n="cards.pageLabel">📄 PAGE</span> ${pi+1}</span>
+        <input data-card="${cardId}" data-pi="${pi}" data-field="pagelabel" value="${pgLabel}" data-i18n-ph="cards.phPageName" placeholder="Nom de la page…"
           style="flex:1;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:13px;font-weight:600;font-family:'Syne',sans-serif;outline:none;padding:2px 4px"
           onfocus="this.style.borderBottomColor='var(--teal)'" onblur="this.style.borderBottomColor='transparent'" />
-        <span style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${pg.cases.length} cas</span>
+        <span class="tc-pagecount" data-n="${pg.cases.length}" style="font-size:10px;color:var(--gray);font-family:'IBM Plex Mono',monospace">${(pg.cases.length>1?t('cards.caseCountMany'):t('cards.caseCountOne')).replace('{n}', pg.cases.length)}</span>
         ${canDel ? `<button data-card="${cardId}" data-pi="${pi}" data-action="del-page"
           style="background:transparent;border:none;color:var(--gray);cursor:pointer;font-size:11px;padding:2px 5px"
-          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" title="Supprimer cette page">✕</button>` : ''}
+          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray)'" data-i18n-title="cards.tDeletePage" title="Supprimer cette page">✕</button>` : ''}
       </div>
       <div style="padding:10px 12px">
         ${pgCases}
-        <button data-card="${cardId}" data-pi="${pi}" data-action="add-case"
+        <button data-card="${cardId}" data-pi="${pi}" data-action="add-case" data-i18n="cards.addCase"
           style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:5px 12px;border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
           + Ajouter un cas
         </button>
@@ -286,26 +286,29 @@ function rebuildCard(cardId) {
     <div class="msg-body" style="width:100%;max-width:100%">
       <div class="msg-bubble" style="padding:16px 20px;resize:horizontal;overflow:auto;min-width:340px;max-width:100%;box-sizing:border-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          <strong style="font-size:15px">📋 ${totalCases} cas — ${storeRef.pages.length} page${storeRef.pages.length>1?'s':''} POM${hostname?` <span class="tag rf">🌐 ${hostname}</span>`:''}</strong>
+          <strong id="tc-header-${cardId}" style="font-size:15px">📋 ${(totalCases>1?t('cards.caseCountMany'):t('cards.caseCountOne')).replace('{n}', totalCases)} — ${(storeRef.pages.length>1?t('cards.pageCountMany'):t('cards.pageCountOne')).replace('{n}', storeRef.pages.length)}${hostname?` <span class="tag rf">🌐 ${hostname}</span>`:''}</strong>
         </div>
         <div id="tc-pages-${cardId}">${pagesHtml}</div>
         <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border)">
-          <button data-card="${cardId}" data-action="add-page"
+          <button data-card="${cardId}" data-action="add-page" data-i18n="cards.addPage" data-i18n-title="cards.tAddPage"
             style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.3);color:#c084fc;padding:8px 14px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Ajouter une nouvelle page POM">+ Ajouter une page</button>
-          <button data-card="${cardId}" data-action="select-blocks"
-            style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:8px 14px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Sélectionner des blocs à fusionner" title="Sélectionner des blocs à fusionner">☑ Sélectionner</button>
+          <button data-card="${cardId}" data-action="select-blocks" data-i18n="cards.select" data-i18n-title="cards.tSelectBlocks"
+            style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:8px 14px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Sélectionner des blocs à fusionner">☑ Sélectionner</button>
 
-          <button data-card="${cardId}" data-action="downloadcsv"
+          <button data-card="${cardId}" data-action="downloadcsv" data-i18n="cards.csv" data-i18n-title="cards.tCsv"
             style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);color:#22c55e;padding:8px 12px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Télécharger les cas de tests en CSV Excel">⬇️ CSV</button>
-          <button data-card="${cardId}" data-action="copy"
+          <button data-card="${cardId}" data-action="copy" data-i18n="cards.copy" data-i18n-title="cards.tCopy"
             style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:8px 14px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Copier tous les cas de tests">📋 Copier</button>
-          <button data-card="${cardId}" data-action="generate"
+          <button data-card="${cardId}" data-action="generate" data-i18n="cards.genRFCode" data-i18n-title="cards.tGenRF"
             style="background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;padding:8px 18px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;font-weight:700" title="Générer le code Robot Framework">⚡ Générer le code RF</button>
-          <button data-card="${cardId}" data-action="cancel"
+          <button data-card="${cardId}" data-action="cancel" data-i18n-title="cards.tCancelBlock"
             style="background:rgba(230,57,70,0.08);border:1px solid var(--red);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Supprimer ce bloc de cas de tests">✕</button>
         </div>
       </div>
     </div>`;
+
+  // Synchronise le chrome (data-i18n / -ph / -title) à la langue courante dès le rendu
+  if (window.applyI18n) applyI18n(el);
 
   // Event delegation
   el.addEventListener('input', e => {
@@ -360,13 +363,31 @@ function rebuildCard(cardId) {
 }
 
 
+// Re-render des compteurs pluralisés des cartes de cas à la bascule de langue.
+// (Le chrome statique est géré par applyI18n ; ici on relit TC_STORE pour le {n}, sans rebuild.)
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(() => {
+  document.querySelectorAll('[id^="tc-header-"]').forEach(el => {
+    const cardId = el.id.slice('tc-header-'.length);
+    const store = TC_STORE[cardId]; if (!store || !store.pages) return;
+    const total = store.pages.reduce((s,p) => s + (p.cases||[]).length, 0);
+    const np    = store.pages.length;
+    const host  = store.url ? (() => { try { return new URL(store.url).hostname; } catch(e) { return ''; } })() : '';
+    el.innerHTML = `📋 ${(total>1?t('cards.caseCountMany'):t('cards.caseCountOne')).replace('{n}', total)} — ${(np>1?t('cards.pageCountMany'):t('cards.pageCountOne')).replace('{n}', np)}${host?` <span class="tag rf">🌐 ${host}</span>`:''}`;
+  });
+  document.querySelectorAll('.tc-pagecount').forEach(el => {
+    const n = +el.getAttribute('data-n') || 0;
+    el.textContent = (n>1?t('cards.caseCountMany'):t('cards.caseCountOne')).replace('{n}', n);
+  });
+});
+
 // TC actions
 
 function downloadCasesCSV(cardId) {
   const cases = pendingTestCases?.cases || TC_STORE[cardId]?.cases;
   if (!cases) return;
 
-  const headers = ['Test_ID', 'Nom', 'Description', 'Résultat attendu'];
+  const headers = ['Test_ID', t('cards.csvColName'), t('cards.csvColDesc'), t('cards.csvColExpected')];
   const rows    = cases.map(c => [
     c.testId || ('TC_' + String(c.id).padStart(3,'0')),
     c.name        || '',
@@ -381,7 +402,7 @@ function downloadCasesCSV(cardId) {
   a.href = URL.createObjectURL(blob);
   a.download = 'cas_de_tests_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
-  showToast('⬇️ CSV téléchargé — ouvrable dans Excel');
+  showToast(t('cards.csvDownloaded'));
 }
 
 
@@ -394,7 +415,7 @@ function openBlockSelector(targetCardId) {
   const otherCards = Object.keys(TC_STORE).filter(id => id !== targetCardId);
   console.log('[BlockSelector] otherCards:', otherCards);
   if (otherCards.length === 0) {
-    showToast('⚠️ Aucun autre bloc disponible dans le chat');
+    showToast(t('cards.warnNoOtherBlock'));
     return;
   }
 
@@ -417,7 +438,7 @@ function openBlockSelector(targetCardId) {
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">${escHtml(pageLabels)}</div>
         <div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace">
-          ${pages.length} page${pages.length>1?'s':''} · ${totalCases} cas de tests
+          ${t('cards.modalRowCount').replace('{p}', pages.length).replace('{c}', totalCases)}
         </div>
       </div>
     </label>`;
@@ -427,14 +448,14 @@ function openBlockSelector(targetCardId) {
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;overflow:hidden;display:flex;flex-direction:column">
       <!-- Header -->
       <div style="display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--card)">
-        <span style="font-size:15px;font-weight:700;color:var(--text)">☑ Sélectionner des blocs à fusionner</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text)">${t('cards.modalTitle')}</span>
         <button onclick="document.getElementById('blockSelectorModal').remove()"
-          style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer" title="Fermer">✕</button>
+          style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer" title="${t('cards.tClose')}">✕</button>
       </div>
       <!-- Bloc list -->
       <div style="padding:16px 20px;max-height:360px;overflow-y:auto">
         <div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:12px">
-          BLOCS DISPONIBLES — coche ceux à fusionner dans le bloc actuel
+          ${t('cards.modalHeader')}
         </div>
         ${rows}
       </div>
@@ -443,12 +464,12 @@ function openBlockSelector(targetCardId) {
         <button onclick="mergeSelectedBlocks('${targetCardId}')"
           style="flex:1;background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;
                  padding:10px 20px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
-          🔀 Fusionner la sélection
+          ${t('cards.mergeSelection')}
         </button>
         <button onclick="document.getElementById('blockSelectorModal').remove()"
           style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px 16px;
                  border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-          Annuler
+          ${t('cards.cancel')}
         </button>
       </div>
     </div>`;
@@ -466,7 +487,7 @@ function mergeSelectedBlocks(targetCardId) {
   }
 
   const checked = [...document.querySelectorAll('.block-select-cb:checked')];
-  if (checked.length === 0) { showToast('⚠️ Coche au moins un bloc'); return; }
+  if (checked.length === 0) { showToast(t('cards.warnCheckOne')); return; }
 
   let merged = 0;
   checked.forEach(cb => {
@@ -532,7 +553,7 @@ function mergeSelectedBlocks(targetCardId) {
     delete TC_STORE[srcId];
   });
 
-  if (merged === 0) { showToast('⚠️ Aucune page à fusionner'); return; }
+  if (merged === 0) { showToast(t('cards.warnNoPageMerge')); return; }
 
   // Renumber testIds sequentially — names stay untouched
   let seqIdx = 1;
@@ -553,8 +574,8 @@ function mergeSelectedBlocks(targetCardId) {
   rebuildCard(targetCardId);
   const inp = document.getElementById('userInput');
   if (inp) { inp.value = ''; inp.style.height = 'auto'; }
-  showToast('🔀 ' + merged + ' page(s) fusionnée(s) — génération RF...');
-  setTimeout(() => { const k=window._serverApiKey||document.getElementById('apiKey')?.value?.trim(); if(k) generateCodeFromCases(k); else showToast('⚠️ Clé API requise'); }, 300);
+  showToast(t('cards.mergedToGen').replace('{n}', merged));
+  setTimeout(() => { const k=window._serverApiKey||document.getElementById('apiKey')?.value?.trim(); if(k) generateCodeFromCases(k); else showToast(t('cards.warnApiKey')); }, 300);
 }
 
 // ── Merge all TC cards in the chat into one ───────────────────────────────────
@@ -609,7 +630,7 @@ function mergeAllCards(targetCardId) {
   });
 
   if (merged === 0) {
-    showToast('⚠️ Aucun autre bloc à fusionner');
+    showToast(t('cards.warnNoOtherMerge'));
     return;
   }
 
@@ -624,7 +645,7 @@ function mergeAllCards(targetCardId) {
 
   syncStoreToPending(targetCardId);
   rebuildCard(targetCardId);
-  showToast('🔀 ' + merged + ' page(s) fusionnée(s) dans ce bloc');
+  showToast(t('cards.mergedInBlock').replace('{n}', merged));
 }
 
 function syncStoreToPending(cardId) {
@@ -687,14 +708,14 @@ function tcCopy(cardId) {
   const text = cases.map(c =>
     'TC-' + c.id + ' — ' + c.name + '\nDescription : ' + c.description + '\nRésultat attendu : ' + c.expected
   ).join('\n\n');
-  navigator.clipboard.writeText(text).then(() => showToast('📋 Cas copiés !'));
+  navigator.clipboard.writeText(text).then(() => showToast(t('cards.casesCopied')));
 }
 
 function tcCancelAll(cardId) {
   const _tcStore = TC_STORE[cardId];
   const _tcLabel = _tcStore?.pageLabel || _tcStore?.pages?.[0]?.label || cardId;
   const _tcCount = _tcStore?.pages ? _tcStore.pages.reduce((s,p) => s+(p.cases||[]).length, 0) : (_tcStore?.cases?.length || 0);
-  showConfirmDialog('🗑 Supprimer le bloc', 'Supprimer le bloc <b>' + escHtml(_tcLabel) + '</b> (' + _tcCount + ' cas de tests) ?', () => {
+  showConfirmDialog(t('cards.deleteBlockTitle'), t('cards.deleteBlockBody').replace('{name}', escHtml(_tcLabel)).replace('{n}', _tcCount), () => {
     pendingTestCases = null;
     pendingBlocks = [];
     delete TC_STORE[cardId];
@@ -705,7 +726,7 @@ function tcCancelAll(cardId) {
     } catch(e) {}
     const el = document.getElementById(cardId);
     if (el) el.remove();
-    showToast('🗑 Bloc supprimé');
+    showToast(t('cards.blockDeleted'));
   });
 }
 
@@ -720,10 +741,10 @@ function addNewBlock() {
   const input = document.getElementById('userInput');
   if (input) {
     input.value = '';
-    input.placeholder = 'Décris les cas de tests pour la prochaine page...';
+    input.placeholder = t('cards.nextPagePh');
     input.focus();
   }
-  showToast('💡 Décris la prochaine page pour ajouter un bloc');
+  showToast(t('cards.nextPageHint'));
 }
 
 function updateGlobalActionBars() {
