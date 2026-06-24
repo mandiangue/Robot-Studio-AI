@@ -111,7 +111,7 @@ const LS = {
             const _loadingDiv = document.createElement('div');
             _loadingDiv.id = '_loadingIndicator';
             _loadingDiv.className = 'msg agent';
-            _loadingDiv.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-body"><div class="msg-bubble" style="padding:10px 14px;color:var(--gray);font-size:12px;font-family:monospace">⏳ Chargement des blocs...</div></div>';
+            _loadingDiv.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-body"><div class="msg-bubble" style="padding:10px 14px;color:var(--gray);font-size:12px;font-family:monospace">' + t('store.loadingBlocks') + '</div></div>';
             const _msgs = document.getElementById('messages');
             if (_msgs) _msgs.appendChild(_loadingDiv);
 
@@ -187,7 +187,7 @@ const LS = {
       // ── Warn if running from file://
       if (window.location.protocol === 'file:') {
         setTimeout(() => {
-          renderAgentMsg('⚠️ **localStorage désactivé** en mode `file://`\n\nLes données ne sont pas persistées. Lance un serveur local :\n\n`node server.js` puis ouvre `http://localhost:3001/qa-agent.html`', false);
+          renderAgentMsg(t('store.localStorageDisabled'), false);
         }, 500);
       }
 

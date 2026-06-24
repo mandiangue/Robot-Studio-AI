@@ -269,7 +269,7 @@
     // Header
     var hdr = document.createElement('div');
     hdr.style.cssText = 'padding:4px 10px;font-size:10px;color:rgba(0,212,170,0.5);border-bottom:1px solid rgba(0,212,170,0.1);letter-spacing:1px';
-    hdr.textContent = 'RF COMPLETIONS';
+    hdr.textContent = t('ac.completions');
     drop.appendChild(hdr);
 
     var selected = [0];

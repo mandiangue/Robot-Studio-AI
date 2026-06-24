@@ -79,10 +79,10 @@ function importTCFromFile(file) {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   const finish = rows => {
     const out = _tcRowsToCases(rows);
-    if (!out.cases.length) { showToast('\u26a0\ufe0f Aucun cas d\u00e9tect\u00e9 dans le fichier'); return; }
-    if (typeof renderTestCasesCard !== 'function') { showToast('\u26a0\ufe0f renderTestCasesCard introuvable'); return; }
+    if (!out.cases.length) { showToast(t('imp.noCasesDetected')); return; }
+    if (typeof renderTestCasesCard !== 'function') { showToast(t('imp.renderMissing')); return; }
     renderTestCasesCard(out.cases, out.url, true);
-    showToast('\U0001F4E5 ' + out.cases.length + ' cas import\u00e9(s)' + (out.url ? ' \u00b7 ' + out.url : ''));
+    showToast('\U0001F4E5 ' + t('imp.casesImportedTxt').replace('{n}', out.cases.length) + (out.url ? ' \u00b7 ' + out.url : ''));
   };
   if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
     const reader = new FileReader();
@@ -97,10 +97,10 @@ function importTCFromFile(file) {
       const delim = [',', ';', '\t'].reduce((a, b) => counts[b] > counts[a] ? b : a, ',');
       finish(_parseDelimited(text, delim));
     };
-    reader.onerror = () => showToast('\u26a0\ufe0f Lecture du fichier impossible');
+    reader.onerror = () => showToast(t('imp.fileReadError'));
     reader.readAsText(file, 'utf-8');
   } else if (ext === 'xlsx' || ext === 'xls') {
-    showToast('\u23f3 Chargement du lecteur Excel...');
+    showToast(t('imp.loadingXlsxReader'));
     _ensureXLSX().then(() => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -109,13 +109,13 @@ function importTCFromFile(file) {
           const ws = wb.Sheets[wb.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: '' });
           finish(rows.map(r => (r || []).map(c => (c == null ? '' : String(c)))));
-        } catch (e) { showToast('\u26a0\ufe0f Lecture XLSX impossible : ' + e.message); }
+        } catch (e) { showToast(t('imp.xlsxReadError') + e.message); }
       };
-      reader.onerror = () => showToast('\u26a0\ufe0f Lecture du fichier impossible');
+      reader.onerror = () => showToast(t('imp.fileReadError'));
       reader.readAsArrayBuffer(file);
-    }).catch(() => showToast('\u26a0\ufe0f Lecteur XLSX non charg\u00e9 (hors-ligne ?). Exporte en CSV.'));
+    }).catch(() => showToast(t('imp.xlsxReaderMissing')));
   } else {
-    showToast('\u26a0\ufe0f Format non support\u00e9 (CSV, TSV ou XLSX)');
+    showToast(t('imp.unsupportedFormat'));
   }
 }
 
@@ -233,17 +233,17 @@ function _rfImportModal(title, files) {
     '<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-family:monospace;font-size:12px;color:var(--text,#e2e8f0)">'
     + '<span style="color:' + (f.binary ? '#c084fc' : 'var(--teal,#2dd4bf)') + '">' + (f.binary ? '\u25A0' : '\u25A1') + '</span>'
     + '<span>' + esc(f.filename) + '</span>'
-    + (f.binary ? ' <span style="color:var(--gray,#9ca3af);font-size:10px">[binaire]</span>' : '')
+    + (f.binary ? ' <span style="color:var(--gray,#9ca3af);font-size:10px">' + t('imp.binaryTag') + '</span>' : '')
     + '</div>'
   ).join('');
   ov.innerHTML =
     '<div style="background:var(--surface,#15202b);border:1px solid var(--border,#2a3744);border-radius:14px;max-width:660px;width:100%;max-height:82vh;display:flex;flex-direction:column;overflow:hidden">'
-    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--text,#e2e8f0)">\uD83D\uDCC2 Importer le projet \u00ab ' + esc(title) + ' \u00bb</div>'
-    + '<div style="padding:10px 20px 6px;color:var(--gray,#9ca3af);font-size:13px">' + files.length + ' fichier(s)' + (bin ? ' \u00b7 ' + bin + ' binaire(s) (images / DICOM)' : '') + ' \u2014 reclass\u00e9s vers tests/ + resources/ :</div>'
+    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--text,#e2e8f0)">\uD83D\uDCC2 ' + t('imp.importProjectTitleTxt').replace('{title}', esc(title)) + '</div>'
+    + '<div style="padding:10px 20px 6px;color:var(--gray,#9ca3af);font-size:13px">' + t('imp.fileBinarySubline').replace('{n}', files.length).replace('{bin}', bin ? t('imp.binarySuffix').replace('{n}', bin) : '') + '</div>'
     + '<div style="padding:0 20px 8px;overflow:auto;flex:1">' + rows + '</div>'
     + '<div style="padding:14px 20px;border-top:1px solid var(--border,#2a3744);display:flex;gap:10px;justify-content:flex-end">'
-    + '<button id="_rfCancel" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--text,#e2e8f0);padding:8px 16px;border-radius:8px;cursor:pointer">Annuler</button>'
-    + '<button id="_rfOk" style="background:var(--teal,#2dd4bf);border:none;color:#06202a;font-weight:700;padding:8px 18px;border-radius:8px;cursor:pointer">Importer</button>'
+    + '<button id="_rfCancel" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--text,#e2e8f0);padding:8px 16px;border-radius:8px;cursor:pointer">' + t('imp.cancel') + '</button>'
+    + '<button id="_rfOk" style="background:var(--teal,#2dd4bf);border:none;color:#06202a;font-weight:700;padding:8px 18px;border-radius:8px;cursor:pointer">' + t('imp.import') + '</button>'
     + '</div></div>';
   document.body.appendChild(ov);
   const close = () => ov.remove();
@@ -257,7 +257,7 @@ function _rfImportModal(title, files) {
     if (typeof saveCodeCards === 'function') saveCodeCards();
     if (typeof renderResultCard === 'function') renderResultCard(files, cardId);
     close();
-    showToast('\uD83D\uDCC2 Projet \u00ab ' + title + ' \u00bb import\u00e9 \u2014 ' + files.length + ' fichier(s)');
+showToast('📂 ' + t('imp.projectImportedTxt').replace('{title}', title).replace('{n}', files.length));
   };
 }
 function _rfMediaDrop(rp) {
@@ -278,7 +278,7 @@ async function _rfReadDropEntry(entry, prefix, out) {
 }
 async function _rfProcessDropped(fileRecs) {
   const kept = fileRecs.filter(r => !_rfMediaDrop(r.rel));
-  if (!kept.length) { showToast('\u26a0\ufe0f Aucun fichier exploitable (media/logs/tmp ignor\u00e9s)'); return; }
+  if (!kept.length) { showToast(t('imp.noUsableFile')); return; }
   const rootSeg = (kept[0].rel.split('/')[0]) || 'Projet RF';
   const DCM = /\.(dcm|dicom)$/i;
   const readDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
@@ -290,7 +290,7 @@ async function _rfProcessDropped(fileRecs) {
     return { relPath, content: await r.file.text(), binary: false };
   }));
   const clean = entries.filter(Boolean);
-  if (!clean.filter(e => /\.(robot|resource)$/i.test(e.relPath)).length) { showToast('\u26a0\ufe0f Aucun .robot/.resource trouv\u00e9'); return; }
+  if (!clean.filter(e => /\.(robot|resource)$/i.test(e.relPath)).length) { showToast(t('imp.noRobotFound')); return; }
   _rfImportModal(rootSeg, _buildRFCard(clean));
 }
 function _rfOpenImportModal() {
@@ -298,11 +298,11 @@ function _rfOpenImportModal() {
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML =
     '<div style="background:var(--surface,#15202b);border:1px solid var(--border,#2a3744);border-radius:14px;max-width:560px;width:100%;overflow:hidden">'
-    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--text,#e2e8f0)">\uD83D\uDCC2 Importer un projet Robot Framework</div>'
-    + '<div id="_rfDrop" style="margin:20px;padding:42px 20px;border:2px dashed var(--border,#2a3744);border-radius:12px;text-align:center;color:var(--gray,#9ca3af);font-size:14px">Glisse le dossier du projet ici<br><span style="font-size:12px">sous-dossiers inclus \u2014 media, logs et tmp ignor\u00e9s</span></div>'
+    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--text,#e2e8f0)">\uD83D\uDCC2 ' + t('imp.importProjectDropTitleTxt') + '</div>'
+    + '<div id="_rfDrop" style="margin:20px;padding:42px 20px;border:2px dashed var(--border,#2a3744);border-radius:12px;text-align:center;color:var(--gray,#9ca3af);font-size:14px">' + t('imp.dropHint') + '<br><span style="font-size:12px">' + t('imp.dropHintSub') + '</span></div>'
     + '<div style="padding:0 20px 16px;display:flex;gap:10px;justify-content:space-between;align-items:center">'
-    + '<span style="color:var(--gray,#9ca3af);font-size:12px">\u2026 ou <a href="#" id="_rfPick" style="color:var(--teal,#2dd4bf)">choisir un dossier</a></span>'
-    + '<button id="_rfClose" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--text,#e2e8f0);padding:8px 16px;border-radius:8px;cursor:pointer">Fermer</button>'
+    + '<span style="color:var(--gray,#9ca3af);font-size:12px">' + t('imp.orChooseFolder') + '</span>'
+    + '<button id="_rfClose" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--text,#e2e8f0);padding:8px 16px;border-radius:8px;cursor:pointer">' + t('imp.close') + '</button>'
     + '</div></div>';
   document.body.appendChild(ov);
   const close = () => ov.remove();
@@ -316,7 +316,7 @@ function _rfOpenImportModal() {
     e.preventDefault();
     const items = Array.from(e.dataTransfer.items || []);
     const out = [];
-    dz.innerHTML = '\u23f3 Lecture du dossier\u2026';
+    dz.innerHTML = t('imp.readingFolder');
     await Promise.all(items.map(it => { const ent = it.webkitGetAsEntry && it.webkitGetAsEntry(); return ent ? _rfReadDropEntry(ent, '', out) : Promise.resolve(); }));
     close();
     await _rfProcessDropped(out);
@@ -339,8 +339,8 @@ async function importRFProject(fileList) {
     if (f.size > _max) return false;
     return true;
   });
-  if (!picked.length) { showToast('\u26a0\ufe0f Aucun fichier RF exploitable dans ce dossier'); return; }
-  showToast('\u23f3 Lecture du projet\u2026');
+  if (!picked.length) { showToast(t('imp.noRfInFolder')); return; }
+  showToast(t('imp.readingProject'));
   try {
     const entries = await Promise.all(picked.map(async f => {
       const rp = (f.webkitRelativePath || f.name);
@@ -349,15 +349,15 @@ async function importRFProject(fileList) {
       return { relPath, content };
     }));
     if (!entries.filter(e => /\.(robot|resource)$/i.test(e.relPath)).length) {
-      showToast('\u26a0\ufe0f Aucun .robot/.resource trouv\u00e9'); return;
+      showToast(t('imp.noRobotFound')); return;
     }
     _rfImportModal(title, _buildRFCard(entries));
   } catch (e) {
-    showToast('\u26a0\ufe0f Import projet impossible : ' + e.message);
+    showToast(t('imp.projectImportError') + e.message);
   }
 }
 function _importRFFiles(files, source) {
-  if (!files || !files.length) { showToast('Aucun fichier .robot trouve'); return; }
+  if (!files || !files.length) { showToast(t('imp.noRobotFile')); return; }
   // Normaliser les chemins : retirer le prefixe commun redondant
   var _allPaths = files.map(function(f){ return f.path; });
   var _commonPrefix = (function(){
@@ -400,7 +400,7 @@ function _importRFFiles(files, source) {
     }, 100);
     saveCodeCards();
     _savePulledBlock(existing.cardId, source, rf, true);
-    showToast('Bloc mis à jour : ' + source);
+    showToast(t('imp.blockUpdated') + source);
     return;
   }
 
@@ -431,5 +431,5 @@ function _importRFFiles(files, source) {
 
   saveCodeCards();
   _savePulledBlock(stableId, source, rf, true);
-  showToast(rf.length + ' fichiers importés : ' + source);
+  showToast(t('imp.filesImported').replace('{n}', rf.length) + source);
 }

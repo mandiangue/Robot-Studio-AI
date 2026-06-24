@@ -464,6 +464,22 @@ const TRANSLATIONS = {
     'gen.appiumWarn':'<div style="display:flex;justify-content:space-between"><span>⚠️ <strong>Appium requis</strong></span><span onclick="this.closest(div.id)" style="cursor:pointer;color:var(--gray)">✕</span></div>Avant de lancer les tests :<br>1. Démarrer Appium Server : <code>appium</code><br>2. Émulateur Android (AVD) ou device USB<br>3. Web mobile : browserName=Chrome (pas d\'APK)<br>4. App native : fournir le chemin APK',
     'gen.apiRestWarn':'<div style="display:flex;justify-content:space-between"><span>ℹ️ <strong>API REST</strong> — Aucun navigateur requis.</span><span style="cursor:pointer;color:var(--gray)">✕</span></div>Installe : <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">pip install robotframework-requests</code>',
     'gen.dbWarn':'<div style="display:flex;justify-content:space-between"><span>ℹ️ <strong>Base de données</strong> — Aucun navigateur requis.</span><span style="cursor:pointer;color:var(--gray)">✕</span></div>Installe : <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">pip install robotframework-databaselibrary pymysql</code>',
+    // Autocomplete (autocomplete.js)
+    'ac.completions':'RF COMPLETIONS',
+    // Imports (import.js)
+    'imp.noCasesDetected':'⚠️ Aucun cas détecté dans le fichier', 'imp.renderMissing':'⚠️ renderTestCasesCard introuvable',
+    'imp.casesImported':'📥 {n} cas importé(s)', 'imp.fileReadError':'⚠️ Lecture du fichier impossible', 'imp.loadingXlsxReader':'⏳ Chargement du lecteur Excel...',
+    'imp.xlsxReadError':'⚠️ Lecture XLSX impossible : ', 'imp.xlsxReaderMissing':'⚠️ Lecteur XLSX non chargé (hors-ligne ?). Exporte en CSV.', 'imp.unsupportedFormat':'⚠️ Format non supporté (CSV, TSV ou XLSX)',
+    'imp.projectImported':'📂 Projet « {title} » importé — {n} fichier(s)', 'imp.noUsableFile':'⚠️ Aucun fichier exploitable (media/logs/tmp ignorés)', 'imp.noRobotFound':'⚠️ Aucun .robot/.resource trouvé',
+    'imp.readingFolder':'⏳ Lecture du dossier…', 'imp.noRfInFolder':'⚠️ Aucun fichier RF exploitable dans ce dossier', 'imp.readingProject':'⏳ Lecture du projet…',
+    'imp.projectImportError':'⚠️ Import projet impossible : ', 'imp.noRobotFile':'Aucun fichier .robot trouvé', 'imp.blockUpdated':'Bloc mis à jour : ', 'imp.filesImported':'{n} fichiers importés : ',
+    'imp.importProjectTitle':'📂 Importer le projet « {title} »', 'imp.fileBinarySubline':'{n} fichier(s){bin} — reclassés vers tests/ + resources/ :', 'imp.binarySuffix':' · {n} binaire(s) (images / DICOM)', 'imp.binaryTag':'[binaire]',
+    'imp.cancel':'Annuler', 'imp.import':'Importer',
+    'imp.casesImportedTxt':'{n} cas importé(s)', 'imp.projectImportedTxt':'Projet « {title} » importé — {n} fichier(s)', 'imp.importProjectTitleTxt':'Importer le projet « {title} »', 'imp.importProjectDropTitleTxt':'Importer un projet Robot Framework',
+    'imp.importProjectDropTitle':'📂 Importer un projet Robot Framework', 'imp.dropHint':'Glisse le dossier du projet ici', 'imp.dropHintSub':'sous-dossiers inclus — media, logs et tmp ignorés', 'imp.orChooseFolder':'… ou <a href="#" id="_rfPick" style="color:var(--teal,#2dd4bf)">choisir un dossier</a>', 'imp.close':'Fermer',
+    // Storage (storage.js)
+    'store.loadingBlocks':'⏳ Chargement des blocs...',
+    'store.localStorageDisabled':'⚠️ **localStorage désactivé** en mode `file://`\n\nLes données ne sont pas persistées. Lance un serveur local :\n\n`node server.js` puis ouvre `http://localhost:3001/qa-agent.html`',
   },
   en: {
     flag: '🇬🇧', name: 'EN',
@@ -699,6 +715,22 @@ const TRANSLATIONS = {
     'gen.appiumWarn':'<div style="display:flex;justify-content:space-between"><span>⚠️ <strong>Appium required</strong></span><span onclick="this.closest(div.id)" style="cursor:pointer;color:var(--gray)">✕</span></div>Before running tests:<br>1. Start Appium Server: <code>appium</code><br>2. Android emulator (AVD) or USB device<br>3. Mobile web: browserName=Chrome (no APK)<br>4. Native app: provide the APK path',
     'gen.apiRestWarn':'<div style="display:flex;justify-content:space-between"><span>ℹ️ <strong>REST API</strong> — No browser required.</span><span style="cursor:pointer;color:var(--gray)">✕</span></div>Install: <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">pip install robotframework-requests</code>',
     'gen.dbWarn':'<div style="display:flex;justify-content:space-between"><span>ℹ️ <strong>Database</strong> — No browser required.</span><span style="cursor:pointer;color:var(--gray)">✕</span></div>Install: <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">pip install robotframework-databaselibrary pymysql</code>',
+    // Autocomplete (autocomplete.js)
+    'ac.completions':'RF COMPLETIONS',
+    // Imports (import.js)
+    'imp.noCasesDetected':'⚠️ No case detected in the file', 'imp.renderMissing':'⚠️ renderTestCasesCard not found',
+    'imp.casesImported':'📥 {n} case(s) imported', 'imp.fileReadError':'⚠️ Cannot read the file', 'imp.loadingXlsxReader':'⏳ Loading Excel reader...',
+    'imp.xlsxReadError':'⚠️ Cannot read XLSX: ', 'imp.xlsxReaderMissing':'⚠️ XLSX reader not loaded (offline?). Export to CSV.', 'imp.unsupportedFormat':'⚠️ Unsupported format (CSV, TSV or XLSX)',
+    'imp.projectImported':'📂 Project “{title}” imported — {n} file(s)', 'imp.noUsableFile':'⚠️ No usable file (media/logs/tmp ignored)', 'imp.noRobotFound':'⚠️ No .robot/.resource found',
+    'imp.readingFolder':'⏳ Reading folder…', 'imp.noRfInFolder':'⚠️ No usable RF file in this folder', 'imp.readingProject':'⏳ Reading project…',
+    'imp.projectImportError':'⚠️ Cannot import project: ', 'imp.noRobotFile':'No .robot file found', 'imp.blockUpdated':'Block updated: ', 'imp.filesImported':'{n} files imported: ',
+    'imp.importProjectTitle':'📂 Import project “{title}”', 'imp.fileBinarySubline':'{n} file(s){bin} — reclassified to tests/ + resources/:', 'imp.binarySuffix':' · {n} binary (images / DICOM)', 'imp.binaryTag':'[binary]',
+    'imp.cancel':'Cancel', 'imp.import':'Import',
+    'imp.casesImportedTxt':'{n} case(s) imported', 'imp.projectImportedTxt':'Project “{title}” imported — {n} file(s)', 'imp.importProjectTitleTxt':'Import project “{title}”', 'imp.importProjectDropTitleTxt':'Import a Robot Framework project',
+    'imp.importProjectDropTitle':'📂 Import a Robot Framework project', 'imp.dropHint':'Drop the project folder here', 'imp.dropHintSub':'subfolders included — media, logs and tmp ignored', 'imp.orChooseFolder':'… or <a href="#" id="_rfPick" style="color:var(--teal,#2dd4bf)">choose a folder</a>', 'imp.close':'Close',
+    // Storage (storage.js)
+    'store.loadingBlocks':'⏳ Loading blocks...',
+    'store.localStorageDisabled':'⚠️ **localStorage disabled** in `file://` mode\n\nData is not persisted. Start a local server:\n\n`node server.js` then open `http://localhost:3001/qa-agent.html`',
   },
 };
 
