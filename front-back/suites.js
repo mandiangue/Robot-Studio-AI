@@ -399,6 +399,8 @@ function startScheduleTimer(schedule) {
       s.active = false;
       saveSchedules();
     }
+    // Re-render la modale scheduler SI ouverte (sinon badge/toggle/Prochain restent figés après le run)
+    if (document.getElementById('schedulerModal')) openScheduler();
   }, delay);
 }
 
