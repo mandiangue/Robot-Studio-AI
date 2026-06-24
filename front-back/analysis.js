@@ -10,6 +10,16 @@ function _apFilter(s) { const c=document.getElementById('analysisPanelContent');
 function _apSearch(v) { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),search:v};_apRenderList(c);} }
 function _apPage(p)   { const c=document.getElementById('analysisPanelContent'); if(c){c._filters={...(c._filters||{}),page:p};_apRenderList(c);} }
 let _analysisPanelOpen = false;
+
+// Bascule de langue : reconstruit le contenu du panneau SEULEMENT s'il est ouvert.
+// Le chrome persistant (header/tabs data-i18n) est déjà couvert par applyI18n(document).
+// État (_filters/_diffSel/dataset.tab) préservé sur l'élément content -> rebuild sûr.
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(() => {
+  const ov = document.getElementById('analysisPanelOverlay');
+  if (ov && ov.style.display !== 'none') renderAnalysisPanel();
+});
+
 function openAnalysisPanel() {
   let overlay = document.getElementById('analysisPanelOverlay');
   if (overlay) {
@@ -44,7 +54,7 @@ function openAnalysisPanel() {
   const header = document.createElement('div');
   header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0';
   header.innerHTML = `
-    <span style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🔍 ANALYSE</span>
+    <span data-i18n="analysis.title" style="font-size:12px;font-weight:700;color:var(--teal);letter-spacing:1px">🔍 ANALYSE</span>
     <button onclick="document.getElementById('analysisPanelOverlay').style.display='none';_analysisPanelOpen=false;"
       style="background:transparent;border:none;color:var(--gray);font-size:16px;cursor:pointer;margin-left:auto">✕</button>
   `;
@@ -53,11 +63,11 @@ function openAnalysisPanel() {
   const tabs = document.createElement('div');
   tabs.style.cssText = 'display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card)';
   tabs.innerHTML = `
-    <button id="aTabFilter" onclick="switchAnalysisTab('filter')"
+    <button id="aTabFilter" onclick="switchAnalysisTab('filter')" data-i18n="analysis.tabFilters"
       style="flex:1;padding:10px;font-size:13px;font-family:monospace;cursor:pointer;border:none;border-bottom:2px solid var(--teal);background:transparent;color:var(--teal)">
       🔎 FILTRES
     </button>
-    <button id="aTabDiff" onclick="switchAnalysisTab('diff')"
+    <button id="aTabDiff" onclick="switchAnalysisTab('diff')" data-i18n="analysis.tabCompare"
       style="flex:1;padding:10px;font-size:13px;font-family:monospace;cursor:pointer;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--gray)">
       ⚖️ COMPARAISON
     </button>
@@ -75,6 +85,8 @@ function openAnalysisPanel() {
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.style.display='none'; _analysisPanelOpen=false; } });
 
+  // Chrome persistant (header/tabs) à la langue courante dès l'ouverture
+  if (window.applyI18n) applyI18n(panel);
   renderAnalysisPanel();
 }
 
@@ -162,10 +174,10 @@ function _apRenderList(content) {
     grouped.get(key).push(t);
   });
 
-  let html = `<div style="padding:6px 14px;font-size:12px;color:var(--gray);letter-spacing:1px;border-bottom:1px solid var(--border)">${filtered.length} résultat${filtered.length>1?'s':''}</div>`;
+  let html = `<div style="padding:6px 14px;font-size:12px;color:var(--gray);letter-spacing:1px;border-bottom:1px solid var(--border)">${(filtered.length>1?t('analysis.resultCountMany'):t('analysis.resultCountOne')).replace('{n}', filtered.length)}</div>`;
 
   if (filtered.length === 0) {
-    html += '<div style="padding:32px;text-align:center;font-size:12px;color:var(--gray)">Aucun résultat</div>';
+    html += `<div style="padding:32px;text-align:center;font-size:12px;color:var(--gray)">${t('analysis.noResult')}</div>`;
   } else {
     grouped.forEach((tests, pageName) => {
       const passCount = tests.filter(t=>t.status==='pass').length;
@@ -181,7 +193,7 @@ function _apRenderList(content) {
             <span style="font-size:12px;color:#22c55e">✓${passCount}</span>
             <span style="font-size:12px;color:#DC2626;margin-left:4px">✗${failCount}</span>
             ${skipCount?`<span style="font-size:12px;color:#f59e0b;margin-left:4px">⏭${skipCount}</span>`:''}
-            <span style="font-size:11px;color:var(--gray);margin-left:6px">${tests.length} TC</span>
+            <span style="font-size:11px;color:var(--gray);margin-left:6px">${t('analysis.tcCount').replace('{n}', tests.length)}</span>
           </div>
           <div id="${collapseId}">`;
 
@@ -251,15 +263,15 @@ function renderFilterTab(content) {
 
   const btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;gap:6px;margin-bottom:10px';
-  btnRow.appendChild(activeBtn('all',  'TOUS',   all.length, 'var(--teal)'));
-  btnRow.appendChild(activeBtn('pass', '✓ PASS', pass,       '#22c55e'));
-  btnRow.appendChild(activeBtn('fail', '✗ FAIL', fail,       '#DC2626'));
-  btnRow.appendChild(activeBtn('skip', '⏭ SKIP', skip,       '#f59e0b'));
+  btnRow.appendChild(activeBtn('all',  t('analysis.all'),  all.length, 'var(--teal)'));
+  btnRow.appendChild(activeBtn('pass', t('analysis.pass'), pass,       '#22c55e'));
+  btnRow.appendChild(activeBtn('fail', t('analysis.fail'), fail,       '#DC2626'));
+  btnRow.appendChild(activeBtn('skip', t('analysis.skip'), skip,       '#f59e0b'));
 
   const searchInput = document.createElement('input');
   searchInput.id = 'apSearch';
   searchInput.type = 'text';
-  searchInput.placeholder = '🔍 Rechercher...';
+  searchInput.placeholder = t('analysis.searchPh');
   searchInput.value = filters.search || '';
   searchInput.style.cssText = 'width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-family:monospace;color:var(--text);box-sizing:border-box';
   searchInput.oninput = () => _apSearch(searchInput.value);
@@ -277,7 +289,7 @@ function renderFilterTab(content) {
       const active = (filters.page||'all') === p;
       const pb = document.createElement('button');
       pb.style.cssText = `padding:3px 10px;font-size:11px;font-family:monospace;border-radius:12px;cursor:pointer;border:1px solid ${active?'#c084fc':'var(--border)'};background:${active?'rgba(192,132,252,0.12)':'transparent'};color:${active?'#c084fc':'var(--gray)'}`;
-      pb.textContent = p === 'all' ? 'Toutes' : p;
+      pb.textContent = p === 'all' ? t('analysis.pageAll') : p;
       pb.onclick = () => _apPage(p);
       pageRow.appendChild(pb);
     });
@@ -313,17 +325,17 @@ function renderDiffTab(content) {
     <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <div style="font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px">RUN A</div>
+          <div style="font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px">${t('analysis.runA')}</div>
           <select id="diffSelA" onchange="document.getElementById('analysisPanelContent')._diffSel.a=this.value;renderAnalysisPanel()"
             style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;color:var(--text)">
-            <option value="">— Sélectionner —</option>${runOptions}
+            <option value="">${t('analysis.selectPlaceholder')}</option>${runOptions}
           </select>
         </div>
         <div>
-          <div style="font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px">RUN B</div>
+          <div style="font-size:12px;color:var(--gray);margin-bottom:4px;letter-spacing:1px">${t('analysis.runB')}</div>
           <select id="diffSelB" onchange="document.getElementById('analysisPanelContent')._diffSel.b=this.value;renderAnalysisPanel()"
             style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:monospace;color:var(--text)">
-            <option value="">— Sélectionner —</option>${runOptions}
+            <option value="">${t('analysis.selectPlaceholder')}</option>${runOptions}
           </select>
         </div>
       </div>
@@ -331,7 +343,7 @@ function renderDiffTab(content) {
   `;
 
   if (!sel.a || !sel.b) {
-    html += '<div style="padding:32px;text-align:center;font-size:12px;color:var(--gray)">Sélectionne deux runs pour les comparer</div>';
+    html += `<div style="padding:32px;text-align:center;font-size:12px;color:var(--gray)">${t('analysis.pickTwoRuns')}</div>`;
     content.innerHTML = html;
     return;
   }
@@ -368,7 +380,7 @@ function renderDiffTab(content) {
         </div>
       </div>
     </div>
-    <div style="padding:6px 14px;font-size:12px;color:var(--gray);letter-spacing:1px;border-bottom:1px solid var(--border)">${allNames.length} test(s)</div>
+    <div style="padding:6px 14px;font-size:12px;color:var(--gray);letter-spacing:1px;border-bottom:1px solid var(--border)">${(allNames.length>1?t('analysis.testCountMany'):t('analysis.testCountOne')).replace('{n}', allNames.length)}</div>
   `;
 
   allNames.forEach(name => {
@@ -376,6 +388,7 @@ function renderDiffTab(content) {
     const tB = testsB.find(t=>t.name===name);
     const sA = (tA?.status||'missing').toLowerCase();
     const sB = (tB?.status||'missing').toLowerCase();
+    const lbl = s => s==='missing' ? t('analysis.missing') : s;
     const changed = sA !== sB;
 
     const statusCell = (s, msg) => {
@@ -384,7 +397,7 @@ function renderDiffTab(content) {
       const icon  = s==='pass'?'✓':s==='fail'?'✗':s==='skip'?'⏭':'—';
       return `<div style="padding:8px 10px;border-right:1px solid var(--border);background:${bg}">
         <span style="font-size:15px;color:${color};font-weight:700">${icon}</span>
-        <span style="font-size:12px;color:${color};margin-left:5px;text-transform:uppercase;font-weight:600">${s}</span>
+        <span style="font-size:12px;color:${color};margin-left:5px;text-transform:uppercase;font-weight:600">${lbl(s)}</span>
         ${msg?`<div style="font-size:12px;color:#DC2626;margin-top:4px;word-break:break-all;font-family:monospace">${escHtml((msg||'').slice(0,100))}</div>`:''}
       </div>`;
     };

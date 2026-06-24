@@ -373,6 +373,13 @@ const TRANSLATIONS = {
     'ui.tScheduler':'Sélectionne au moins une suite pour activer le scheduler', 'ui.tClose':'Fermer',
     'ui.ariaNavMain':'Barre de navigation principale', 'ui.ariaNavToggle':'Ouvrir le menu de navigation', 'ui.ariaLangSwitch':'Changer de langue (FR / EN)',
     'ui.ariaMsgInput':'Zone de saisie du message', 'ui.ariaImportRF':'Importer un projet RF', 'ui.ariaImportCsv':'Importer CSV/XLS', 'ui.ariaMic':'Dictée vocale', 'ui.ariaSend':'Soumettre le message',
+    // Analysis panel (analysis.js)
+    'analysis.title':'🔍 ANALYSE', 'analysis.tabFilters':'🔎 FILTRES', 'analysis.tabCompare':'⚖️ COMPARAISON',
+    'analysis.all':'TOUS', 'analysis.pass':'✓ PASS', 'analysis.fail':'✗ FAIL', 'analysis.skip':'⏭ SKIP',
+    'analysis.searchPh':'🔍 Rechercher…', 'analysis.pageAll':'Toutes',
+    'analysis.resultCountOne':'{n} résultat', 'analysis.resultCountMany':'{n} résultats', 'analysis.noResult':'Aucun résultat', 'analysis.tcCount':'{n} TC',
+    'analysis.runA':'RUN A', 'analysis.runB':'RUN B', 'analysis.selectPlaceholder':'— Sélectionner —', 'analysis.pickTwoRuns':'Sélectionne deux runs pour les comparer',
+    'analysis.testCountOne':'{n} test', 'analysis.testCountMany':'{n} tests', 'analysis.missing':'absent',
   },
   en: {
     flag: '🇬🇧', name: 'EN',
@@ -517,6 +524,13 @@ const TRANSLATIONS = {
     'ui.tScheduler':'Select at least one suite to enable the scheduler', 'ui.tClose':'Close',
     'ui.ariaNavMain':'Main navigation bar', 'ui.ariaNavToggle':'Open the navigation menu', 'ui.ariaLangSwitch':'Change language (FR / EN)',
     'ui.ariaMsgInput':'Message input area', 'ui.ariaImportRF':'Import an RF project', 'ui.ariaImportCsv':'Import CSV/XLS', 'ui.ariaMic':'Voice input', 'ui.ariaSend':'Submit message',
+    // Analysis panel (analysis.js)
+    'analysis.title':'🔍 ANALYSIS', 'analysis.tabFilters':'🔎 FILTERS', 'analysis.tabCompare':'⚖️ COMPARE',
+    'analysis.all':'ALL', 'analysis.pass':'✓ PASS', 'analysis.fail':'✗ FAIL', 'analysis.skip':'⏭ SKIP',
+    'analysis.searchPh':'🔍 Search…', 'analysis.pageAll':'All',
+    'analysis.resultCountOne':'{n} result', 'analysis.resultCountMany':'{n} results', 'analysis.noResult':'No results', 'analysis.tcCount':'{n} TC',
+    'analysis.runA':'RUN A', 'analysis.runB':'RUN B', 'analysis.selectPlaceholder':'— Select —', 'analysis.pickTwoRuns':'Select two runs to compare',
+    'analysis.testCountOne':'{n} test', 'analysis.testCountMany':'{n} tests', 'analysis.missing':'missing',
   },
 };
 
