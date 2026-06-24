@@ -394,6 +394,18 @@ function t(key) {
   return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['fr'][key] || key;
 }
 
+// Applique les traductions sur un sous-arbre (document par défaut).
+// Conventions : data-i18n -> textContent ; data-i18n-ph -> placeholder ; data-i18n-title -> title.
+// Réutilisable par les hooks __i18nRerender pour retraduire le chrome d'une carte sans rebuild.
+function applyI18n(root = document) {
+  root.querySelectorAll('[data-i18n],[data-i18n-ph],[data-i18n-title]').forEach(el => {
+    const k  = el.getAttribute('data-i18n');        if (k  !== null) el.textContent = t(k);
+    const p  = el.getAttribute('data-i18n-ph');     if (p  !== null) el.placeholder = t(p);
+    const ti = el.getAttribute('data-i18n-title');  if (ti !== null) el.title       = t(ti);
+  });
+}
+window.applyI18n = applyI18n;
+
 function setLang(lang) {
   // Deux langues seulement : tout le reste retombe sur fr (ex. ancien 'es'/'pt' en localStorage)
   if (lang !== 'fr' && lang !== 'en') lang = 'fr';
@@ -407,25 +419,7 @@ function setLang(lang) {
   document.documentElement.lang = lang;
 
   // Update all data-i18n elements
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    const val = t(key);
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-      el.placeholder = val;
-    } else if (el.tagName === 'OPTION') {
-      // Preserve value attribute, only update text
-      el.textContent = val;
-    } else if (el.tagName === 'BUTTON') {
-      // Preserve onclick and other attrs — just update text node
-      // val may contain emoji prefix like "📋 ..." — set directly
-      el.textContent = val;
-    } else if (el.tagName === 'LABEL') {
-      el.textContent = val;
-    } else {
-      // For spans, divs — set textContent directly
-      el.textContent = val;
-    }
-  });
+  applyI18n(document);
 
   // Re-render des modules hors [data-i18n] (rapports, etc.)
   window.__i18nRerender.forEach(fn => { try { fn(currentLang); } catch(e) {} });
