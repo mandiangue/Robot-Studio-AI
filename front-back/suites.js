@@ -197,8 +197,8 @@ function openScheduler() {
         style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:4px 8px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
         ${s.active ? t('suites.pause') : t('suites.activate')}
       </button>
-      <button onclick="stopTestRun();deleteSchedule(${i})"
-        style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="${t('suites.stopRunTitle')}">${t('suites.stop')}</button>
+      ${s.id === window._runningScheduleId ? `<button onclick="stopTestRun();deleteSchedule(${i})"
+        style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="${t('suites.stopRunTitle')}">${t('suites.stop')}</button>` : ''}
       <button onclick="deleteSchedule(${i})"
         style="background:transparent;border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer" title="${t('suites.deleteTitle')}">✕</button>
     </div>`).join('') || '<div style="padding:16px;text-align:center;color:var(--gray);font-size:12px;font-style:italic">'+t('suites.noScheduling')+'</div>';
@@ -384,6 +384,9 @@ function startScheduleTimer(schedule) {
 
     // Run each selected suite sequentially
     showToast(t('suites.schedulingTriggered').replace('{name}', s.suiteName));
+    // Flag runtime-only (jamais sur s, jamais persiste) : marque CE scheduling comme en cours -> affiche son "Stop"
+    window._runningScheduleId = s.id;
+    if (document.getElementById('schedulerModal')) openScheduler();
     const suiteIdsToRun = s.suiteIds || [];
     for (const suiteId of suiteIdsToRun) {
       const idx = savedSuites.findIndex(suite => suite.id === suiteId);
@@ -399,6 +402,8 @@ function startScheduleTimer(schedule) {
       s.active = false;
       saveSchedules();
     }
+    // Run termine : retire le flag AVANT le re-render -> "Stop" masque (seul le ✕ reste)
+    window._runningScheduleId = null;
     // Re-render la modale scheduler SI ouverte (sinon badge/toggle/Prochain restent figés après le run)
     if (document.getElementById('schedulerModal')) openScheduler();
   }, delay);
