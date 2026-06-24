@@ -86,6 +86,7 @@ try {
 
 function renderReportCard(data, suiteCardId) {
   // Each run gets its own card — don't remove previous ones
+  const _t = t; // alias traducteur (cohérence avec buildInlineReport)
 
   const reportHtml = buildInlineReport(data);
   const blob    = new Blob([reportHtml], { type: 'text/html' });
@@ -96,6 +97,13 @@ function renderReportCard(data, suiteCardId) {
   data.runNumber = runNum; // ensure runNumber is always set
   // cardId stable basé uniquement sur runNumber — même rapport = même cardId
   const cardId = 'reportCard-' + runNum;
+  const isRerender = !!document.getElementById(cardId);
+
+  // Registre des rapports vivants (re-render i18n). Révoque l'ancien blob pour éviter les fuites.
+  window._openReports = window._openReports || {};
+  const _prev = window._openReports[cardId];
+  if (_prev && _prev.blobUrl) { try { URL.revokeObjectURL(_prev.blobUrl); } catch(e) {} }
+  window._openReports[cardId] = { data, blobUrl, suiteCardId: suiteCardId || null };
   const div = document.createElement('div');
   div.className = 'msg agent';
   div.id = cardId;
@@ -112,14 +120,14 @@ function renderReportCard(data, suiteCardId) {
             RUN #${runNum}
           </span>
           ${data.isSuite ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(245,158,11,0.15);color:var(--warn);border:1px solid rgba(245,158,11,0.3);padding:3px 10px;border-radius:10px">
-            🧪 SUITE : ${escHtml(data.suiteName||'')}
+            ${_t('report.suiteBadge')} ${escHtml(data.suiteName||'')}
           </span>${(() => {
             const names = data.blockNames||[];
             const max = 3;
             const visible = names.slice(0, max);
             const rest = names.slice(max);
             const badges = visible.map(n => `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(0,212,170,0.12);color:var(--teal);border:1px solid rgba(0,212,170,0.3);padding:3px 10px;border-radius:10px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(n)}">${escHtml(n)}</span>`).join('');
-            const more = rest.length ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);padding:3px 10px;border-radius:10px;white-space:nowrap;cursor:default" title="${escHtml(rest.join(', '))}">+${rest.length} autres</span>` : '';
+            const more = rest.length ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);padding:3px 10px;border-radius:10px;white-space:nowrap;cursor:default" title="${escHtml(rest.join(', '))}">+${rest.length} ${_t('report.moreOthers')}</span>` : '';
             return badges + more;
           })()}` : (data.pageTitle ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(0,212,170,0.12);color:var(--teal);border:1px solid rgba(0,212,170,0.3);padding:3px 10px;border-radius:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(data.pageTitle)}">
             📄 ${escHtml(data.pageTitle)}
@@ -132,26 +140,26 @@ function renderReportCard(data, suiteCardId) {
             return `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:${colors[t]};color:${textc[t]};border:1px solid ${textc[t]};padding:3px 10px;border-radius:10px">${badges[t]||'🔵 Run Web'}</span>`;
           })()}
           <span style="font-size:13px;font-family:'IBM Plex Mono',monospace;color:${data.status==='PASS'?'var(--teal)':'var(--red)'};font-weight:700">
-            ${data.status==='PASS'?'✅':'❌'} ${data.passed}/${data.total} réussis
+            ${data.status==='PASS'?'✅':'❌'} ${data.passed}/${data.total} ${_t('report.passedShort')}
           </span>
           ${data.failed > 0 ? `<button onclick="scrollToFailed('${cardId}')"
             style="background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);color:#DC2626;padding:4px 12px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-            ❌ ${data.failed} échec${data.failed>1?'s':''}
+            ❌ ${data.failed} ${_t('report.failureWord')}${data.failed>1?'s':''}
           </button>` : ''}
           <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
 
             <button onclick="openRunHistory()"
               style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;padding:4px 12px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-              📜 Historique (${_reportHistory.length})
+              ${_t('report.history')} (${_reportHistory.length})
             </button>
             <a href="${blobUrl}" download="rapport_tests_${date}.html"
               style="background:rgba(245,158,11,0.08);border:1px solid var(--warn);color:var(--warn);padding:4px 12px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;text-decoration:none">
-              ⬇️ Télécharger
+              ${_t('report.download')}
             </a>
             <button onclick="deleteReportCard('${cardId}', ${runNum})"
               style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);color:var(--red);
                      padding:4px 10px;border-radius:5px;font-size:13px;cursor:pointer"
-              title="Supprimer ce rapport">✕</button>
+              title="${_t('report.deleteTitle')}">✕</button>
           </div>
         </div>
 
@@ -160,6 +168,12 @@ function renderReportCard(data, suiteCardId) {
       </div>
     </div>`;
 
+  if (isRerender) {
+    // Re-render (ex. bascule de langue) : remplace la carte en place, pas de scroll/persist
+    document.getElementById(cardId).replaceWith(div);
+    updateStatsBar();
+    return;
+  }
   document.getElementById('messages').appendChild(div);
   scrollToBottom();
 
@@ -187,6 +201,15 @@ function renderReportCard(data, suiteCardId) {
   }
   updateStatsBar();
 }
+
+// ── Re-render des rapports ouverts à la bascule de langue (registre core.js) ────
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(() => {
+  const reps = window._openReports || {};
+  Object.keys(reps).forEach(cardId => {
+    if (document.getElementById(cardId)) renderReportCard(reps[cardId].data, reps[cardId].suiteCardId);
+  });
+});
 
 // ── Report editor modal ────────────────────────────────────────────────────────
 function openReportEditor() {
@@ -289,16 +312,18 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function fmtD(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(2)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
 
 function buildInlineReport(data) {
+  const _t      = t; // alias traducteur : le param 't' du .map ci-dessous masque la fonction globale
+  const _loc    = currentLang === 'en' ? 'en-GB' : 'fr-FR';
   const rate    = data.total > 0 ? Math.round(data.passed / data.total * 100) : 0;
   const now     = new Date();
-  const dateStr = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
-  const timeStr = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  const title   = data.reportTitle || (data.isSuite ? 'Suite : ' + (data.suiteName||'') : 'Rapport de Tests Automatisés');
+  const dateStr = now.toLocaleDateString(_loc,{day:'2-digit',month:'long',year:'numeric'});
+  const timeStr = now.toLocaleTimeString(_loc,{hour:'2-digit',minute:'2-digit'});
+  const title   = data.reportTitle || (data.isSuite ? _t('report.suitePrefix') + (data.suiteName||'') : _t('report.titleDefault'));
   const comment = data.comment || '';
 
   const testsHtml = data.tests.map((t, i) => {
     const icon     = t.status==='PASS'?'✅':t.status==='FAIL'?'❌':t.status==='SKIP'?'⏭️':'✅';
-    const iconEn   = t.status==='PASS'?'PASSED':t.status==='FAIL'?'FAILED':t.status==='SKIP'?'SKIPPED':'PASSED';
+    const iconEn   = t.status==='PASS'?_t('report.statusPass'):t.status==='FAIL'?_t('report.statusFail'):t.status==='SKIP'?_t('report.statusSkip'):_t('report.statusPass');
     const color    = t.status==='PASS'?'#22c55e':t.status==='FAIL'?'#DC2626':t.status==='SKIP'?'#f59e0b':'#22c55e';
     const tags     = (t.tags||[]).map(tg=>`<span style="background:rgba(0,212,170,0.12);color:#00d4aa;border:1px solid rgba(0,212,170,0.25);padding:2px 8px;border-radius:10px;font-size:10px;font-family:monospace;margin:0 2px">${esc(tg)}</span>`).join('');
 
@@ -307,7 +332,7 @@ function buildInlineReport(data) {
       const sIcon  = s.status==='PASS'?'✓':s.status==='FAIL'?'✗':s.status==='INFO'?'ℹ':'○';
       const screenshot = s.screenshot ? `
         <div style="margin:8px 0">
-          <div style="font-size:10px;color:#60a5fa;font-family:monospace;margin-bottom:4px">📸 SCREENSHOT</div>
+          <div style="font-size:10px;color:#60a5fa;font-family:monospace;margin-bottom:4px">${_t('report.screenshotLabel')}</div>
           <img src="${s.screenshot}" style="max-width:100%;border-radius:6px;border:1px solid #1c2a38;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'none':'100%'" />
         </div>` : '';
       return `
@@ -324,13 +349,13 @@ function buildInlineReport(data) {
 
     const failHtml = t.status==='FAIL' ? `
       <div style="background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.2);border-radius:8px;padding:14px;margin:12px 0">
-        <div style="font-size:11px;font-family:monospace;color:#DC2626;letter-spacing:1px;margin-bottom:8px;font-weight:700">🔎 ANALYSE DE L'ÉCHEC / FAILURE ANALYSIS</div>
+        <div style="font-size:11px;font-family:monospace;color:#DC2626;letter-spacing:1px;margin-bottom:8px;font-weight:700">${_t('report.failureAnalysis')}</div>
         <div style="font-size:13px;color:#fca5a5;margin-bottom:10px;line-height:1.65">${esc(t.failureAnalysis||'')}</div>
         ${t.message?`<div style="background:#060c14;border-radius:6px;padding:10px 12px;font-family:monospace;font-size:12px;color:#fca5a5;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;border:1px solid rgba(220,38,38,0.15)">${esc(t.message)}</div>`:''}
         ${t.suggestion?`<div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:12px;font-size:13px;color:#fcd34d;line-height:1.65">
-          <div style="font-size:10px;font-family:monospace;color:#f59e0b;margin-bottom:4px;letter-spacing:1px">💡 SOLUTION SUGGÉRÉE / SUGGESTED FIX</div>
+          <div style="font-size:10px;font-family:monospace;color:#f59e0b;margin-bottom:4px;letter-spacing:1px">${_t('report.suggestedFix')}</div>
           ${esc(t.suggestion)}</div>`:''}
-        ${failScreenshot?`<div style="margin-top:12px"><div style="font-size:10px;font-family:monospace;color:#60a5fa;letter-spacing:1px;margin-bottom:6px">📸 CAPTURE D'ÉCRAN / SCREENSHOT</div>
+        ${failScreenshot?`<div style="margin-top:12px"><div style="font-size:10px;font-family:monospace;color:#60a5fa;letter-spacing:1px;margin-bottom:6px">${_t('report.screenshotLabel')}</div>
           <img src="${failScreenshot.screenshot}" style="max-width:100%;border-radius:8px;border:1px solid rgba(220,38,38,0.3);cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'none':'100%'" title="Cliquer pour agrandir" /></div>`:''}
       </div>` : '';
 
@@ -351,13 +376,13 @@ function buildInlineReport(data) {
         <div id="tb${i}" style="display:${t.status==='FAIL'?'block':'none'};padding:14px 16px;border-top:1px solid #1c2a38">
           ${failHtml}
           ${stepsHtml?`
-            <div style="font-size:10px;color:#94afc8;font-family:monospace;letter-spacing:1px;margin:12px 0 6px">ÉTAPES D'EXÉCUTION / EXECUTION STEPS</div>
+            <div style="font-size:10px;color:#94afc8;font-family:monospace;letter-spacing:1px;margin:12px 0 6px">${_t('report.execSteps')}</div>
             <table style="width:100%;border-collapse:collapse">
               <thead>
                 <tr style="border-bottom:1px solid #1c2a38">
                   <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">ST</th>
                   <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">STEP</th>
-                  <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">DURÉE</th>
+                  <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">${_t('report.colDuration')}</th>
                   <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">MESSAGE</th>
                 </tr>
               </thead>
@@ -412,31 +437,31 @@ function buildInlineReport(data) {
       <div>
         <div class="report-title">📊 ${esc(title)}</div>
         <div class="report-meta">
-          Généré le / Generated on: ${dateStr} à ${timeStr}<br>
-          Environnement / Environment: RoboTest·AI — Robot Framework
+          ${_t('report.generatedOn')}: ${dateStr} · ${timeStr}<br>
+          ${_t('report.environment')}: RoboTest·AI — Robot Framework
         </div>
       </div>
-      <span class="badge ${rate===100?'badge-pass':'badge-fail'}">${rate===100?'✅ ALL PASS':`❌ ${data.failed} FAILED`}</span>
+      <span class="badge ${rate===100?'badge-pass':'badge-fail'}">${rate===100?_t('report.allPass'):`❌ ${data.failed} ${_t('report.failedWord')}`}</span>
     </div>
   </div>
 
   <!-- Print button -->
   <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap">
-    <button class="print-btn" onclick="window.print()">🖨️ Imprimer / Print</button>
-    ${data.logUrl ? `<a href="${data.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">📋 Log Robot Framework</a>` : ''}
-    ${(data.isSuite && Array.isArray(data.blocs)) ? data.blocs.filter(b => b.logUrl).map(b => `<a href="${b.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">📋 Log bloc ${b.idx}</a>`).join('') : ''}
-    <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">▼ Tout déplier / Expand all</button>
-    <button class="print-btn" style="background:transparent;border-color:#1c2a38;color:#94afc8" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='none')">▲ Tout replier / Collapse all</button>
+    <button class="print-btn" onclick="window.print()">${_t('report.print')}</button>
+    ${data.logUrl ? `<a href="${data.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logRf')}</a>` : ''}
+    ${(data.isSuite && Array.isArray(data.blocs)) ? data.blocs.filter(b => b.logUrl).map(b => `<a href="${b.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logBloc')} ${b.idx}</a>`).join('') : ''}
+    <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">${_t('report.expandAll')}</button>
+    <button class="print-btn" style="background:transparent;border-color:#1c2a38;color:#94afc8" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='none')">${_t('report.collapseAll')}</button>
   </div>
 
   <!-- Stats -->
   <div class="stats">
-    <div class="stat s-total"><div class="stat-n" style="color:#00d4aa">${data.total}</div><div class="stat-l">TOTAL</div></div>
-    <div class="stat s-pass"><div class="stat-n" style="color:#22c55e">${data.passed}</div><div class="stat-l">RÉUSSIS / PASSED</div></div>
-    <div class="stat s-fail"><div class="stat-n" style="color:#DC2626">${data.failed}</div><div class="stat-l">ÉCHOUÉS / FAILED</div></div>
-    ${data.skipped>0?`<div class="stat s-dur"><div class="stat-n" style="color:#f59e0b">${data.skipped}</div><div class="stat-l">IGNORÉS / SKIPPED</div></div>`:''}
-    <div class="stat s-dur"><div class="stat-n" style="color:#94afc8;font-size:24px">${rate}%</div><div class="stat-l">TAUX / RATE</div></div>
-    <div class="stat s-dur"><div class="stat-n" style="color:#94afc8;font-size:22px">${fmtD(data.duration)}</div><div class="stat-l">DURÉE TOTALE / TOTAL</div></div>
+    <div class="stat s-total"><div class="stat-n" style="color:#00d4aa">${data.total}</div><div class="stat-l">${_t('report.statTotal')}</div></div>
+    <div class="stat s-pass"><div class="stat-n" style="color:#22c55e">${data.passed}</div><div class="stat-l">${_t('report.statPassed')}</div></div>
+    <div class="stat s-fail"><div class="stat-n" style="color:#DC2626">${data.failed}</div><div class="stat-l">${_t('report.statFailed')}</div></div>
+    ${data.skipped>0?`<div class="stat s-dur"><div class="stat-n" style="color:#f59e0b">${data.skipped}</div><div class="stat-l">${_t('report.statSkipped')}</div></div>`:''}
+    <div class="stat s-dur"><div class="stat-n" style="color:#94afc8;font-size:24px">${rate}%</div><div class="stat-l">${_t('report.statRate')}</div></div>
+    <div class="stat s-dur"><div class="stat-n" style="color:#94afc8;font-size:22px">${fmtD(data.duration)}</div><div class="stat-l">${_t('report.statDuration')}</div></div>
   </div>
 
   <!-- Progress bar -->
@@ -446,17 +471,17 @@ function buildInlineReport(data) {
   </div>
 
   <!-- Comment -->
-  ${comment?`<div class="comment-box"><span style="font-size:10px;font-family:monospace;color:#00d4aa;display:block;margin-bottom:4px">💬 COMMENTAIRE TEST MANAGER</span>${esc(comment)}</div>`:''}
+  ${comment?`<div class="comment-box"><span style="font-size:10px;font-family:monospace;color:#00d4aa;display:block;margin-bottom:4px">${_t('report.commentLabel')}</span>${esc(comment)}</div>`:''}
 
   <!-- Tests -->
-  <div class="section-title">📋 DÉTAIL DES CAS DE TESTS / TEST CASES DETAIL</div>
+  <div class="section-title">${_t('report.detailTitle')}</div>
   ${testsHtml}
 
   <!-- Footer -->
   <div class="footer">
-    <span>RoboTest·AI — Rapport bilingue FR/EN</span>
-    <span>Généré le ${dateStr} ${timeStr}</span>
-    <span>Robot Framework + SeleniumLibrary</span>
+    <span>RoboTest·AI</span>
+    <span>${_t('report.generatedOn')} ${dateStr} ${timeStr}</span>
+    <span>${_t('report.footerStack')}</span>
   </div>
 
 </div>
@@ -595,6 +620,11 @@ function deleteReportCard(cardId, runNum) {
   showConfirmDialog('🗑 Supprimer le rapport', 'Supprimer le rapport <b>RUN #' + runNum + '</b> ?', () => {
     // Remove from DOM
     document.getElementById(cardId)?.remove();
+    // Purge le registre de re-render i18n + révoque le blob
+    if (window._openReports && window._openReports[cardId]) {
+      try { URL.revokeObjectURL(window._openReports[cardId].blobUrl); } catch(e) {}
+      delete window._openReports[cardId];
+    }
     // Remove from _codeCards — filter by cardId (reliable) AND runNum (fallback)
     window._codeCards = (window._codeCards||[]).filter(c => {
       if (c.cardId === cardId) return false;
