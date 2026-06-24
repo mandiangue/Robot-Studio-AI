@@ -450,14 +450,12 @@ function updateConnBadge(platform, connected, label) {
   const badge = document.getElementById(platform + 'Badge');
   const card  = document.getElementById(platform + 'Card');
   const btn   = document.getElementById(platform + 'ConnectLabel');
-  const dc    = document.getElementById(platform + 'DisconnectBtn');
-  if (dc) dc.style.display = connected ? '' : 'none';
   if (!badge) return;
   if (connected) {
     badge.textContent = '✓ ' + (label || 'connecté');
     badge.className   = 'conn-badge ' + (platform === 'jira' ? 'ok-blue' : 'ok');
     card.className    = 'conn-card ' + (platform === 'jira' ? 'connected-jira' : 'connected');
-    if (btn) btn.textContent = '🔄 Reconnecter';
+    if (btn) btn.textContent = '🔌 Déconnecter';
   } else {
     badge.textContent = 'non connecté';
     badge.className   = 'conn-badge';
@@ -485,6 +483,12 @@ function toggleFieldVisibility(fieldId, btn) {
 }
 
 // ── Azure UI ──────────────────────────────────────────────────────────────────
+// Bouton unique : connecte si deconnecte, deconnecte si connecte.
+function uiToggleAzure() {
+  if (azureSession) uiDisconnectAzure();
+  else              uiConnectAzure();
+}
+
 async function uiConnectAzure() {
   const url   = document.getElementById('azureUrlInput').value.trim();
   const token = document.getElementById('azureTokenInput').value.trim();
@@ -562,6 +566,12 @@ function uiDisconnectAzure() {
 }
 
 // ── Jira UI ───────────────────────────────────────────────────────────────────
+// Bouton unique : connecte si deconnecte, deconnecte si connecte.
+function uiToggleJira() {
+  if (jiraSession) uiDisconnectJira();
+  else             uiConnectJira();
+}
+
 async function uiConnectJira() {
   const url   = document.getElementById('jiraUrlInput').value.trim();
   const email = document.getElementById('jiraEmailInput').value.trim();
