@@ -7,31 +7,7 @@
 function showWelcome() {
   // Ne pas recréer si le welcome est déjà dans le DOM (injecté dans index.html)
   if (document.getElementById('welcomeMsg')) return;
-  renderAgentMsg(`👋 Bonjour ! Je suis ton **QA Agent** spécialisé Robot Framework.
-
-**Ce que je peux faire :**
-- 🔵 Me connecter à **Azure DevOps** → récupérer une US → générer les tests RF
-- 🟦 Me connecter à **Jira** → récupérer une US → générer les tests RF
-- 🌐 Me connecter à **n'importe quelle app web** → générer des tests depuis l'URL
-- 🤖 Générer des tests en **Keyword-Driven**, **BDD (Given/When/Then)** ou **Data-Driven**
-- 📁 Créer une architecture **multi-fichiers** (variables.robot, keywords.robot, tests.robot)
-
-**Comment ça marche en 2 étapes :**
-1️⃣ Tu décris ce que tu veux tester → je propose des **cas de tests** en langage naturel (modifiables)
-2️⃣ Tu valides → tu copies les cas → tu tapes **"génère le code RF"** → j'écris le fichier .robot
-
-**Exemples de commandes :**
-> *"Connecte-toi sur https://the-internet.herokuapp.com/login avec username: tomsmith et password: SuperSecretPassword! et génère 3 cas de tests"*
-
-> *"Connecte-toi sur Azure https://dev.azure.com/monorg/projet avec le token XYZ, cherche l'US #42 et génère les tests RF en BDD"*
-
-> *"Connecte-toi sur Jira https://monorg.atlassian.net avec email@company.com et token XYZ, cherche l'US PROJ-42"*
-
-> *"Génère le code RF"* ← après avoir validé les cas de tests
-
-**Configuration :** Colle ta clé API Anthropic en haut à droite, choisis la librairie et le style dans la sidebar. 🚀
-
-💡 *L'IA ne remplace pas le QA — elle supprime la partie rébarbative pour que tu te concentres sur ce qui compte.*`, false);
+  renderAgentMsg(t('welcome.md'), false);
 }
 
 // ── Render messages ────────────────────────────────────────────────────────────
