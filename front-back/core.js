@@ -357,6 +357,22 @@ const TRANSLATIONS = {
     'editor.folderDeleteTitle':'🗑 Supprimer le dossier', 'editor.folderDeleteExtra':' et ses <b>{n}</b> fichier(s)', 'editor.folderDeleteEmpty':' (vide)',
     'editor.folderDeleteBody':'Supprimer <b>{name}</b>{extra} ?', 'editor.folderDeleted':'🗑 Dossier supprimé',
     'editor.addedToSuite':'✅ {name} ajouté à la suite', 'editor.blocksMerged':'🔀 {n} bloc(s) fusionné(s) avec succès !',
+    // index.html — chrome statique
+    'ui.skipLink':'Aller au contenu principal',
+    'ui.statTC':'Cas de tests', 'ui.statGenerated':'Tests RF lancés', 'ui.statSuites':'Suites', 'ui.statPassed':'Réussis', 'ui.statFailed':'Échoués', 'ui.statRate':'Taux réussite',
+    'ui.dashboard':'📊 Dashboard & Analytics', 'ui.live':'🔴 Live Tests', 'ui.analysis':'🔍 Analyse des tests', 'ui.cicd':'🚀 CI/CD Deploy',
+    'ui.testSuite':'🧪 TEST SUITE', 'ui.manageSuites':'🧪 Gérer les suites de tests',
+    'ui.browserLabel':'NAVIGATEUR', 'ui.sessionLabel':'SESSION',
+    'ui.suiteManager':'🧪 Test Suite Manager', 'ui.scheduler':'⏰ Scheduler', 'ui.suites':'SUITES',
+    'ui.testsAvailable':'TESTS GÉNÉRÉS DISPONIBLES', 'ui.dragHint':'Glisse un test vers une suite ↑ ou utilise le sélecteur',
+    'ui.dashboardTitle':'📊 DASHBOARD & ANALYTICS',
+    'ui.apiKeyPh':'🔒 Clé API (.env)',
+    'ui.tProvider':'Fournisseur IA', 'ui.tModel':'Modèle', 'ui.tTheme':'Changer de thème', 'ui.tBrowserType':'Type de navigateur',
+    'ui.tSession':"Gestion de l'ouverture et fermeture du navigateur", 'ui.tSessionSel':'Gestion du navigateur entre les tests',
+    'ui.tImportRF':'Importer un projet Robot Framework (dossier)', 'ui.tImportCsv':'Importer CSV/XLS', 'ui.tMic':'Dictée vocale',
+    'ui.tScheduler':'Sélectionne au moins une suite pour activer le scheduler', 'ui.tClose':'Fermer',
+    'ui.ariaNavMain':'Barre de navigation principale', 'ui.ariaNavToggle':'Ouvrir le menu de navigation', 'ui.ariaLangSwitch':'Changer de langue (FR / EN)',
+    'ui.ariaMsgInput':'Zone de saisie du message', 'ui.ariaImportRF':'Importer un projet RF', 'ui.ariaImportCsv':'Importer CSV/XLS', 'ui.ariaMic':'Dictée vocale', 'ui.ariaSend':'Soumettre le message',
   },
   en: {
     flag: '🇬🇧', name: 'EN',
@@ -485,6 +501,22 @@ const TRANSLATIONS = {
     'editor.folderDeleteTitle':'🗑 Delete folder', 'editor.folderDeleteExtra':' and its <b>{n}</b> file(s)', 'editor.folderDeleteEmpty':' (empty)',
     'editor.folderDeleteBody':'Delete <b>{name}</b>{extra}?', 'editor.folderDeleted':'🗑 Folder deleted',
     'editor.addedToSuite':'✅ {name} added to the suite', 'editor.blocksMerged':'🔀 {n} block(s) merged successfully!',
+    // index.html — static chrome
+    'ui.skipLink':'Skip to main content',
+    'ui.statTC':'Test cases', 'ui.statGenerated':'RF tests run', 'ui.statSuites':'Suites', 'ui.statPassed':'Passed', 'ui.statFailed':'Failed', 'ui.statRate':'Success rate',
+    'ui.dashboard':'📊 Dashboard & Analytics', 'ui.live':'🔴 Live Tests', 'ui.analysis':'🔍 Test analysis', 'ui.cicd':'🚀 CI/CD Deploy',
+    'ui.testSuite':'🧪 TEST SUITE', 'ui.manageSuites':'🧪 Manage test suites',
+    'ui.browserLabel':'BROWSER', 'ui.sessionLabel':'SESSION',
+    'ui.suiteManager':'🧪 Test Suite Manager', 'ui.scheduler':'⏰ Scheduler', 'ui.suites':'SUITES',
+    'ui.testsAvailable':'GENERATED TESTS AVAILABLE', 'ui.dragHint':'Drag a test onto a suite ↑ or use the selector',
+    'ui.dashboardTitle':'📊 DASHBOARD & ANALYTICS',
+    'ui.apiKeyPh':'🔒 API key (.env)',
+    'ui.tProvider':'AI provider', 'ui.tModel':'Model', 'ui.tTheme':'Toggle theme', 'ui.tBrowserType':'Browser type',
+    'ui.tSession':'Browser open/close handling', 'ui.tSessionSel':'Browser handling between tests',
+    'ui.tImportRF':'Import a Robot Framework project (folder)', 'ui.tImportCsv':'Import CSV/XLS', 'ui.tMic':'Voice input',
+    'ui.tScheduler':'Select at least one suite to enable the scheduler', 'ui.tClose':'Close',
+    'ui.ariaNavMain':'Main navigation bar', 'ui.ariaNavToggle':'Open the navigation menu', 'ui.ariaLangSwitch':'Change language (FR / EN)',
+    'ui.ariaMsgInput':'Message input area', 'ui.ariaImportRF':'Import an RF project', 'ui.ariaImportCsv':'Import CSV/XLS', 'ui.ariaMic':'Voice input', 'ui.ariaSend':'Submit message',
   },
 };
 
@@ -502,10 +534,11 @@ function t(key) {
 // Conventions : data-i18n -> textContent ; data-i18n-ph -> placeholder ; data-i18n-title -> title.
 // Réutilisable par les hooks __i18nRerender pour retraduire le chrome d'une carte sans rebuild.
 function applyI18n(root = document) {
-  root.querySelectorAll('[data-i18n],[data-i18n-ph],[data-i18n-title]').forEach(el => {
+  root.querySelectorAll('[data-i18n],[data-i18n-ph],[data-i18n-title],[data-i18n-aria]').forEach(el => {
     const k  = el.getAttribute('data-i18n');        if (k  !== null) el.textContent = t(k);
     const p  = el.getAttribute('data-i18n-ph');     if (p  !== null) el.placeholder = t(p);
     const ti = el.getAttribute('data-i18n-title');  if (ti !== null) el.title       = t(ti);
+    const a  = el.getAttribute('data-i18n-aria');   if (a  !== null) el.setAttribute('aria-label', t(a));
   });
 }
 window.applyI18n = applyI18n;
