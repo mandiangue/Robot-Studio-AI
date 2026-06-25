@@ -57,16 +57,19 @@ async function treeHandleUpload(event, cardId) {
 }
 
 async function readAndAddFile(file, name, ext, card, replace) {
-  const isImage = ['png','jpg','jpeg'].includes(ext);
+  const isImage  = ['png','jpg','jpeg'].includes(ext);          // aperçu image
+  // Fichiers d'UPLOAD (data) -> base64 (round-trip binaire intact). PAS .robot/.resource/.py (= code, restent texte éditable).
+  const isBinary = isImage || ['pdf','txt','csv','xls','xlsx'].includes(ext);
+  // Limite de taille (uniquement pour les binaires, lourds en base64)
+  if (isBinary && file.size > 3 * 1024 * 1024) {
+    showToast(t('editor.fileTooLarge').replace('{name}', name));
+    return;
+  }
   const content = await new Promise(res => {
     const r = new FileReader();
-    if (isImage) {
-      r.onload = () => res(r.result); // base64 data URL
-      r.readAsDataURL(file);
-    } else {
-      r.onload = () => res(r.result);
-      r.readAsText(file);
-    }
+    r.onload = () => res(r.result);
+    if (isBinary) r.readAsDataURL(file);  // base64 data URL (décodé côté serveur à l'écriture disque)
+    else          r.readAsText(file);
   });
 
   // Determine folder based on extension
@@ -79,53 +82,26 @@ async function readAndAddFile(file, name, ext, card, replace) {
       else filename = 'resources/' + name;
     } else if (ext === 'py') {
       filename = 'libraries/' + name;
-    } else if (isImage) {
-      filename = 'screenshots/' + name;
+    } else if (isBinary) {
+      filename = 'resources/files/' + name;   // dossier dédié aux fichiers d'upload (≠ screenshots de run)
     }
   }
 
   if (replace) {
     const existing = card.files.find(f => f.filename.endsWith('/' + name) || f.filename === name);
-    if (existing) { existing.code = content; existing.isImage = isImage; return; }
-  }
-
-  card.files.push({ filename, code: content, isImage: isImage || false });
-}
-
-
-// ── Drop code card into suite group ──────────────────────────────────────────
-function dropCardToSuite(event, groupId) {
-  event.preventDefault();
-  event.currentTarget.style.borderColor = 'var(--border)';
-  event.currentTarget.style.background = '';
-
-  // Try drag data from code card
-  try {
-    const raw  = event.dataTransfer.getData('application/x-rf-card');
-    if (raw) {
-      const data = JSON.parse(raw);
-      const code = decodeURIComponent(data.code);
-      const filename = data.filename || 'test_dropped.robot';
-      const name = (data.name || filename.replace('.robot','').replace(/_/g,' ')).replace(/\b\w/g, c => c.toUpperCase());
-      const id = generateSuiteId();
-      suiteRegistry.push({ id, cardId: data.cardId, groupId, name, filename, code, addedAt: new Date().toISOString(), droppedIntoGroup: true });
-      saveSuiteRegistry();
-      renderSavedSuites();
-      renderSuiteTestList();
-      showToast(t('editor.addedToSuite').replace('{name}', name));
+    if (existing) {
+      existing.code = content; existing.isImage = isImage; existing.binary = isBinary;
+      // Migrer un upload vers resources/files/ (ex. ancien rangement files/ ou screenshots/)
+      if (isBinary && !existing.filename.startsWith('resources/files/')) existing.filename = 'resources/files/' + name;
       return;
     }
-  } catch(e) {}
-
-  // Try cardId from tree drag
-  if (window._treeDrag?.cardId) {
-    const card = (window._codeCards||[]).find(c => c.cardId === window._treeDrag.cardId);
-    if (card) {
-      addCardToSuite(card.cardId);
-      window._treeDrag = null;
-    }
   }
+
+  card.files.push({ filename, code: content, isImage: isImage || false, binary: isBinary || false });
 }
+
+
+// dropCardToSuite retiré : le drag carte-vers-suite est supprimé (redondant avec la modale _suitePickerModal).
 
 // ── Add folder ───────────────────────────────────────────────────────────────
 function treeAddFolder(parentFolder, cardId) {

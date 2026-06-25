@@ -627,8 +627,8 @@ window.__i18nRerender.push(() => {
     const card = (window._codeCards||[]).find(c => c.cardId === cardId); if (!card) return;
     const files = (card.files||[]).filter(f => !f.filename.endsWith('.gitkeep'));
     el.innerHTML = files.length > 1
-      ? `⠿ ✅ ${t('codecards.filesGenerated').replace('{n}', files.length)}`
-      : `⠿ ✅ 📄 ${escHtml(files[0]?.filename||'')}`;
+      ? `✅ ${t('codecards.filesGenerated').replace('{n}', files.length)}`
+      : `✅ 📄 ${escHtml(files[0]?.filename||'')}`;
   });
 });
 
@@ -655,7 +655,19 @@ function renderResultCard(files, existingCardId) {
     const f    = files[active];
     const rawCode = cleanRobotCodeFromHtml(f.code);
     const safe = escHtml(rawCode);
-    const hl   = syntaxHL(safe);
+    // Fichier binaire (image/PDF) : NE PAS afficher le base64 en texte ni le linter -> aperçu/placeholder.
+    const isBinary = !!f.binary;
+    const isRf = !isBinary && /\.(robot|resource)$/i.test(f.filename || '');
+    let hl;
+    if (isBinary) {
+      const _kb   = Math.round((String(f.code||'').length * 0.75) / 1024);
+      const _name = escHtml((f.filename||'').split('/').pop());
+      hl = f.isImage
+        ? `<img src="${f.code}" alt="${_name}" style="max-width:100%;max-height:320px;border-radius:6px;display:block;margin:8px auto"/><div style="text-align:center;color:var(--gray);font-size:12px;margin-top:6px">🖼️ ${_name} · ${_kb} Ko</div>`
+        : `<div style="padding:32px;text-align:center;color:var(--gray);font-size:13px">📎 ${_name}<div style="font-size:12px;margin-top:6px">fichier binaire · ${_kb} Ko</div></div>`;
+    } else {
+      hl = isRf ? syntaxHLLinted(rawCode) : syntaxHL(safe);
+    }
 
     // Multi-file run selector
     const runSelector = isMulti ? `
@@ -667,27 +679,8 @@ function renderResultCard(files, existingCardId) {
 
     const editId = cardId + '-edit-' + active;
 
-    div.draggable = true;
-    const _dragTimestamp = Date.now();
-    div.dataset.dragCode     = encodeURIComponent(files.map(f => f.code).join('\n\n'));
-    div.dataset.dragFilename = files[0].filename.replace('.robot','') + '_' + _dragTimestamp + '.robot';
-    div.dataset.dragName     = (files.length > 1 ? files.length + ' fichiers' : files[0].filename.replace('.robot','').replace(/_/g,' '));
-
-    div.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('text/plain', div.dataset.dragCode);
-      e.dataTransfer.setData('application/x-rf-card', JSON.stringify({
-        code:     div.dataset.dragCode,
-        filename: div.dataset.dragFilename,
-        name:     div.dataset.dragName,
-      }));
-      e.dataTransfer.effectAllowed = 'copy';
-      div.style.opacity = '0.6';
-      div.style.outline = '2px solid var(--teal)';
-    });
-    div.addEventListener('dragend', () => {
-      div.style.opacity = '1';
-      div.style.outline = '';
-    });
+    // Drag carte-vers-suite retiré (redondant avec la modale _suitePickerModal ;
+    // causait l'insertion %20/%0A en sélectionnant du texte dans le code).
 
     div.innerHTML = `
       <div class="msg-avatar">🤖</div>
@@ -696,8 +689,8 @@ function renderResultCard(files, existingCardId) {
 
           <!-- Card header -->
           <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap">
-            <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--teal);font-weight:600;cursor:grab" data-i18n-title="codecards.tDrag" title="Glisser vers la Test Suite">
-              <span id="cc-header-${cardId}">⠿ ✅ ${isMulti ? t('codecards.filesGenerated').replace('{n}', files.length) : '📄 ' + escHtml(f.filename)}</span>
+            <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--teal);font-weight:600">
+              <span id="cc-header-${cardId}">✅ ${isMulti ? t('codecards.filesGenerated').replace('{n}', files.length) : '📄 ' + escHtml(f.filename)}</span>
             </span>
             ${(() => {
               const card = (window._codeCards||[]).find(c => c.cardId === cardId);
@@ -746,7 +739,7 @@ function renderResultCard(files, existingCardId) {
                   style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);
                          padding:2px 8px;border-radius:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
                   <span data-i18n="codecards.import">⬆ Import</span>
-                  <input type="file" multiple accept=".robot,.py,.png,.jpg,.jpeg"
+                  <input type="file" multiple accept=".robot,.py,.png,.jpg,.jpeg,.pdf,.txt,.csv,.xls,.xlsx"
                     style="display:none"
                     onchange="treeHandleUpload(event,'${cardId}')" />
                 </label>
@@ -782,7 +775,7 @@ function renderResultCard(files, existingCardId) {
                   style="flex:1;width:100%;min-height:320px;background:var(--code);border:none;color:#7dd3c8;
                          font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.75;
                          padding:14px;outline:none;resize:vertical;box-sizing:border-box;white-space:pre;overflow-x:auto"
-                  spellcheck="false">${escHtml(rawCode)}</textarea>
+                  spellcheck="false"${isBinary ? ' readonly' : ''}>${isBinary ? '' : escHtml(rawCode)}</textarea>
                 <div style="display:flex;gap:8px;padding:10px 14px;background:var(--card);border-top:1px solid var(--border)">
                   <button data-card="${cardId}" data-raction="applyedit" data-editid="${editId}" data-i18n="codecards.apply"
                     style="background:linear-gradient(135deg,var(--teal),#00a882);border:none;color:#07090f;padding:8px 18px;border-radius:7px;font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
@@ -850,6 +843,8 @@ function renderResultCard(files, existingCardId) {
         const eid = btn.dataset.editid;
         const ta  = document.getElementById(eid + '-ta');
         if (!ta) return;
+        // Fichier binaire (image/PDF) : non éditable -> ne pas écraser le base64
+        if (files[activeTab] && files[activeTab].binary) { showToast(t('editor.binaryNoEdit')); return; }
         // Update files array with new code
         files[activeTab].code = ta.value;
         // Persist in _codeCards

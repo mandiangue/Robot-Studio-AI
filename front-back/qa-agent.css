@@ -118,6 +118,9 @@ body::before {
 }
 .clear-btn:hover { border-color: var(--red); color: var(--red); }
 
+/* Bouton de langue (toggle FR/EN) — indiquer qu'il est cliquable */
+#langBtn { cursor: pointer; }
+
 /* ── Layout ───────────────────────────────────────────────────── */
 .layout { position: relative; z-index: 1; display: flex; flex: 1; overflow: hidden; }
 
@@ -240,6 +243,14 @@ body.sidebar-resizing { cursor: col-resize; user-select: none; }
   font-size: 14px; line-height: 1.7;
   overflow-x: auto; margin: 10px 0;
   color: #7dd3c8; white-space: pre;
+}
+
+/* Ligne RF syntaxiquement invalide (lint conservateur) — rouge DISTINCT du #e06c75 des sections */
+.rf-error-line {
+  display: block;
+  background: rgba(220,38,38,0.12);
+  border-left: 3px solid #dc2626;
+  padding-left: 4px; margin-left: -4px;
 }
 
 .msg-bubble .tag {

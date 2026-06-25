@@ -50,6 +50,46 @@ function syntaxHL(code) {
   return c;
 }
 
+// ── Lint RF (conservateur) : Set de numéros de lignes (0-indexées) syntaxiquement invalides ──
+// Travaille sur le CODE BRUT. 3 règles ; en cas de doute -> ne marque PAS. Aucune règle d'indentation.
+function rfLintLines(rawCode) {
+  const bad = new Set();
+  if (!rawCode) return bad;
+  const VALID = ['settings', 'variables', 'test cases', 'keywords', 'tasks', 'comments'];
+  const lines = rawCode.split('\n');
+  let seenSection = false;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (trimmed === '' || trimmed.startsWith('#')) continue;           // vide / commentaire
+    if (trimmed.startsWith('***')) {                                   // marqueur de section
+      const m    = trimmed.match(/^\*{3}\s*([a-zA-Z ]+?)\s*\*{3}$/);
+      const name = m ? m[1].trim().toLowerCase().replace(/\s+/g, ' ') : null;
+      if (!name || !VALID.includes(name)) bad.add(i);                  // RÈGLE 2 : section mal formée
+      seenSection = true;                                             // frontière (même mal formée) -> pas de cascade RÈGLE 1
+      continue;
+    }
+    if (!seenSection) { bad.add(i); continue; }                        // RÈGLE 1 : contenu avant 1ère section
+    const opens  = (lines[i].match(/[$@&]\{/g) || []).length;          // RÈGLE 3 : ${ @{ &{
+    const closes = (lines[i].match(/\}/g) || []).length;
+    if (opens > closes) bad.add(i);                                    // déséquilibre net seulement (imbriqué équilibré -> OK)
+  }
+  return bad;
+}
+
+// Wrapper ISOLÉ autour de syntaxHL (syntaxHL reste INCHANGÉE).
+// Set vide -> retourne EXACTEMENT syntaxHL(escHtml(rawCode)) (non-régression garantie).
+function syntaxHLLinted(rawCode) {
+  if (!rawCode) return '';
+  const hl  = syntaxHL(escHtml(rawCode));                             // coloration normale, identique à avant
+  const bad = rfLintLines(rawCode);
+  if (!bad.size) return hl;
+  const lines = hl.split('\n');                                       // syntaxHL préserve les \n -> indices alignés au brut
+  for (let i = 0; i < lines.length; i++) {
+    if (bad.has(i)) lines[i] = '<span class="rf-error-line">' + lines[i] + '</span>';
+  }
+  return lines.join('\n');
+}
+
 
 // ── Markdown renderer (minimal) ────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -332,7 +372,7 @@ const TRANSLATIONS = {
     'codecards.newFile':'+ nouveau fichier', 'codecards.newFolder':'+ nouveau dossier',
     'codecards.apply':'✅ Appliquer', 'codecards.cancel':'Annuler', 'codecards.searchPh':'🔍 Rechercher…',
     'codecards.edit':'✏️ Éditer', 'codecards.view':'👁 Voir', 'codecards.filesGenerated':'{n} fichiers générés',
-    'codecards.tDrag':'Glisser vers la Test Suite', 'codecards.tEditCode':'Éditer le code', 'codecards.tSelectMerge':'Sélectionner des blocs à fusionner',
+    'codecards.tEditCode':'Éditer le code', 'codecards.tSelectMerge':'Sélectionner des blocs à fusionner',
     'codecards.tCopy':'Copier le code', 'codecards.tDownload':'Télécharger ce fichier', 'codecards.tDownloadAll':'Télécharger tous les fichiers',
     'codecards.tTag':'Taguer pour deploy', 'codecards.tZoomIn':'Zoom +', 'codecards.tZoomOut':'Zoom -', 'codecards.tReset':'Supprimer',
     'codecards.tImport':'Importer .robot .py .png .jpg', 'codecards.tRename':'Renommer', 'codecards.tDelete':'Supprimer',
@@ -342,6 +382,7 @@ const TRANSLATIONS = {
     'codecards.deleteBlockTitle':'🗑 Supprimer le bloc', 'codecards.deleteBlockBody':'Supprimer <b>{name}</b> ?',
     // File/folder dialogs (editor.js) — créés au clic
     'editor.fileExistsTitle':'⚠️ Fichier existant', 'editor.fileExistsBody':'Remplacer <b>{name}</b> ?', 'editor.imported':'⬆ {n} fichier(s) importé(s)',
+    'editor.fileTooLarge':'⚠️ « {name} » trop volumineux (max 3 Mo)', 'editor.binaryNoEdit':'📎 Fichier binaire — non éditable',
     'editor.newFolderTitle':'📁 Nouveau dossier', 'editor.newFolderLabel':'Nom du dossier (ex: pages)',
     'editor.folderExists':'⚠️ Dossier déjà existant', 'editor.folderCreated':'📁 Dossier créé : {path}',
     'editor.newFileTitle':'📄 Nouveau fichier', 'editor.newFileLabel':'Nom du fichier (ex: new_page.robot)', 'editor.fileCreated':'📄 Fichier créé : {path}',
@@ -364,7 +405,7 @@ const TRANSLATIONS = {
     'ui.testSuite':'🧪 TEST SUITE', 'ui.manageSuites':'🧪 Gérer les suites de tests',
     'ui.browserLabel':'NAVIGATEUR', 'ui.sessionLabel':'SESSION',
     'ui.suiteManager':'🧪 Test Suite Manager', 'ui.scheduler':'⏰ Scheduler', 'ui.suites':'SUITES',
-    'ui.testsAvailable':'TESTS GÉNÉRÉS DISPONIBLES', 'ui.dragHint':'Glisse un test vers une suite ↑ ou utilise le sélecteur',
+    'ui.testsAvailable':'TESTS GÉNÉRÉS DISPONIBLES', 'ui.dragHint':'Utilise le sélecteur pour ajouter un test à une suite',
     'ui.dashboardTitle':'📊 DASHBOARD & ANALYTICS',
     'ui.apiKeyPh':'🔒 Clé API (.env)',
     'ui.tProvider':'Fournisseur IA', 'ui.tModel':'Modèle', 'ui.tTheme':'Changer de thème', 'ui.tBrowserType':'Type de navigateur',
@@ -444,10 +485,10 @@ const TRANSLATIONS = {
     'cicd.toPushOne':'{n} fichier à pusher', 'cicd.toPushMany':'{n} fichiers à pusher', 'cicd.importedOne':'{n} fichier importé', 'cicd.importedMany':'{n} fichiers importés',
     // Suites panel (suites.js)
     'suites.newSuite':'+ Nouvelle suite', 'suites.runSuite':'▶️ Run suite', 'suites.noSuite':'Aucune suite — clique "+ Nouvelle suite"',
-    'suites.reorder':'Réordonner', 'suites.enable':'Activer', 'suites.disable':'Désactiver', 'suites.remove':'Retirer', 'suites.noCode':'Pas de code disponible',
+    'suites.enable':'Activer', 'suites.disable':'Désactiver', 'suites.remove':'Retirer', 'suites.noCode':'Pas de code disponible',
     'suites.testCountOne':'{n} test', 'suites.testCountMany':'{n} tests',
     'suites.runSuiteTitle':'Lancer la suite', 'suites.stopSuiteTitle':'Arrêter la suite', 'suites.deleteSuiteTitle':'Supprimer la suite', 'suites.browserModeTitle':'Mode navigateur pour cette suite',
-    'suites.dropZone':'📥 Glisse un bloc de code ici', 'suites.selectTest':'— Sélectionner un test —', 'suites.addBtn':'+ Ajouter', 'suites.allTestsIn':'Tous les tests sont dans cette suite',
+    'suites.emptyState':'Aucun test — ajoute des blocs via « + Ajouter » ci-dessous', 'suites.selectTest':'— Sélectionner un test —', 'suites.addBtn':'+ Ajouter', 'suites.allTestsIn':'Tous les tests sont dans cette suite',
     'suites.schedulerTitle':'⏰ Scheduler de suites', 'suites.close':'Fermer', 'suites.active':'● Actif', 'suites.inactive':'○ Inactif',
     'suites.pause':'⏸ Pause', 'suites.activate':'▶️ Activer', 'suites.stop':'⏹ Stop', 'suites.stopRunTitle':'Stopper le run en cours', 'suites.deleteTitle':'Supprimer',
     'suites.everyInterval':'🔁 Toutes les {interval} {unit}', 'suites.next':'Prochain :', 'suites.noScheduling':'Aucun scheduling configuré',
@@ -500,7 +541,7 @@ const TRANSLATIONS = {
     'live.noRun':'Aucun run lancé…', 'live.noSuite':'Aucune suite lancée…', 'live.waiting':'En attente…',
     'live.running':'⋯ EN COURS', 'live.bloc':'Bloc {n}', 'live.fileChanged':'🔄 Fichier mis à jour depuis VS Code : ',
     // Generation chrome (generation.js) — UI uniquement (jamais les prompts LLM)
-    'gen.configApiKey':'⚠️ Configure ta clé API {provider} en haut à droite', 'gen.apiKeyMissing':'⚠️ Configure ta clé API',
+    'gen.configApiKey':'⚠️ Configure ta clé API {provider} dans le fichier .env', 'gen.apiKeyMissing':'⚠️ Configure ta clé API',
     'gen.blockNotFound':'⚠️ Bloc introuvable', 'gen.multiFileAuto':'💡 Mode Multi-fichiers activé automatiquement pour le POM',
     'gen.noPendingCases':"⚠️ Aucun cas de tests en attente. Décris d'abord ce que tu veux tester.",
     'gen.errorPrefix':'❌ Erreur : ', 'gen.apiErrorPrefix':'❌ Erreur API : ', 'gen.genErrorPrefix':'❌ Erreur génération : ', 'gen.pomErrorPrefix':'❌ Erreur génération POM : ',
@@ -534,8 +575,8 @@ const TRANSLATIONS = {
     'popup.download':'⬇️ Télécharger', 'popup.downloadAll':'⬇️ Tout télécharger', 'popup.reset':'🗑️ Reset',
     'popup.copied':'📋 Copié !', 'popup.filesDownloaded':'⬇️ {n} fichiers téléchargés', 'popup.closeConfirm':'Fermer cette fenêtre ?',
     // Welcome (index.html statique + cards.js markdown)
-    'welcome.html':'<p>👋 <strong>Bonjour ! Je suis ton QA Agent spécialisé Robot Framework.</strong></p><p><strong>Ce que je peux faire :</strong></p><ul><li>🔵 Me connecter à <strong>Azure DevOps</strong> → récupérer une US → générer les tests RF</li><li>🟦 Me connecter à <strong>Jira</strong> → récupérer une US → générer les tests RF</li><li>🌐 Me connecter à <strong>n\'importe quelle app web</strong> → générer des tests depuis l\'URL</li><li>🤖 Générer des tests en <strong>Keyword-Driven</strong>, <strong>BDD (Given/When/Then)</strong> ou <strong>Data-Driven</strong></li><li>📁 Créer une architecture <strong>multi-fichiers</strong> (variables.robot, keywords.robot, tests.robot)</li></ul><p><strong>Comment ça marche en 2 étapes :</strong></p><p>1️⃣ Tu décris ce que tu veux tester → je propose des <strong>cas de tests</strong> en langage naturel (modifiables)<br>2️⃣ Tu valides → tu tapes <strong>"génère le code RF"</strong> → j\'écris le fichier .robot</p><p><strong>Exemples de commandes :</strong></p><blockquote><em>"Connecte-toi sur https://the-internet.herokuapp.com/login avec username: tomsmith et password: SuperSecretPassword! et génère 3 cas de tests"</em></blockquote><blockquote><em>"Connecte-toi sur Azure https://dev.azure.com/monorg/projet avec le token XYZ, cherche l\'US #42 et génère les tests RF en BDD"</em></blockquote><blockquote><em>"Génère le code RF"</em> ← après avoir validé les cas de tests</blockquote><p><strong>Configuration :</strong> Colle ta clé API en haut à droite, choisis la librairie et le style dans la sidebar. 🚀</p><p><em>💡 L\'IA ne remplace pas le QA — elle supprime la partie rébarbative pour que tu te concentres sur ce qui compte.</em></p>',
-    'welcome.md':'👋 Bonjour ! Je suis ton **QA Agent** spécialisé Robot Framework.\n\n**Ce que je peux faire :**\n- 🔵 Me connecter à **Azure DevOps** → récupérer une US → générer les tests RF\n- 🟦 Me connecter à **Jira** → récupérer une US → générer les tests RF\n- 🌐 Me connecter à **n\'importe quelle app web** → générer des tests depuis l\'URL\n- 🤖 Générer des tests en **Keyword-Driven**, **BDD (Given/When/Then)** ou **Data-Driven**\n- 📁 Créer une architecture **multi-fichiers** (variables.robot, keywords.robot, tests.robot)\n\n**Comment ça marche en 2 étapes :**\n1️⃣ Tu décris ce que tu veux tester → je propose des **cas de tests** en langage naturel (modifiables)\n2️⃣ Tu valides → tu copies les cas → tu tapes **"génère le code RF"** → j\'écris le fichier .robot\n\n**Exemples de commandes :**\n> *"Connecte-toi sur https://the-internet.herokuapp.com/login avec username: tomsmith et password: SuperSecretPassword! et génère 3 cas de tests"*\n\n> *"Connecte-toi sur Azure https://dev.azure.com/monorg/projet avec le token XYZ, cherche l\'US #42 et génère les tests RF en BDD"*\n\n> *"Connecte-toi sur Jira https://monorg.atlassian.net avec email@company.com et token XYZ, cherche l\'US PROJ-42"*\n\n> *"Génère le code RF"* ← après avoir validé les cas de tests\n\n**Configuration :** Colle ta clé API Anthropic en haut à droite, choisis la librairie et le style dans la sidebar. 🚀\n\n💡 *L\'IA ne remplace pas le QA — elle supprime la partie rébarbative pour que tu te concentres sur ce qui compte.*',
+    'welcome.html':'<p>👋 <strong>Bonjour ! Je suis ton QA Agent spécialisé Robot Framework.</strong></p><p><strong>Ce que je peux faire :</strong></p><ul><li>🔵 Me connecter à <strong>Azure DevOps</strong> → récupérer une US → générer les tests RF</li><li>🟦 Me connecter à <strong>Jira</strong> → récupérer une US → générer les tests RF</li><li>🌐 Me connecter à <strong>n\'importe quelle app web</strong> → générer des tests depuis l\'URL</li><li>🤖 Générer des tests en <strong>Keyword-Driven</strong>, <strong>BDD (Given/When/Then)</strong> ou <strong>Data-Driven</strong></li><li>📁 Créer une architecture <strong>multi-fichiers</strong> (variables.robot, keywords.robot, tests.robot)</li></ul><p><strong>Comment ça marche en 2 étapes :</strong></p><p>1️⃣ Tu décris ce que tu veux tester → je propose des <strong>cas de tests</strong> en langage naturel (modifiables)<br>2️⃣ Tu valides → tu tapes <strong>"génère le code RF"</strong> → j\'écris le fichier .robot</p><p><strong>Exemples de commandes :</strong></p><blockquote><em>"Connecte-toi sur https://the-internet.herokuapp.com/login avec username: tomsmith et password: SuperSecretPassword! et génère 3 cas de tests"</em></blockquote><blockquote><em>"Connecte-toi sur Azure https://dev.azure.com/monorg/projet avec le token XYZ, cherche l\'US #42 et génère les tests RF en BDD"</em></blockquote><blockquote><em>"Génère le code RF"</em> ← après avoir validé les cas de tests</blockquote><p><strong>Configuration :</strong> Ta clé API se configure dans le fichier <code>.env</code> (voir le README), puis choisis la librairie et le style dans la sidebar. 🚀</p><p><em>💡 L\'IA ne remplace pas le QA — elle supprime la partie rébarbative pour que tu te concentres sur ce qui compte.</em></p>',
+    'welcome.md':'👋 Bonjour ! Je suis ton **QA Agent** spécialisé Robot Framework.\n\n**Ce que je peux faire :**\n- 🔵 Me connecter à **Azure DevOps** → récupérer une US → générer les tests RF\n- 🟦 Me connecter à **Jira** → récupérer une US → générer les tests RF\n- 🌐 Me connecter à **n\'importe quelle app web** → générer des tests depuis l\'URL\n- 🤖 Générer des tests en **Keyword-Driven**, **BDD (Given/When/Then)** ou **Data-Driven**\n- 📁 Créer une architecture **multi-fichiers** (variables.robot, keywords.robot, tests.robot)\n\n**Comment ça marche en 2 étapes :**\n1️⃣ Tu décris ce que tu veux tester → je propose des **cas de tests** en langage naturel (modifiables)\n2️⃣ Tu valides → tu copies les cas → tu tapes **"génère le code RF"** → j\'écris le fichier .robot\n\n**Exemples de commandes :**\n> *"Connecte-toi sur https://the-internet.herokuapp.com/login avec username: tomsmith et password: SuperSecretPassword! et génère 3 cas de tests"*\n\n> *"Connecte-toi sur Azure https://dev.azure.com/monorg/projet avec le token XYZ, cherche l\'US #42 et génère les tests RF en BDD"*\n\n> *"Connecte-toi sur Jira https://monorg.atlassian.net avec email@company.com et token XYZ, cherche l\'US PROJ-42"*\n\n> *"Génère le code RF"* ← après avoir validé les cas de tests\n\n**Configuration :** Ta clé API se configure dans le fichier `.env` (voir le README), puis choisis la librairie et le style dans la sidebar. 🚀\n\n💡 *L\'IA ne remplace pas le QA — elle supprime la partie rébarbative pour que tu te concentres sur ce qui compte.*',
   },
   en: {
     flag: '🇬🇧', name: 'EN',
@@ -639,7 +680,7 @@ const TRANSLATIONS = {
     'codecards.newFile':'+ new file', 'codecards.newFolder':'+ new folder',
     'codecards.apply':'✅ Apply', 'codecards.cancel':'Cancel', 'codecards.searchPh':'🔍 Search…',
     'codecards.edit':'✏️ Edit', 'codecards.view':'👁 View', 'codecards.filesGenerated':'{n} files generated',
-    'codecards.tDrag':'Drag to the Test Suite', 'codecards.tEditCode':'Edit the code', 'codecards.tSelectMerge':'Select blocks to merge',
+    'codecards.tEditCode':'Edit the code', 'codecards.tSelectMerge':'Select blocks to merge',
     'codecards.tCopy':'Copy the code', 'codecards.tDownload':'Download this file', 'codecards.tDownloadAll':'Download all files',
     'codecards.tTag':'Tag for deploy', 'codecards.tZoomIn':'Zoom +', 'codecards.tZoomOut':'Zoom -', 'codecards.tReset':'Delete',
     'codecards.tImport':'Import .robot .py .png .jpg', 'codecards.tRename':'Rename', 'codecards.tDelete':'Delete',
@@ -649,6 +690,7 @@ const TRANSLATIONS = {
     'codecards.deleteBlockTitle':'🗑 Delete block', 'codecards.deleteBlockBody':'Delete <b>{name}</b>?',
     // File/folder dialogs (editor.js) — created on click
     'editor.fileExistsTitle':'⚠️ File exists', 'editor.fileExistsBody':'Replace <b>{name}</b>?', 'editor.imported':'⬆ {n} file(s) imported',
+    'editor.fileTooLarge':'⚠️ “{name}” too large (max 3 MB)', 'editor.binaryNoEdit':'📎 Binary file — not editable',
     'editor.newFolderTitle':'📁 New folder', 'editor.newFolderLabel':'Folder name (e.g. pages)',
     'editor.folderExists':'⚠️ Folder already exists', 'editor.folderCreated':'📁 Folder created: {path}',
     'editor.newFileTitle':'📄 New file', 'editor.newFileLabel':'File name (e.g. new_page.robot)', 'editor.fileCreated':'📄 File created: {path}',
@@ -671,7 +713,7 @@ const TRANSLATIONS = {
     'ui.testSuite':'🧪 TEST SUITE', 'ui.manageSuites':'🧪 Manage test suites',
     'ui.browserLabel':'BROWSER', 'ui.sessionLabel':'SESSION',
     'ui.suiteManager':'🧪 Test Suite Manager', 'ui.scheduler':'⏰ Scheduler', 'ui.suites':'SUITES',
-    'ui.testsAvailable':'GENERATED TESTS AVAILABLE', 'ui.dragHint':'Drag a test onto a suite ↑ or use the selector',
+    'ui.testsAvailable':'GENERATED TESTS AVAILABLE', 'ui.dragHint':'Use the selector to add a test to a suite',
     'ui.dashboardTitle':'📊 DASHBOARD & ANALYTICS',
     'ui.apiKeyPh':'🔒 API key (.env)',
     'ui.tProvider':'AI provider', 'ui.tModel':'Model', 'ui.tTheme':'Toggle theme', 'ui.tBrowserType':'Browser type',
@@ -751,10 +793,10 @@ const TRANSLATIONS = {
     'cicd.toPushOne':'{n} file to push', 'cicd.toPushMany':'{n} files to push', 'cicd.importedOne':'{n} file imported', 'cicd.importedMany':'{n} files imported',
     // Suites panel (suites.js)
     'suites.newSuite':'+ New suite', 'suites.runSuite':'▶️ Run suite', 'suites.noSuite':'No suite — click "+ New suite"',
-    'suites.reorder':'Reorder', 'suites.enable':'Enable', 'suites.disable':'Disable', 'suites.remove':'Remove', 'suites.noCode':'No code available',
+    'suites.enable':'Enable', 'suites.disable':'Disable', 'suites.remove':'Remove', 'suites.noCode':'No code available',
     'suites.testCountOne':'{n} test', 'suites.testCountMany':'{n} tests',
     'suites.runSuiteTitle':'Run the suite', 'suites.stopSuiteTitle':'Stop the suite', 'suites.deleteSuiteTitle':'Delete the suite', 'suites.browserModeTitle':'Browser mode for this suite',
-    'suites.dropZone':'📥 Drop a code block here', 'suites.selectTest':'— Select a test —', 'suites.addBtn':'+ Add', 'suites.allTestsIn':'All tests are in this suite',
+    'suites.emptyState':'No test yet — add blocks via "+ Add" below', 'suites.selectTest':'— Select a test —', 'suites.addBtn':'+ Add', 'suites.allTestsIn':'All tests are in this suite',
     'suites.schedulerTitle':'⏰ Suite scheduler', 'suites.close':'Close', 'suites.active':'● Active', 'suites.inactive':'○ Inactive',
     'suites.pause':'⏸ Pause', 'suites.activate':'▶️ Activate', 'suites.stop':'⏹ Stop', 'suites.stopRunTitle':'Stop the running test', 'suites.deleteTitle':'Delete',
     'suites.everyInterval':'🔁 Every {interval} {unit}', 'suites.next':'Next:', 'suites.noScheduling':'No scheduling configured',
@@ -807,7 +849,7 @@ const TRANSLATIONS = {
     'live.noRun':'No run started…', 'live.noSuite':'No suite started…', 'live.waiting':'Waiting…',
     'live.running':'⋯ RUNNING', 'live.bloc':'Block {n}', 'live.fileChanged':'🔄 File updated from VS Code: ',
     // Generation chrome (generation.js) — UI only (never the LLM prompts)
-    'gen.configApiKey':'⚠️ Configure your {provider} API key (top right)', 'gen.apiKeyMissing':'⚠️ Configure your API key',
+    'gen.configApiKey':'⚠️ Configure your {provider} API key in the .env file', 'gen.apiKeyMissing':'⚠️ Configure your API key',
     'gen.blockNotFound':'⚠️ Block not found', 'gen.multiFileAuto':'💡 Multi-file mode auto-enabled for POM',
     'gen.noPendingCases':'⚠️ No pending test cases. Describe what you want to test first.',
     'gen.errorPrefix':'❌ Error: ', 'gen.apiErrorPrefix':'❌ API error: ', 'gen.genErrorPrefix':'❌ Generation error: ', 'gen.pomErrorPrefix':'❌ POM generation error: ',
@@ -841,8 +883,8 @@ const TRANSLATIONS = {
     'popup.download':'⬇️ Download', 'popup.downloadAll':'⬇️ Download all', 'popup.reset':'🗑️ Reset',
     'popup.copied':'📋 Copied!', 'popup.filesDownloaded':'⬇️ {n} files downloaded', 'popup.closeConfirm':'Close this window?',
     // Welcome (index.html static + cards.js markdown)
-    'welcome.html':'<p>👋 <strong>Hi! I\'m your QA Agent specialized in Robot Framework.</strong></p><p><strong>What I can do:</strong></p><ul><li>🔵 Connect to <strong>Azure DevOps</strong> → fetch a US → generate RF tests</li><li>🟦 Connect to <strong>Jira</strong> → fetch a US → generate RF tests</li><li>🌐 Connect to <strong>any web app</strong> → generate tests from the URL</li><li>🤖 Generate tests in <strong>Keyword-Driven</strong>, <strong>BDD (Given/When/Then)</strong> or <strong>Data-Driven</strong></li><li>📁 Build a <strong>multi-file</strong> architecture (variables.robot, keywords.robot, tests.robot)</li></ul><p><strong>How it works in 2 steps:</strong></p><p>1️⃣ You describe what you want to test → I propose <strong>test cases</strong> in natural language (editable)<br>2️⃣ You validate → you type <strong>"generate the code RF"</strong> → I write the .robot file</p><p><strong>Example commands:</strong></p><blockquote><em>"Connect to https://the-internet.herokuapp.com/login with username: tomsmith and password: SuperSecretPassword! and generate 3 test cases"</em></blockquote><blockquote><em>"Connect to Azure https://dev.azure.com/monorg/projet with token XYZ, find US #42 and generate the RF tests in BDD"</em></blockquote><blockquote><em>"Generate the code RF"</em> ← after validating the test cases</blockquote><p><strong>Setup:</strong> Paste your API key top right, choose the library and style in the sidebar. 🚀</p><p><em>💡 AI doesn\'t replace QA — it removes the tedious part so you can focus on what matters.</em></p>',
-    'welcome.md':'👋 Hi! I\'m your **QA Agent** specialized in Robot Framework.\n\n**What I can do:**\n- 🔵 Connect to **Azure DevOps** → fetch a US → generate RF tests\n- 🟦 Connect to **Jira** → fetch a US → generate RF tests\n- 🌐 Connect to **any web app** → generate tests from the URL\n- 🤖 Generate tests in **Keyword-Driven**, **BDD (Given/When/Then)** or **Data-Driven**\n- 📁 Build a **multi-file** architecture (variables.robot, keywords.robot, tests.robot)\n\n**How it works in 2 steps:**\n1️⃣ You describe what you want to test → I propose **test cases** in natural language (editable)\n2️⃣ You validate → you copy the cases → you type **"generate the code RF"** → I write the .robot file\n\n**Example commands:**\n> *"Connect to https://the-internet.herokuapp.com/login with username: tomsmith and password: SuperSecretPassword! and generate 3 test cases"*\n\n> *"Connect to Azure https://dev.azure.com/monorg/projet with token XYZ, find US #42 and generate the RF tests in BDD"*\n\n> *"Connect to Jira https://monorg.atlassian.net with email@company.com and token XYZ, find US PROJ-42"*\n\n> *"Generate the code RF"* ← after validating the test cases\n\n**Setup:** Paste your Anthropic API key top right, choose the library and style in the sidebar. 🚀\n\n💡 *AI doesn\'t replace QA — it removes the tedious part so you can focus on what matters.*',
+    'welcome.html':'<p>👋 <strong>Hi! I\'m your QA Agent specialized in Robot Framework.</strong></p><p><strong>What I can do:</strong></p><ul><li>🔵 Connect to <strong>Azure DevOps</strong> → fetch a US → generate RF tests</li><li>🟦 Connect to <strong>Jira</strong> → fetch a US → generate RF tests</li><li>🌐 Connect to <strong>any web app</strong> → generate tests from the URL</li><li>🤖 Generate tests in <strong>Keyword-Driven</strong>, <strong>BDD (Given/When/Then)</strong> or <strong>Data-Driven</strong></li><li>📁 Build a <strong>multi-file</strong> architecture (variables.robot, keywords.robot, tests.robot)</li></ul><p><strong>How it works in 2 steps:</strong></p><p>1️⃣ You describe what you want to test → I propose <strong>test cases</strong> in natural language (editable)<br>2️⃣ You validate → you type <strong>"generate the code RF"</strong> → I write the .robot file</p><p><strong>Example commands:</strong></p><blockquote><em>"Connect to https://the-internet.herokuapp.com/login with username: tomsmith and password: SuperSecretPassword! and generate 3 test cases"</em></blockquote><blockquote><em>"Connect to Azure https://dev.azure.com/monorg/projet with token XYZ, find US #42 and generate the RF tests in BDD"</em></blockquote><blockquote><em>"Generate the code RF"</em> ← after validating the test cases</blockquote><p><strong>Setup:</strong> Your API key is configured in the <code>.env</code> file (see README), then choose the library and style in the sidebar. 🚀</p><p><em>💡 AI doesn\'t replace QA — it removes the tedious part so you can focus on what matters.</em></p>',
+    'welcome.md':'👋 Hi! I\'m your **QA Agent** specialized in Robot Framework.\n\n**What I can do:**\n- 🔵 Connect to **Azure DevOps** → fetch a US → generate RF tests\n- 🟦 Connect to **Jira** → fetch a US → generate RF tests\n- 🌐 Connect to **any web app** → generate tests from the URL\n- 🤖 Generate tests in **Keyword-Driven**, **BDD (Given/When/Then)** or **Data-Driven**\n- 📁 Build a **multi-file** architecture (variables.robot, keywords.robot, tests.robot)\n\n**How it works in 2 steps:**\n1️⃣ You describe what you want to test → I propose **test cases** in natural language (editable)\n2️⃣ You validate → you copy the cases → you type **"generate the code RF"** → I write the .robot file\n\n**Example commands:**\n> *"Connect to https://the-internet.herokuapp.com/login with username: tomsmith and password: SuperSecretPassword! and generate 3 test cases"*\n\n> *"Connect to Azure https://dev.azure.com/monorg/projet with token XYZ, find US #42 and generate the RF tests in BDD"*\n\n> *"Connect to Jira https://monorg.atlassian.net with email@company.com and token XYZ, find US PROJ-42"*\n\n> *"Generate the code RF"* ← after validating the test cases\n\n**Setup:** Your API key is configured in the `.env` file (see README), then choose the library and style in the sidebar. 🚀\n\n💡 *AI doesn\'t replace QA — it removes the tedious part so you can focus on what matters.*',
   },
 };
 

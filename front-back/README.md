@@ -1,4 +1,4 @@
-# 🤖 RoboTest Studio — Guide de démarrage
+# 🤖 RoboTest Studio v1 — Guide de démarrage
 
 ## Présentation
 
@@ -8,10 +8,10 @@ RoboTest Studio est un agent IA de génération et d'exécution de tests Robot F
 
 ## Stack technique
 
-- **Frontend** : `index.html` + `qa-agent.js` (interface principale), `dashboard.html` (historique)
+- **Frontend** : `index.html` + modules JS (`core.js`, `cards.js`, `generation.js`, `prompts.js`, `report.js`, `connectors.js`, `editor.js`, `codecards.js`, …), `dashboard.html` (historique)
 - **Backend** : `server.js` (Node.js/Express)
 - **Base de données** : MongoDB Atlas
-- **Tests** : Robot Framework + SeleniumLibrary
+- **Tests** : Robot Framework — SeleniumLibrary (web), Browser/Playwright (web), AppiumLibrary (mobile), RequestsLibrary (API REST), DatabaseLibrary (SQL)
 
 ---
 
@@ -36,11 +36,29 @@ npm install
 
 ## Configuration `.env`
 
-Crée un fichier `.env` à la racine :
+Crée un fichier `.env` à la racine `front-back/` :
 
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/robotstudio
 PORT=3001
+```
+
+### Clés API — 2 méthodes au choix
+
+Tu n'as besoin de configurer **qu'une seule** méthode par provider. Le serveur essaie d'abord la clé chiffrée (`*_KEY_ENC` + `ENCRYPTION_SECRET`), sinon retombe automatiquement sur la clé en clair (`*_KEY`).
+
+**Méthode 1 — En clair (simple)** — ajoute la clé brute des providers que tu utilises :
+
+```env
+ANTHROPIC_KEY=sk-ant-...
+OPENAI_KEY=sk-proj-...
+GEMINI_KEY=AIzaSy...
+MISTRAL_KEY=...
+```
+
+**Méthode 2 — Chiffrée AES-256 (recommandé)** — ne stocke pas la clé en clair ; génère les valeurs avec `encrypt_all_keys.js` (voir section suivante) :
+
+```env
 ENCRYPTION_SECRET=<généré par encrypt_all_keys.js>
 ANTHROPIC_KEY_ENC=<généré par encrypt_all_keys.js>
 OPENAI_KEY_ENC=<généré par encrypt_all_keys.js>
@@ -50,17 +68,19 @@ MISTRAL_KEY_ENC=<généré par encrypt_all_keys.js>
 
 ---
 
-## Chiffrement des clés API
+## 🔐 Chiffrement des clés API (recommandé)
 
-Les clés API sont stockées **chiffrées en AES-256** dans `.env`. Le script `encrypt_all_keys.js` génère toutes les valeurs avec un seul secret partagé.
+Pour ne pas stocker tes clés en clair dans `.env`, RoboTest Studio fournit un outil de chiffrement **AES-256-CBC** : `encrypt_all_keys.js`. Il génère un secret unique partagé (`ENCRYPTION_SECRET`) et la version chiffrée de chaque clé ; le serveur les déchiffre automatiquement au runtime.
 
-### Étape 1 — Lancer le script interactif
+### Étape 1 — Lancer l'outil
 
 ```bash
 node encrypt_all_keys.js
 ```
 
-Il te demande les 4 clés une par une :
+### Étape 2 — Suivre l'invite
+
+Le script génère automatiquement un `ENCRYPTION_SECRET`, puis te demande chaque clé API **en clair**, une par une (Anthropic, OpenAI, Gemini, Mistral). Laisse vide (**Entrée**) pour ignorer un provider que tu n'utilises pas :
 
 ```
 Clé ANTHROPIC (Enter pour ignorer): sk-ant-...
@@ -69,34 +89,54 @@ Clé OPENAI (Enter pour ignorer): sk-proj-...
   ✓ OPENAI chiffré (enc length: 352)
 Clé GEMINI (Enter pour ignorer): AIzaSy...
   ✓ GEMINI chiffré (enc length: 96)
-Clé MISTRAL (Enter pour ignorer): ...
-  ✓ MISTRAL chiffré (enc length: 96)
+Clé MISTRAL (Enter pour ignorer):
 ```
 
-### Étape 2 — Copier les lignes générées dans `.env`
+### Étape 3 — Copier le résultat
 
-Le script affiche 5 lignes à copier **exactement** dans `.env` :
+À la fin, le script affiche des lignes **prêtes à coller**, par exemple :
 
 ```
-ENCRYPTION_SECRET=a1b2c3d4...
-ANTHROPIC_KEY_ENC=iv_hex:encrypted_hex
-OPENAI_KEY_ENC=iv_hex:encrypted_hex
-GEMINI_KEY_ENC=iv_hex:encrypted_hex
-MISTRAL_KEY_ENC=iv_hex:encrypted_hex
+ENCRYPTION_SECRET=a1b2c3...           (32 octets hex)
+ANTHROPIC_KEY_ENC=<iv_hex>:<enc_hex>
+OPENAI_KEY_ENC=<iv_hex>:<enc_hex>
 ```
 
-⚠️ **Important** :
-- Chaque valeur doit être sur **une seule ligne** dans `.env`
-- Ne commite jamais `.env` dans git
-- Si tu régénères les clés, utilise le même `ENCRYPTION_SECRET` pour tous les providers
+### Étape 4 — Coller dans `.env`
 
-### Vérification
+Copie **toutes** ces lignes dans ton fichier `.env`, à la racine `front-back/` (une valeur par ligne).
+
+### Étape 5 — Démarrer
+
+```bash
+node server.js
+```
+
+Le serveur déchiffre automatiquement les clés au runtime (`decryptApiKey`, AES-256-CBC). C'est tout. ✅
+
+### ⚠️ Points importants
+
+- Le `ENCRYPTION_SECRET` doit **rester dans `.env`** : sans lui, le serveur ne peut pas déchiffrer les clés.
+- **Ne commite JAMAIS `.env`** dans git (déjà présent dans `.gitignore`).
+- Si tu changes une clé, **relance `encrypt_all_keys.js`** et remplace les lignes correspondantes (garde le même `ENCRYPTION_SECRET`).
+
+### 💡 Alternative simple (sans chiffrement)
+
+Si tu ne veux pas chiffrer, mets la clé **en clair** dans `.env` :
+
+```env
+ANTHROPIC_KEY=sk-...
+```
+
+Le serveur utilise un fallback automatique. Moins sécurisé, mais plus rapide pour tester.
+
+### Vérifier le format d'une clé chiffrée
 
 ```bash
 node -e "require('dotenv').config(); const e=process.env.ANTHROPIC_KEY_ENC; const p=e.split(':'); console.log('iv:', p[0].length, 'enc:', p[1]?.length);"
 ```
 
-Les deux longueurs doivent être **paires** (ex: iv: 32, enc: 224).
+Les deux longueurs doivent être **paires** (ex: `iv: 32`, `enc: 224`).
 
 ---
 
@@ -175,10 +215,12 @@ rf_tests/
 ├── resources/
 │   ├── variables.robot      # Variables globales
 │   ├── keywords.robot       # Keywords métier
-│   └── pages/
-│       └── main_page.robot  # Page Object
+│   ├── pages/
+│   │   └── main_page.robot  # Page Object (sélecteurs + actions)
+│   └── files/               # Fichiers d'upload (images, PDF, CSV, xlsx…) référencés par Choose File
 ├── tests/
 │   └── tests.robot          # Cas de tests
+├── screenshots/             # Captures automatiques des runs
 └── suite_runs/
     └── suite_<id>_<n>/      # Répertoires isolés par bloc de suite
 ```
@@ -199,4 +241,7 @@ cleanSuiteRegistry()
 ```
 
 **enc length impair lors du chiffrement**
-Utilise `encrypt_all_keys.js` (mode interactif) plutôt que `setup_encryption_all.js`.
+Utilise `encrypt_all_keys.js` (mode interactif) et garde le **même `ENCRYPTION_SECRET`** pour toutes les clés. En dernier recours, bascule ce provider sur une clé en clair (`*_KEY`).
+
+**Une clé API n'est pas reconnue**
+Vérifie que tu n'as **qu'une** forme par provider dans `.env` (soit `*_KEY`, soit `*_KEY_ENC`), et que `ENCRYPTION_SECRET` est présent si tu utilises la forme chiffrée.

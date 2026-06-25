@@ -150,14 +150,8 @@ async function runTestsFromCard(code, filename, suiteCtx) {
       return;
     }
 
-    // Show summary in chat — skip for suite blocs (consolidated report shown at end)
-    if (!suiteCtx?.isSuite) {
-      const icon    = data.status === 'PASS' ? '✅' : '❌';
-      const rate    = data.total > 0 ? Math.round(data.passed / data.total * 100) : 0;
-      const summary = (data.passed>1?t('run.resultMany'):t('run.resultOne'))
-        .replace('{icon}',icon).replace('{status}',data.status).replace('{p}',data.passed).replace('{tot}',data.total).replace('{rate}',rate).replace('{dur}',fmtDuration(data.duration));
-      renderAgentMsg(summary + '\n\n' + t('run.reportBelow'));
-    }
+    // Message de résultat final : la bulle "Test en cours…" (window._currentRunMsg) est transformée
+    // en place par openTestReport (report.js) ci-dessous. PAS de renderAgentMsg ici (évite le doublon).
 
     // Note: snapshot variables.robot désactivé après run — évite d'écraser les cartes de suite
 

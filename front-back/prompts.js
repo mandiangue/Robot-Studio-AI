@@ -108,6 +108,7 @@ Règles :
 - [Teardown] quand un browser est ouvert
 - Sélecteurs réalistes : id:, css:, xpath:
 - Couvre tous les cas décrits + edge cases pertinents
+- UPLOAD DE FICHIER : le SEUL keyword d'upload valide en SeleniumLibrary est EXACTEMENT \`Choose File\`. Les fichiers d'upload sont dans resources/files/ (racine du projet RF) ; ce test est dans tests/, donc le chemin est EXACTEMENT \${CURDIR}/../resources/files/<nom_exact> (UN SEUL ../ : tests/ -> racine, puis resources/files/ ; NE PAS ajouter de niveaux ../ supplémentaires). Choose File exige un chemin CANONIQUE (absolu, SANS '..'), sinon ChromeDriver renvoie "path is not canonical". Tu DOIS donc résoudre le '..' AVANT, via Normalize Path (Library OperatingSystem). Si une étape décrit un upload (ex: "sélectionner/choisir le fichier", "uploader X"), tu DOIS générer EXACTEMENT ce pattern : \${upload_path}=    Normalize Path    \${CURDIR}/../resources/files/<nom_exact> PUIS Choose File    \${LOCATOR}    \${upload_path} (où <nom_exact> = nom EXACT mentionné dans le scénario, ex: avatar.png). IMPORTE \`Library    OperatingSystem\` dans le fichier qui utilise Normalize Path. N'INVENTE JAMAIS un autre nom de keyword (PAS de "Select File To Upload", "Upload File", etc.). Si tu crées un keyword métier pour l'upload, il DOIT appeler \`Choose File\` à l'intérieur. SINON (pas d'upload), aucun Choose File.
 
 Sujet à tester :
 ${description}`;
@@ -185,10 +186,13 @@ function buildRfPromptBrowser(description, style) {
     '',
     'CRITICAL RULES - NEVER BREAK THESE:',
     '',
-    '1. SELECTORS - always use unique, specific selectors:',
-    '   GOOD: id=username  css=[data-test="login-button"]  css=[data-test="inventory-item-name"]:first-child',
+    '1. SELECTORS - STRICT MODE: a locator used for an action/assertion MUST match EXACTLY ONE element.',
+    '   GOOD: id=username  css=[data-test="login-button"]  css=[data-test="inventory-item-name"] >> nth=0',
     '   BAD:  css=.inventory_item_name  (matches multiple elements - strict mode violation)',
-    '   Use data-test attributes: css=[data-test="xxx"]',
+    '   - Unique element (login button, username field): a precise selector (id=, name=, or a NON-shared data-test) is enough.',
+    '   - Element inside a LIST or a repeated data-test (e.g. product items): the selector matches MANY elements -> you MUST disambiguate:',
+    '     append an index (css=[data-test="x"] >> nth=0  or >> nth=N), OR use a unique parent, OR text="..." unique.',
+    '   - Use data-test attributes, BUT if a data-test can be shared by several elements, add >> nth=N. NEVER use a possibly-shared data-test alone for a single-element action.',
     '',
     '2. VARIABLE ASSIGNMENTS - NEVER as BDD steps:',
     '   WRONG: Then ${prices}=    Get Prices List',
@@ -208,6 +212,13 @@ function buildRfPromptBrowser(description, style) {
     '   Get Url',
     '   Go To    url',
     '   Take Screenshot',
+    '',
+    '5b. FILE UPLOAD: the ONLY valid upload keyword (Browser library) is EXACTLY `Upload File By Selector`.',
+    '    Upload files live in resources/files/ ; the page object is in resources/pages/, so the relative path is ${CURDIR}/../files/<exact_name> (ONE ../ level only: pages/ -> resources/ then files/ ; do NOT use ../../ or extra levels).',
+    '    Resolve the ".." to a canonical absolute path with Normalize Path (Library OperatingSystem) BEFORE upload. If a step describes an upload ("select/choose the file", "upload X"), generate EXACTLY:',
+    '        ${upload_path}=    Normalize Path    ${CURDIR}/../files/<exact_name>',
+    '        Upload File By Selector    selector    ${upload_path}   (<exact_name> = exact filename from the scenario, e.g. avatar.png)',
+    '    Import `Library    OperatingSystem` in the page object using Normalize Path. NEVER invent another keyword name (NO "Select File To Upload", "Choose File", etc.). A business upload keyword MUST call `Upload File By Selector` inside. If no upload in the scenario, no upload keyword.',
     '',
     '6. Suite Setup calls "Open Browser Session" ONLY',
     '7. variables.robot has ONLY *** Settings *** + *** Variables ***',
@@ -423,7 +434,7 @@ function buildRfPromptMobile(description, style) {
     '- [Documentation] on every keyword and test case',
     '- [Tags] on every test case',
     bdd ? '- Given/When/Then/And in English' : '',
-    getSessionRules(),
+    // PAS de getSessionRules() : Appium ouvre via Open Application/Open Mobile Browser, pas de session navigateur desktop
   ];
   return lines.filter(function(l){ return l !== false; }).join('\n');
 }
@@ -493,7 +504,7 @@ function buildRfPromptAPI(description, style) {
     '- [Documentation] on every keyword and test case',
     '- [Tags] on every test case',
     bdd ? '- Given/When/Then/And in English' : '',
-    getSessionRules(),
+    // PAS de getSessionRules() : API = aucun navigateur (cohérent avec "NO Open Browser" ci-dessus)
   ];
   return lines.filter(function(l){ return l !== false; }).join('\n');
 }
@@ -563,7 +574,7 @@ function buildRfPromptDB(description, style) {
     '- [Documentation] on every keyword and test case',
     '- [Tags] on every test case',
     bdd ? '- Given/When/Then/And in English' : '',
-    getSessionRules(),
+    // PAS de getSessionRules() : DB = aucun navigateur (cohérent avec "NO Open Browser" ci-dessus)
   ];
   return lines.filter(function(l){ return l !== false; }).join('\n');
 }
@@ -599,7 +610,8 @@ function buildRfPromptPOM(description, library, style) {
   prompt += '  feature_*.robot → "Given User Opens The Login Page" (nom différent)\n';
   prompt += '- Génère TOUJOURS keywords.robot AVANT les fichiers tests/ pour garantir la cohérence.\n';
   prompt += '- INTERDIT dans variables.robot, keywords.robot et pages/*.robot : Suite Setup, Suite Teardown, Test Setup, Test Teardown, Test Template, Force Tags, Default Tags. Ces settings ne sont autorisés QUE dans tests.robot.\n';
-  prompt += '- variables.robot EST UN FICHIER RESOURCE — il ne contient QUE *** Settings *** (Documentation, Library, Resource) et *** Variables ***.\n\n';
+  prompt += '- variables.robot EST UN FICHIER RESOURCE — il ne contient QUE *** Settings *** (Documentation, Library, Resource) et *** Variables ***.\n';
+  prompt += '- UPLOAD DE FICHIER : le SEUL keyword d\'upload valide en SeleniumLibrary est EXACTEMENT `Choose File`. Les fichiers d\'upload sont dans resources/files/ ; le page object est dans resources/pages/, donc le chemin est EXACTEMENT ${CURDIR}/../files/<nom_exact> (UN SEUL ../ : pages/ -> resources/ puis files/ ; NE PAS mettre ../../ ni de niveaux supplémentaires). Choose File exige un chemin CANONIQUE (absolu, SANS \'..\'), sinon ChromeDriver renvoie "path is not canonical". Tu DOIS résoudre le \'..\' AVANT, via Normalize Path (Library OperatingSystem). Si une étape décrit un upload ("sélectionner/choisir le fichier", "uploader X"), génère EXACTEMENT ce pattern dans le page object : ${upload_path}=    Normalize Path    ${CURDIR}/../files/<nom_exact> PUIS Choose File    ${LOCATOR}    ${upload_path} (<nom_exact> = nom EXACT du scénario, ex: avatar.png). IMPORTE `Library    OperatingSystem` dans le page object (resources/pages/*.robot) qui utilise Normalize Path. N\'INVENTE JAMAIS un autre nom de keyword (PAS de "Select File To Upload", "Upload File", etc.). Un keyword métier d\'upload DOIT appeler `Choose File` à l\'intérieur. SINON, aucun Choose File.\n\n';
   prompt += 'DESCRIPTION:\n' + description + '\n\n';
   prompt += 'FORMAT OBLIGATOIRE — commence chaque fichier par ***** FILE: chemin | label | desc\n\n';
 

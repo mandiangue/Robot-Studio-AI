@@ -56,11 +56,15 @@ function openTestReport(data, suiteCtx) {
       const color = data.status === 'PASS' ? 'var(--teal)' : 'var(--red)';
       const rate  = data.total > 0 ? Math.round(data.passed / data.total * 100) : 0;
       const dur   = fmtDuration(data.duration);
+      // i18n : réutilise les clés run.* (singulier/pluriel) ; le span est déjà en gras -> on retire les ** markdown.
+      const summaryTxt = (data.passed > 1 ? t('run.resultMany') : t('run.resultOne'))
+        .replace('{icon}', icon).replace('{status}', data.status)
+        .replace('{p}', data.passed).replace('{tot}', data.total)
+        .replace('{rate}', rate).replace('{dur}', dur)
+        .replace(/\*\*/g, '');
       bubble.innerHTML =
-        '<span style="font-size:13px;color:' + color + ';font-weight:700">' +
-        icon + ' ' + data.status + ' — ' + data.passed + '/' + data.total +
-        ' tests réussis (' + rate + '%) en ' + dur + '</span>' +
-        '<br><span style="font-size:11px;color:var(--gray)">Le rapport complet est disponible ci-dessous 👇</span>';
+        '<span style="font-size:13px;color:' + color + ';font-weight:700">' + summaryTxt + '</span>' +
+        '<br><span style="font-size:11px;color:var(--gray)">' + t('run.reportBelow') + '</span>';
     }
     window._currentRunMsg = null;
   }

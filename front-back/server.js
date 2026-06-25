@@ -2764,7 +2764,13 @@ app.post('/api/rf/write-file', (req, res) => {
     const safePath = path.join(TESTS_DIR, filepath.replace(/\.\./g, ''));
     const dir = path.dirname(safePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(safePath, content, 'utf8');
+    // Fichier binaire (image/PDF) envoyé en data URL base64 -> décoder en vrai binaire.
+    // Un .robot/.resource ne commence jamais par "data:...;base64," -> séparation sûre, texte inchangé.
+    if (/^data:.*;base64,/.test(content)) {
+      fs.writeFileSync(safePath, Buffer.from(content.split(',')[1] || '', 'base64'));
+    } else {
+      fs.writeFileSync(safePath, content, 'utf8');
+    }
     // Marquer comme modifié manuellement (expire après 30 min)
     manuallyEditedFiles.set(safePath, Date.now());
     res.json({ ok: true, path: safePath });

@@ -464,43 +464,8 @@ function onTestDrop(e, suiteIdx, testIdx) {
 }
 
 // Drop from chat card into suite group
-function onSuiteDragOver(e, suiteIdx) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  e.currentTarget.style.borderColor = 'var(--teal)';
-}
+// Drop carte-vers-suite retiré (redondant avec la modale _suitePickerModal). Ajout de blocs via la modale.
 
-function onSuiteDragLeave(e) {
-  e.currentTarget.style.borderColor = 'var(--border)';
-}
-
-function onSuiteDrop(e, suiteIdx) {
-  e.preventDefault();
-  e.currentTarget.style.borderColor = 'var(--border)';
-  if (_dragTestIdx !== null) return; // internal reorder handled by onTestDrop
-
-  try {
-    const raw  = e.dataTransfer.getData('application/x-rf-card');
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    const code = decodeURIComponent(data.code);
-    const uniqueFile = (data.filename || 'test_' + Date.now() + '.robot');
-    const name = (data.name || uniqueFile.replace('.robot','').replace(/_/g,' ')).replace(/\b\w/g, c => c.toUpperCase());
-    const id   = generateSuiteId();
-    suiteRegistry.push({ id, name, filename: uniqueFile, code, addedAt: new Date().toISOString(), droppedIntoGroup: true });
-    saveSuiteRegistry();
-    if (!savedSuites[suiteIdx].testIds.includes(id)) {
-      savedSuites[suiteIdx].testIds.push(id);
-      savedSuites[suiteIdx].updatedAt = new Date().toISOString();
-      saveSuitesList();
-    }
-    renderSuiteTestList();
-    renderSavedSuites();
-    showToast(t('suiterun.addedToSuite').replace('{id}', id).replace('{title}', savedSuites[suiteIdx].title));
-  } catch(err) {
-    showToast(t('suiterun.dropImpossible') + err.message);
-  }
-}
 // ── Suite panel drag resize ───────────────────────────────────────────────────
 (function() {
   let dragging = false;

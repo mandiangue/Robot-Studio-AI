@@ -255,7 +255,7 @@ async function generateCodeFromCard(cardId, apiKey) {
   try {
     // Prepend explicit instruction about total number of test cases
   const caseInstruction = '⚠️ IMPORTANT : Génère EXACTEMENT ' + totalCases + ' Test Cases dans tests/tests.robot — un par cas listé ci-dessous. NE PAS en omettre.\n\n';
-  const code = await callClaudeRaw(apiKey, caseInstruction + buildRfPrompt(description, library, style, effectiveMode));
+  const code = await callClaudeRaw(apiKey, caseInstruction + buildRfPrompt(description, library, style, effectiveMode), library);
     hideTyping();
     // Clear pending so nothing else triggers a second generation
     pendingTestCases = null;
@@ -288,7 +288,7 @@ async function generatePOMFromBlocks(apiKey) {
   const description = `Architecture POM avec ${pendingBlocks.length} pages :\n\n${blocksDesc}`;
 
   try {
-    const code = await callClaudeRaw(apiKey, buildRfPrompt(description, library, style, 'multi'));
+    const code = await callClaudeRaw(apiKey, buildRfPrompt(description, library, style, 'multi'), library);
     hideTyping();
     pendingTestCases = null;
     pendingBlocks    = [];
@@ -327,7 +327,7 @@ async function generateCodeFromCases(apiKey) {
   showTyping();
 
   try {
-    const code = await callClaudeRaw(apiKey, buildRfPrompt(description, library, style, mode));
+    const code = await callClaudeRaw(apiKey, buildRfPrompt(description, library, style, mode), library);
     hideTyping();
     pendingTestCases = null;
     LS.save();
@@ -358,7 +358,7 @@ async function generateFromUs(us, apiKey) {
   );
 
   try {
-    const code = await callClaudeRaw(apiKey, prompt);
+    const code = await callClaudeRaw(apiKey, prompt, library);
     hideTyping();
 
     if (mode === 'multi') {
@@ -671,6 +671,8 @@ async function fetchDomSnapshot(text) {
          + ' (titre: ' + (d.title || '') + ').\n'
          + 'REGLE STRICTE: utilise EXCLUSIVEMENT des selecteurs derives de ces elements'
          + ' (priorite: id > name > data-testid > css court). N invente JAMAIS un id ou une classe.\n'
+         + 'Si un selecteur (notamment data-testid) peut matcher PLUSIEURS elements (listes, items repetes),'
+         + ' cible UN SEUL element via un index ou un parent unique (Browser/Playwright: >> nth=N ; Selenium: (//...)[N] ou :nth-child(N)).\n'
          + lines.join('\n') + '\n';
   } catch (e) { return ''; }
 }
@@ -755,9 +757,14 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
     raw = raw.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
     return raw;
   }
-}async function callClaudeRaw(apiKey, prompt) {
-  const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax. ${getSessionRules()}`;
-  const domSnap = await fetchDomSnapshot(prompt);
+}async function callClaudeRaw(apiKey, prompt, library) {
+  // Contexte navigateur DESKTOP : règles de session (Open Browser No Popup) + snapshot DOM web
+  // ne s'appliquent QU'au web desktop (Selenium/Playwright).
+  // API (RequestsLibrary), DB (DatabaseLibrary) -> aucun navigateur.
+  // Appium (AppiumLibrary) -> mobile via Open Application/browserName=Chrome, pas de keyword desktop ni de sélecteurs css desktop.
+  const isWebContext = library !== 'RequestsLibrary' && library !== 'DatabaseLibrary' && library !== 'AppiumLibrary';
+  const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax.${isWebContext ? ' ' + getSessionRules() : ''}`;
+  const domSnap = isWebContext ? await fetchDomSnapshot(prompt) : '';
   if (domSnap) console.log('[DOM-AWARE] snapshot injecte (' + domSnap.length + ' chars)');
   return await callAI(apiKey, [{ role: 'user', content: prompt + domSnap }], sys, 4096);
 }

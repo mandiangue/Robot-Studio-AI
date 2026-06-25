@@ -781,7 +781,6 @@ function renderSavedSuites() {
       return `<div class="suite-group-test"
         style="border-bottom:1px solid var(--border);opacity:${isEnabled?'1':'0.5'}">
         <div style="display:flex;align-items:center;gap:8px;padding:7px 10px 7px 20px;cursor:default">
-          <span style="color:var(--gray);cursor:grab;font-size:14px;flex-shrink:0" title="${t('suites.reorder')}">⠿</span>
           <span style="background:rgba(0,212,170,0.1);color:var(--teal);font-family:'IBM Plex Mono',monospace;
                        font-size:9px;padding:1px 6px;border-radius:3px;border:1px solid rgba(0,212,170,0.2);white-space:nowrap">${escHtml(tc.id)}</span>
           <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(tc.name)}</span>
@@ -816,7 +815,6 @@ function renderSavedSuites() {
 
     return `
       <div class="suite-group" data-suite-idx="${si}"
-        ondragover="onSuiteDragOver(event,${si})" ondrop="onSuiteDrop(event,${si})" ondragleave="onSuiteDragLeave(event)"
         style="background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s">
 
         <!-- Suite header -->
@@ -857,7 +855,7 @@ function renderSavedSuites() {
         </div>
 
         <!-- Tests list -->
-        ${testsHtml || '<div id="dropZone-'+s.id+'" style="padding:14px 20px;font-size:11px;color:var(--gray);font-style:italic;border:2px dashed var(--border);border-radius:8px;margin:8px;text-align:center;transition:all .2s" ondragover="event.preventDefault();this.style.borderColor=\'var(--teal)\';this.style.background=\'rgba(0,212,170,0.05)\'" ondragleave="this.style.borderColor=\'var(--border)\';this.style.background=\'\'" ondrop="dropCardToSuite(event,\''+s.id+'\')">'+t('suites.dropZone')+'</div>'}
+        ${testsHtml || '<div style="padding:14px 20px;font-size:11px;color:var(--gray);font-style:italic;border:2px dashed var(--border);border-radius:8px;margin:8px;text-align:center">'+t('suites.emptyState')+'</div>'}
 
         <!-- Add test to suite -->
         ${addOptions ? `<div style="display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);background:rgba(0,0,0,0.1)">
