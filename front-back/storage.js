@@ -162,7 +162,7 @@ const LS = {
                     window._taggedCards.add(card.cardId);
                     setTimeout(function(){
                       var btn = document.getElementById('tagBtn-' + card.cardId);
-                      if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent='Tagged'; }
+                      if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent=t('codecards.tagged'); }
                     }, 500);
                   }
                 }

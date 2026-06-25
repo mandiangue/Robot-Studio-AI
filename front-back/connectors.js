@@ -13,7 +13,7 @@ function updateKeyStatus(val) {
   const provider = getCurrentProvider();
   const minLen = { anthropic: 20, openai: 20, gemini: 10, mistral: 10 };
   const ok = val && val.length >= (minLen[provider] || 10);
-  el.textContent = ok ? '⬤ ready' : '⬤ no key';
+  el.textContent = ok ? t('conn.ready') : t('conn.noKey');
   el.className   = 'key-status' + (ok ? ' ok' : '');
 }
 // ── Azure connect — direct browser call ───────────────────────────────────────
@@ -44,7 +44,7 @@ async function handleAzureConnect(url, token, apiKey, originalMsg) {
     const { org, project } = parseAzureUrl(url);
     if (!org || !project) {
       hideTyping();
-      renderAgentMsg('❌ URL invalide. Format attendu : `https://dev.azure.com/organisation/projet`');
+      renderAgentMsg(t('conn.msg.urlInvalid'));
       return;
     }
 
@@ -52,17 +52,17 @@ async function handleAzureConnect(url, token, apiKey, originalMsg) {
     const r = await azureFetch(testUrl, token);
     hideTyping();
 
-    if (r.status === 401) { renderAgentMsg('❌ Token invalide ou accès refusé.'); return; }
-    if (r.status === 404) { renderAgentMsg(`❌ Projet "${project}" introuvable dans "${org}".`); return; }
-    if (!r.ok)            { renderAgentMsg(`❌ Erreur Azure DevOps : HTTP ${r.status}`); return; }
+    if (r.status === 401) { renderAgentMsg(t('conn.msg.tokenInvalid')); return; }
+    if (r.status === 404) { renderAgentMsg(t('conn.msg.projectNotFound').replace('{project}', project).replace('{org}', org)); return; }
+    if (!r.ok)            { renderAgentMsg(t('conn.msg.azureHttpError').replace('{status}', r.status)); return; }
 
     azureSession = { org, project, token };
     LS.save();
-    renderAgentMsg(`✅ Connecté à Azure DevOps !\n\n<span class="tag azure">📁 ${org}</span> <span class="tag rf">🗂 ${project}</span>\n\nQuel numéro d'US veux-tu récupérer ?`);
+    renderAgentMsg(`${t('conn.msg.azureConnected')}\n\n<span class="tag azure">📁 ${org}</span> <span class="tag rf">🗂 ${project}</span>\n\n${t('conn.msg.askUsNumber')}`);
 
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur de connexion : ${err.message}\n\nSi tu vois une erreur CORS, ton organisation bloque les appels directs — contacte ton admin Azure DevOps pour activer l'accès CORS ou utilise un PAT avec les droits corrects.`);
+    renderAgentMsg(t('conn.msg.azureConnError').replace('{err}', err.message));
   }
 }
 
@@ -82,7 +82,7 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
     if (data && data.stopped === true) { window._rfRunning = false; window._currentRunMsg = null; return; }
 
     if (!r.ok) {
-      renderAgentMsg(`❌ Work Item #${id} introuvable : ${data.message || r.status}`);
+      renderAgentMsg(t('conn.msg.workItemNotFound').replace('{id}', id).replace('{msg}', data.message || r.status));
       return;
     }
 
@@ -105,8 +105,8 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
       <div class="msg-avatar">🤖</div>
       <div class="msg-body">
         <div class="msg-bubble">
-          J'ai récupéré l'US #${id} :${cardHtml}
-          ${shouldGenerate ? '<br>Je génère les tests RF maintenant...' : 'Tu veux que je génère les tests RF pour cette US ?'}
+          ${t('conn.card.usRetrieved')} #${id} :${cardHtml}
+          ${shouldGenerate ? '<br>' + t('conn.card.generating') : t('conn.card.askGenerate')}
         </div>
       </div>`;
     document.getElementById('messages').appendChild(div);
@@ -121,9 +121,9 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
   } catch(err) {
     hideTyping();
     if (err.message.includes('fetch') || err.message.includes('Failed')) {
-      renderAgentMsg(`❌ Serveur proxy non démarré.\n\nLance **\`node server.js\`** dans ton terminal.`);
+      renderAgentMsg(t('conn.msg.proxyNotStarted'));
     } else {
-      renderAgentMsg(`❌ Erreur : ${err.message}`);
+      renderAgentMsg(t('conn.msg.errorPrefix').replace('{err}', err.message));
     }
   }
 }
@@ -147,7 +147,7 @@ async function handleJiraConnect(url, token, apiKey, userText) {
 
     if (!email) {
       hideTyping();
-      renderAgentMsg('⚠️ Précise ton email Jira dans le message.\nEx : `Connecte-toi sur Jira https://monorg.atlassian.net avec email@company.com et token XYZ`');
+      renderAgentMsg(t('conn.msg.jiraEmailRequired'));
       return;
     }
 
@@ -162,16 +162,16 @@ async function handleJiraConnect(url, token, apiKey, userText) {
     hideTyping();
     if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
-    if (r.status === 401) { renderAgentMsg('❌ Token Jira invalide ou email incorrect.'); return; }
-    if (!r.ok)            { renderAgentMsg(`❌ Erreur Jira : HTTP ${r.status}`); return; }
+    if (r.status === 401) { renderAgentMsg(t('conn.msg.jiraTokenInvalid')); return; }
+    if (!r.ok)            { renderAgentMsg(t('conn.msg.jiraHttpError').replace('{status}', r.status)); return; }
 
     jiraSession = { host, email, token, b64, displayName: data.displayName };
     LS.save();
-    renderAgentMsg(`✅ Connecté à Jira !\n\n<span class="tag jira">🟦 ${host}</span> — Bonjour **${data.displayName}** !\n\nQuel numéro d'US veux-tu récupérer ? (ex: PROJ-42)`);
+    renderAgentMsg(`${t('conn.msg.jiraConnected')}\n\n<span class="tag jira">🟦 ${host}</span> — ${t('conn.msg.greeting').replace('{name}', data.displayName)}\n\n${t('conn.msg.askUsNumberJira')}`);
 
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur de connexion Jira : ${err.message}`);
+    renderAgentMsg(t('conn.msg.jiraConnError').replace('{err}', err.message));
   }
 }
 
@@ -182,7 +182,7 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
 
     // id can be "PROJ-42" or just "42" — if just a number, ask for full key
     const issueKey = /^\d+$/.test(id)
-      ? (() => { hideTyping(); renderAgentMsg(`⚠️ Précise la clé complète de l'issue Jira (ex: **PROJ-${id}**)`); return null; })()
+      ? (() => { hideTyping(); renderAgentMsg(t('conn.msg.issueKeyRequired').replace('{id}', id)); return null; })()
       : id.toUpperCase();
 
     if (!issueKey) return;
@@ -192,8 +192,8 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
     hideTyping();
     if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
-    if (r.status === 404) { renderAgentMsg(`❌ Issue **${issueKey}** introuvable.`); return; }
-    if (!r.ok)            { renderAgentMsg(`❌ Erreur Jira : ${data.error || r.status}`); return; }
+    if (r.status === 404) { renderAgentMsg(t('conn.msg.issueNotFound').replace('{issueKey}', issueKey)); return; }
+    if (!r.ok)            { renderAgentMsg(t('conn.msg.jiraError').replace('{err}', data.error || r.status)); return; }
 
     const f = {
       summary:          data.title,
@@ -231,10 +231,10 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
     // Issue type → icône + couleur
     function issueTypeTag(type) {
       const t = (type || '').toLowerCase();
-      if (t.includes('bug')    || t.includes('défaut'))  return `<span style="background:rgba(230,57,70,0.15);color:#DC2626;border:1px solid rgba(230,57,70,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">🐛 Bug</span>`;
-      if (t.includes('epic'))                            return `<span style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">⚡ Epic</span>`;
-      if (t.includes('story') || t.includes('histoire')) return `<span style="background:rgba(0,212,170,0.15);color:var(--teal);border:1px solid rgba(0,212,170,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">📖 Story</span>`;
-      if (t.includes('task')  || t.includes('tâche') || t.includes('tache')) return `<span style="background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">✅ Tâche</span>`;
+      if (t.includes('bug')    || t.includes('défaut'))  return `<span style="background:rgba(230,57,70,0.15);color:#DC2626;border:1px solid rgba(230,57,70,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">${window.t('conn.card.tagBug')}</span>`;
+      if (t.includes('epic'))                            return `<span style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">${window.t('conn.card.tagEpic')}</span>`;
+      if (t.includes('story') || t.includes('histoire')) return `<span style="background:rgba(0,212,170,0.15);color:var(--teal);border:1px solid rgba(0,212,170,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">${window.t('conn.card.tagStory')}</span>`;
+      if (t.includes('task')  || t.includes('tâche') || t.includes('tache')) return `<span style="background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace">${window.t('conn.card.tagTask')}</span>`;
       return `<span class="tag jira">${escHtml(type)}</span>`;
     }
 
@@ -243,9 +243,9 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
       <div class="us-card">
         <div class="us-id">🟦 ${issue.id} · ${issueTypeTag(issue.type)} · <span class="tag warn">${issue.state}</span></div>
         <div class="us-title">${escHtml(issue.title)}</div>
-        ${issue.description ? `<div class="us-section"><div class="us-section-label">DESCRIPTION</div><div class="us-section-content">${escHtml(issue.description)}</div></div>` : ''}
-        ${issue.acceptance  ? `<div class="us-section"><div class="us-section-label">CRITÈRES D'ACCEPTANCE</div><div class="us-section-content us-acceptance">${escHtml(issue.acceptance)}</div></div>` : ''}
-        ${issue.labels.length ? `<div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;margin-top:8px">Labels : ${issue.labels.map(l => `<span class="tag jira">${escHtml(l)}</span>`).join(' ')}</div>` : ''}
+        ${issue.description ? `<div class="us-section"><div class="us-section-label">${t('conn.card.description')}</div><div class="us-section-content">${escHtml(issue.description)}</div></div>` : ''}
+        ${issue.acceptance  ? `<div class="us-section"><div class="us-section-label">${t('conn.card.acceptance')}</div><div class="us-section-content us-acceptance">${escHtml(issue.acceptance)}</div></div>` : ''}
+        ${issue.labels.length ? `<div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;margin-top:8px">${t('conn.card.labels')} ${issue.labels.map(l => `<span class="tag jira">${escHtml(l)}</span>`).join(' ')}</div>` : ''}
       </div>`;
 
     const issueCardId = 'issue-' + Date.now();
@@ -256,18 +256,18 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
       <div class="msg-avatar">🤖</div>
       <div class="msg-body">
         <div class="msg-bubble">
-          J'ai récupéré l'US <strong>${issue.id}</strong> :${cardHtml}
+          ${t('conn.card.usRetrieved')} <strong>${issue.id}</strong> :${cardHtml}
           <div style="margin-top:12px;font-size:13px;color:#8ab4c4">
-            Veux-tu que je génère des cas de tests à partir de cette US ?
+            ${t('conn.card.askGenerateCases')}
           </div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button data-issue-card="${issueCardId}" data-action="yes"
               style="background:rgba(0,212,170,0.12);border:1px solid var(--teal);color:var(--teal);padding:8px 20px;border-radius:7px;font-size:13px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer">
-              ✅ Oui, générer les cas de tests
+              ${t('conn.card.yesGenerate')}
             </button>
             <button data-issue-card="${issueCardId}" data-action="no"
               style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:8px 16px;border-radius:7px;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer">
-              ✕ Non merci
+              ${t('conn.card.noThanks')}
             </button>
           </div>
         </div>
@@ -301,7 +301,7 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
 
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur Jira : ${err.message}`);
+    renderAgentMsg(t('conn.msg.jiraError').replace('{err}', err.message));
   }
 }
 
@@ -375,7 +375,7 @@ Format de réponse OBLIGATOIRE — UNIQUEMENT ce JSON, rien d'autre, sans backti
 
   } catch(err) {
     hideTyping();
-    renderAgentMsg(`❌ Erreur génération des cas : ${err.message}`);
+    renderAgentMsg(t('conn.msg.genError').replace('{err}', err.message));
   }
 }
 
@@ -389,7 +389,7 @@ function clearApiKey() {
   updateKeyStatus('');
   try { localStorage.removeItem('qa_agent_key'); } catch(e) {}
   el.focus();
-  showToast('Clé API effacée');
+  showToast(t('conn.apiKeyCleared'));
 }
 
 function toggleKeyVisibility() {
@@ -451,17 +451,25 @@ function updateConnBadge(platform, connected, label) {
   const btn   = document.getElementById(platform + 'ConnectLabel');
   if (!badge) return;
   if (connected) {
-    badge.textContent = '✓ ' + (label || 'connecté');
+    badge.textContent = '✓ ' + (label || t('conn.connected'));
     badge.className   = 'conn-badge ' + (platform === 'jira' ? 'ok-blue' : 'ok');
     card.className    = 'conn-card ' + (platform === 'jira' ? 'connected-jira' : 'connected');
-    if (btn) btn.textContent = '🔌 Déconnecter';
+    if (btn) btn.textContent = t('conn.disconnect');
   } else {
-    badge.textContent = 'non connecté';
+    badge.textContent = t('conn.notConnected');
     badge.className   = 'conn-badge';
     card.className    = 'conn-card';
-    if (btn) btn.textContent = '🔗 Connecter';
+    if (btn) btn.textContent = t('conn.connect');
   }
 }
+
+// Bascule de langue : re-render des badges JS (hors data-i18n) avec l'ÉTAT COURANT réel
+// des sessions -> retraduit "connecté/non connecté" + boutons sans repasser à "non connecté".
+window.__i18nRerender = window.__i18nRerender || [];
+window.__i18nRerender.push(function(){
+  updateConnBadge('azure', !!azureSession, azureSession ? azureSession.org + '/' + azureSession.project : '');
+  updateConnBadge('jira',  !!jiraSession,  jiraSession  ? jiraSession.host : '');
+});
 
 function showConnError(platform, msg) {
   const el = document.getElementById(platform + 'Error');
@@ -494,12 +502,12 @@ async function uiConnectAzure() {
   hideConnError('azure');
 
   if (!url || !token) {
-    showConnError('azure', '⚠️ URL et token requis');
+    showConnError('azure', t('conn.urlTokenRequired'));
     return;
   }
 
   const btn = document.getElementById('azureConnectLabel');
-  btn.textContent = '⏳ Connexion...';
+  btn.textContent = t('conn.connecting');
 
   try {
     const r    = await fetch(`/api/azure/connect`, {
@@ -518,10 +526,10 @@ async function uiConnectAzure() {
     } catch(e) {}
 
     updateConnBadge('azure', true, data.org + '/' + data.project);
-    renderAgentMsg(`✅ Connecté à Azure DevOps — <span class="tag azure">📁 ${data.org} / ${data.project}</span>\n\nSaisis un numéro d'US et clique **Récupérer**.`);
+    renderAgentMsg(`${t('conn.msg.azureConnectedShort')} <span class="tag azure">📁 ${data.org} / ${data.project}</span>\n\n${t('conn.msg.enterUsClickFetch').replace('{btn}', t('conn.fetch'))}`);
 
   } catch(err) {
-    btn.textContent = '🔗 Connecter';
+    btn.textContent = t('conn.connect');
     const msg = err.message.includes('fetch') ? '❌ Serveur proxy non démarré — lance node server.js' : '❌ ' + err.message;
     showConnError('azure', msg);
   }
@@ -530,8 +538,8 @@ async function uiConnectAzure() {
 async function uiFetchAzure() {
   const id = document.getElementById('azureUsInput').value.trim();
   hideConnError('azure');
-  if (!id) { showConnError('azure', '⚠️ Saisis un numéro d\'US'); return; }
-  if (!azureSession) { showConnError('azure', '⚠️ Connecte-toi d\'abord'); return; }
+  if (!id) { showConnError('azure', t('conn.err.usNumberRequired')); return; }
+  if (!azureSession) { showConnError('azure', t('conn.err.connectFirst')); return; }
 
   const btn = document.querySelector('#azureCard .mini-btn');
   if (btn) btn.textContent = '⏳';
@@ -539,13 +547,13 @@ async function uiFetchAzure() {
   try {
     const r    = await fetch(`/api/azure/workitem/${id}`);
     const data = await r.json();
-    if (!r.ok) { showConnError('azure', '❌ ' + (data.error || `Erreur HTTP ${r.status}`)); return; }
-    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!r.ok) { showConnError('azure', '❌ ' + (data.error || t('conn.err.httpError').replace('{status}', r.status))); return; }
+    const apiKey = window._serverApiKey || document.getElementById('apiKey').value.trim();
     await handleFetchAndGenerate(id, true, apiKey, '', data);  // true = génère les cas
   } catch(err) {
     showConnError('azure', err.message.includes('fetch') ? '❌ Serveur proxy non démarré' : '❌ ' + err.message);
   } finally {
-    if (btn) btn.textContent = 'Récupérer';
+    if (btn) btn.textContent = t('conn.fetch');
   }
 }
 
@@ -561,7 +569,7 @@ function uiDisconnectAzure() {
   document.getElementById('azureUsInput').value    = '';
   updateConnBadge('azure', false);
   hideConnError('azure');
-  showToast('Azure DevOps déconnecté');
+  showToast(t('conn.azureDisconnected'));
 }
 
 // ── Jira UI ───────────────────────────────────────────────────────────────────
@@ -578,12 +586,12 @@ async function uiConnectJira() {
   hideConnError('jira');
 
   if (!url || !email || !token) {
-    showConnError('jira', '⚠️ URL, email et token requis');
+    showConnError('jira', t('conn.urlEmailTokenRequired'));
     return;
   }
 
   const btn = document.getElementById('jiraConnectLabel');
-  btn.textContent = '⏳ Connexion...';
+  btn.textContent = t('conn.connecting');
 
   try {
     const r    = await fetch(`/api/jira/connect`, {
@@ -605,10 +613,10 @@ async function uiConnectJira() {
     } catch(e) {}
 
     updateConnBadge('jira', true, host);
-    renderAgentMsg(`✅ Connecté à Jira — <span class="tag jira">🟦 ${host}</span>\n\nBonjour **${data.displayName}** ! Saisis un numéro d'issue et clique **Récupérer**.`);
+    renderAgentMsg(`${t('conn.msg.jiraConnectedShort')} <span class="tag jira">🟦 ${host}</span>\n\n${t('conn.msg.greeting').replace('{name}', data.displayName)} ${t('conn.msg.enterIssueClickFetch').replace('{btn}', t('conn.fetch'))}`);
 
   } catch(err) {
-    btn.textContent = '🔗 Connecter';
+    btn.textContent = t('conn.connect');
     const msg = err.message.includes('fetch') ? '❌ Serveur proxy non démarré — lance node server.js' : '❌ ' + err.message;
     showConnError('jira', msg);
   }
@@ -617,15 +625,15 @@ async function uiConnectJira() {
 async function uiFetchJira() {
   const id = document.getElementById('jiraIssueInput').value.trim();
   hideConnError('jira');
-  if (!id) { showConnError('jira', '⚠️ Saisis un numéro d\'issue (ex: PROJ-42)'); return; }
-  if (!jiraSession) { showConnError('jira', '⚠️ Connecte-toi d\'abord'); return; }
+  if (!id) { showConnError('jira', t('conn.err.issueNumberRequired')); return; }
+  if (!jiraSession) { showConnError('jira', t('conn.err.connectFirst')); return; }
 
   const btn = document.querySelector('#jiraCard .mini-btn');
   if (btn) btn.textContent = '⏳';
 
-  await handleJiraFetch(id, false, document.getElementById('apiKey').value.trim());
+  await handleJiraFetch(id, false, window._serverApiKey || document.getElementById('apiKey').value.trim());
 
-  if (btn) btn.textContent = 'Récupérer';
+  if (btn) btn.textContent = t('conn.fetch');
 }
 
 function uiDisconnectJira() {
@@ -642,7 +650,7 @@ function uiDisconnectJira() {
   document.getElementById('jiraIssueInput').value = '';
   updateConnBadge('jira', false);
   hideConnError('jira');
-  showToast('Jira déconnecté');
+  showToast(t('conn.jiraDisconnected'));
 }
 
 // ── Restore on load ───────────────────────────────────────────────────────────

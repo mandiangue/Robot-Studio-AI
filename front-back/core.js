@@ -257,8 +257,8 @@ const TRANSLATIONS = {
     styleLabel:       'STYLE',
     modeLabel:        'MODE',
     browserLabel:     'BROWSER',
-    withBrowser:      '🖥️ Non Headless',
-    withoutBrowser:   '🔇 Headless',
+    withBrowser:      '🖥️ Headless off',
+    withoutBrowser:   '🔇 Headless on',
     // Input
     inputHint:        '↵ Envoyer · ⇧↵ Nouvelle ligne',
     submitBtn:        'SUBMIT',
@@ -327,7 +327,7 @@ const TRANSLATIONS = {
     'cards.warnNoPageMerge':'⚠️ Aucune page à fusionner', 'cards.warnApiKey':'⚠️ Clé API requise', 'cards.warnNoOtherMerge':'⚠️ Aucun autre bloc à fusionner',
     'cards.csvColName':     'Nom', 'cards.csvColDesc':'Description', 'cards.csvColExpected':'Résultat attendu',
     // Code cards (codecards.js) — chrome
-    'codecards.run':'▶️ Run', 'codecards.select':'☑ Sélectionner', 'codecards.downloadAll':'⬇️ Tout', 'codecards.tag':'Tag',
+    'codecards.run':'▶️ Run', 'codecards.select':'☑ Sélectionner', 'codecards.downloadAll':'⬇️ Tout', 'codecards.tag':'Tag', 'codecards.tagged':'Tagué',
     'codecards.import':'⬆ Import', 'codecards.tree':'ARBORESCENCE', 'codecards.runAll':'▶ Tous les fichiers',
     'codecards.newFile':'+ nouveau fichier', 'codecards.newFolder':'+ nouveau dossier',
     'codecards.apply':'✅ Appliquer', 'codecards.cancel':'Annuler', 'codecards.searchPh':'🔍 Rechercher…',
@@ -387,6 +387,55 @@ const TRANSLATIONS = {
     'cicd.blockCountOne':'{n} bloc', 'cicd.blockCountMany':'{n} blocs', 'cicd.fileCountOne':'{n} fichier', 'cicd.fileCountMany':'{n} fichiers',
     'cicd.repoUrl':'URL repo', 'cicd.branch':'Branche', 'cicd.newBranch':'Nouvelle branche', 'cicd.commitMsg':'Message commit', 'cicd.destFolder':'Dossier destination', 'cicd.filesLabel':'Fichiers',
     'cicd.untagged':'Retiré du deploy', 'cicd.tagged':'Tagué pour deploy',
+    // Options BROWSER (label only ; value 'visible'/'headless' inchangée)
+    'opt.headlessOff':'🖥️ Headless off', 'opt.headlessOn':'🔇 Headless on',
+    // Connecteurs Azure/Jira (connectors.js — chrome uniquement, jamais les données org/project/host)
+    'conn.connected':'connecté', 'conn.notConnected':'non connecté',
+    'conn.connect':'🔗 Connecter', 'conn.disconnect':'🔌 Déconnecter', 'conn.connecting':'⏳ Connexion…', 'conn.fetch':'Récupérer',
+    'conn.urlTokenRequired':'⚠️ URL et token requis', 'conn.urlEmailTokenRequired':'⚠️ URL, email et token requis',
+    'conn.azureDisconnected':'Azure DevOps déconnecté', 'conn.jiraDisconnected':'Jira déconnecté', 'conn.apiKeyCleared':'Clé API effacée',
+    'conn.ready':'⬤ ready', 'conn.noKey':'⬤ no key',
+    // Erreurs de validation sous le champ (showConnError) ; {status} = donnée serveur
+    'conn.err.usNumberRequired':'⚠️ Saisis un numéro d\'US', 'conn.err.issueNumberRequired':'⚠️ Saisis un numéro d\'issue (ex: PROJ-42)',
+    'conn.err.connectFirst':'⚠️ Connecte-toi d\'abord', 'conn.err.httpError':'Erreur HTTP {status}',
+    // Messages chat de connexion (connectors.js renderAgentMsg — chrome ; {…} = données interpolées, non traduites)
+    'conn.msg.urlInvalid':'❌ URL invalide. Format attendu : `https://dev.azure.com/organisation/projet`',
+    'conn.msg.tokenInvalid':'❌ Token invalide ou accès refusé.',
+    'conn.msg.projectNotFound':'❌ Projet "{project}" introuvable dans "{org}".',
+    'conn.msg.azureHttpError':'❌ Erreur Azure DevOps : HTTP {status}',
+    'conn.msg.azureConnected':'✅ Connecté à Azure DevOps !',
+    'conn.msg.askUsNumber':'Quel numéro d\'US veux-tu récupérer ?',
+    'conn.msg.askUsNumberJira':'Quel numéro d\'US veux-tu récupérer ? (ex: PROJ-42)',
+    'conn.msg.azureConnError':'❌ Erreur de connexion : {err}\n\nSi tu vois une erreur CORS, ton organisation bloque les appels directs — contacte ton admin Azure DevOps pour activer l\'accès CORS ou utilise un PAT avec les droits corrects.',
+    'conn.msg.workItemNotFound':'❌ Work Item #{id} introuvable : {msg}',
+    'conn.msg.proxyNotStarted':'❌ Serveur proxy non démarré.\n\nLance **`node server.js`** dans ton terminal.',
+    'conn.msg.errorPrefix':'❌ Erreur : {err}',
+    'conn.msg.azureConnectedShort':'✅ Connecté à Azure DevOps —',
+    'conn.msg.enterUsClickFetch':'Saisis un numéro d\'US et clique **{btn}**.',
+    'conn.msg.jiraEmailRequired':'⚠️ Précise ton email Jira dans le message.\nEx : `Connecte-toi sur Jira https://monorg.atlassian.net avec email@company.com et token XYZ`',
+    'conn.msg.jiraTokenInvalid':'❌ Token Jira invalide ou email incorrect.',
+    'conn.msg.jiraHttpError':'❌ Erreur Jira : HTTP {status}',
+    'conn.msg.jiraConnected':'✅ Connecté à Jira !',
+    'conn.msg.greeting':'Bonjour **{name}** !',
+    'conn.msg.jiraConnError':'❌ Erreur de connexion Jira : {err}',
+    'conn.msg.issueKeyRequired':'⚠️ Précise la clé complète de l\'issue Jira (ex: **PROJ-{id}**)',
+    'conn.msg.issueNotFound':'❌ Issue **{issueKey}** introuvable.',
+    'conn.msg.jiraError':'❌ Erreur Jira : {err}',
+    'conn.msg.genError':'❌ Erreur génération des cas : {err}',
+    'conn.msg.jiraConnectedShort':'✅ Connecté à Jira —',
+    'conn.msg.enterIssueClickFetch':'Saisis un numéro d\'issue et clique **{btn}**.',
+    // Cartes US/issue (div.innerHTML — chrome ; contenu US = données)
+    'conn.card.usRetrieved':'J\'ai récupéré l\'US',
+    'conn.card.generating':'Je génère les tests RF maintenant…',
+    'conn.card.askGenerate':'Tu veux que je génère les tests RF pour cette US ?',
+    'conn.card.askGenerateCases':'Veux-tu que je génère des cas de tests à partir de cette US ?',
+    'conn.card.yesGenerate':'✅ Oui, générer les cas de tests',
+    'conn.card.noThanks':'✕ Non merci',
+    'conn.card.description':'DESCRIPTION',
+    'conn.card.acceptance':'CRITÈRES D\'ACCEPTANCE',
+    'conn.card.tags':'Tags :',
+    'conn.card.labels':'Labels :',
+    'conn.card.tagBug':'🐛 Bug', 'conn.card.tagEpic':'⚡ Epic', 'conn.card.tagStory':'📖 Story', 'conn.card.tagTask':'✅ Tâche',
     'cicd.urlTokenRequired':'URL et token requis', 'cicd.analyzingChanges':'Analyse des changements…', 'cicd.diffUnavailable':'Diff indisponible — push direct…',
     'cicd.noChanges':'Aucun changement à pusher', 'cicd.nothingToPush':'Rien à pusher — tous les fichiers sont identiques',
     'cicd.pushing':'Push en cours…', 'cicd.pushSuccess':'✅ Push réussi !', 'cicd.pushedTo':'Code pushé sur {provider}',
@@ -518,8 +567,8 @@ const TRANSLATIONS = {
     styleLabel:       'STYLE',
     modeLabel:        'MODE',
     browserLabel:     'BROWSER',
-    withBrowser:      '🖥️ With browser',
-    withoutBrowser:   '🔇 Without browser',
+    withBrowser:      '🖥️ Headless off',
+    withoutBrowser:   '🔇 Headless on',
     inputHint:        '↵ Send · ⇧↵ New line',
     submitBtn:        'SUBMIT',
     welcomeTitle:     '👋 Hello! I\'m your **QA Agent** specialized in Robot Framework.',
@@ -585,7 +634,7 @@ const TRANSLATIONS = {
     'cards.warnNoPageMerge':'⚠️ No page to merge', 'cards.warnApiKey':'⚠️ API key required', 'cards.warnNoOtherMerge':'⚠️ No other block to merge',
     'cards.csvColName':     'Name', 'cards.csvColDesc':'Description', 'cards.csvColExpected':'Expected result',
     // Code cards (codecards.js) — chrome
-    'codecards.run':'▶️ Run', 'codecards.select':'☑ Select', 'codecards.downloadAll':'⬇️ All', 'codecards.tag':'Tag',
+    'codecards.run':'▶️ Run', 'codecards.select':'☑ Select', 'codecards.downloadAll':'⬇️ All', 'codecards.tag':'Tag', 'codecards.tagged':'Tagged',
     'codecards.import':'⬆ Import', 'codecards.tree':'FILE TREE', 'codecards.runAll':'▶ All files',
     'codecards.newFile':'+ new file', 'codecards.newFolder':'+ new folder',
     'codecards.apply':'✅ Apply', 'codecards.cancel':'Cancel', 'codecards.searchPh':'🔍 Search…',
@@ -645,6 +694,55 @@ const TRANSLATIONS = {
     'cicd.blockCountOne':'{n} block', 'cicd.blockCountMany':'{n} blocks', 'cicd.fileCountOne':'{n} file', 'cicd.fileCountMany':'{n} files',
     'cicd.repoUrl':'Repo URL', 'cicd.branch':'Branch', 'cicd.newBranch':'New branch', 'cicd.commitMsg':'Commit message', 'cicd.destFolder':'Destination folder', 'cicd.filesLabel':'Files',
     'cicd.untagged':'Removed from deploy', 'cicd.tagged':'Tagged for deploy',
+    // BROWSER options (label only ; value 'visible'/'headless' unchanged)
+    'opt.headlessOff':'🖥️ Headless off', 'opt.headlessOn':'🔇 Headless on',
+    // Azure/Jira connectors (connectors.js — chrome only, never the org/project/host data)
+    'conn.connected':'connected', 'conn.notConnected':'not connected',
+    'conn.connect':'🔗 Connect', 'conn.disconnect':'🔌 Disconnect', 'conn.connecting':'⏳ Connecting…', 'conn.fetch':'Fetch',
+    'conn.urlTokenRequired':'⚠️ URL and token required', 'conn.urlEmailTokenRequired':'⚠️ URL, email and token required',
+    'conn.azureDisconnected':'Azure DevOps disconnected', 'conn.jiraDisconnected':'Jira disconnected', 'conn.apiKeyCleared':'API key cleared',
+    'conn.ready':'⬤ ready', 'conn.noKey':'⬤ no key',
+    // Field validation errors (showConnError) ; {status} = raw server data
+    'conn.err.usNumberRequired':'⚠️ Enter a US number', 'conn.err.issueNumberRequired':'⚠️ Enter an issue number (e.g. PROJ-42)',
+    'conn.err.connectFirst':'⚠️ Connect first', 'conn.err.httpError':'HTTP error {status}',
+    // Connection chat messages (connectors.js renderAgentMsg — chrome ; {…} = interpolated data, not translated)
+    'conn.msg.urlInvalid':'❌ Invalid URL. Expected format: `https://dev.azure.com/organization/project`',
+    'conn.msg.tokenInvalid':'❌ Invalid token or access denied.',
+    'conn.msg.projectNotFound':'❌ Project "{project}" not found in "{org}".',
+    'conn.msg.azureHttpError':'❌ Azure DevOps error: HTTP {status}',
+    'conn.msg.azureConnected':'✅ Connected to Azure DevOps!',
+    'conn.msg.askUsNumber':'Which US number do you want to fetch?',
+    'conn.msg.askUsNumberJira':'Which US number do you want to fetch? (e.g. PROJ-42)',
+    'conn.msg.azureConnError':'❌ Connection error: {err}\n\nIf you see a CORS error, your organization blocks direct calls — contact your Azure DevOps admin to enable CORS access or use a PAT with the right permissions.',
+    'conn.msg.workItemNotFound':'❌ Work Item #{id} not found: {msg}',
+    'conn.msg.proxyNotStarted':'❌ Proxy server not started.\n\nRun **`node server.js`** in your terminal.',
+    'conn.msg.errorPrefix':'❌ Error: {err}',
+    'conn.msg.azureConnectedShort':'✅ Connected to Azure DevOps —',
+    'conn.msg.enterUsClickFetch':'Enter a US number and click **{btn}**.',
+    'conn.msg.jiraEmailRequired':'⚠️ Specify your Jira email in the message.\nE.g.: `Connect to Jira https://monorg.atlassian.net with email@company.com and token XYZ`',
+    'conn.msg.jiraTokenInvalid':'❌ Invalid Jira token or wrong email.',
+    'conn.msg.jiraHttpError':'❌ Jira error: HTTP {status}',
+    'conn.msg.jiraConnected':'✅ Connected to Jira!',
+    'conn.msg.greeting':'Hello **{name}**!',
+    'conn.msg.jiraConnError':'❌ Jira connection error: {err}',
+    'conn.msg.issueKeyRequired':'⚠️ Specify the full Jira issue key (e.g. **PROJ-{id}**)',
+    'conn.msg.issueNotFound':'❌ Issue **{issueKey}** not found.',
+    'conn.msg.jiraError':'❌ Jira error: {err}',
+    'conn.msg.genError':'❌ Test case generation error: {err}',
+    'conn.msg.jiraConnectedShort':'✅ Connected to Jira —',
+    'conn.msg.enterIssueClickFetch':'Enter an issue number and click **{btn}**.',
+    // US/issue cards (div.innerHTML — chrome ; US content = data)
+    'conn.card.usRetrieved':'I retrieved US',
+    'conn.card.generating':'Generating the RF tests now…',
+    'conn.card.askGenerate':'Want me to generate the RF tests for this US?',
+    'conn.card.askGenerateCases':'Want me to generate test cases from this US?',
+    'conn.card.yesGenerate':'✅ Yes, generate the test cases',
+    'conn.card.noThanks':'✕ No thanks',
+    'conn.card.description':'DESCRIPTION',
+    'conn.card.acceptance':'ACCEPTANCE CRITERIA',
+    'conn.card.tags':'Tags:',
+    'conn.card.labels':'Labels:',
+    'conn.card.tagBug':'🐛 Bug', 'conn.card.tagEpic':'⚡ Epic', 'conn.card.tagStory':'📖 Story', 'conn.card.tagTask':'✅ Task',
     'cicd.urlTokenRequired':'URL and token required', 'cicd.analyzingChanges':'Analyzing changes…', 'cicd.diffUnavailable':'Diff unavailable — direct push…',
     'cicd.noChanges':'No changes to push', 'cicd.nothingToPush':'Nothing to push — all files identical',
     'cicd.pushing':'Pushing…', 'cicd.pushSuccess':'✅ Push successful!', 'cicd.pushedTo':'Code pushed to {provider}',
@@ -1006,3 +1104,38 @@ document.addEventListener('click', e => {
     closeSidebar();
   }
 });
+
+// ── Sidebar resize (desktop only, sans persistance) ───────────────────────────
+// Poignée #sidebarResizer (sibling flex) : drag horizontal -> largeur de la sidebar.
+// .chat-area (flex:1) s'adapte seule. style.width inline ; pas de localStorage.
+(function initSidebarResize() {
+  const resizer = document.getElementById('sidebarResizer');
+  const sidebar = document.querySelector('.sidebar');
+  if (!resizer || !sidebar) return;
+
+  const MIN = 220;
+  const maxW = () => Math.min(600, window.innerWidth * 0.5);
+
+  function onMove(e) {
+    const left = sidebar.getBoundingClientRect().left;
+    const w = Math.max(MIN, Math.min(e.clientX - left, maxW()));
+    sidebar.style.width = w + 'px';
+  }
+  function onUp() {
+    document.body.classList.remove('sidebar-resizing');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  resizer.addEventListener('mousedown', e => {
+    if (window.innerWidth <= 640) return; // drawer mobile : pas de resize
+    e.preventDefault();
+    document.body.classList.add('sidebar-resizing');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Piège mobile : un width inline déformerait le drawer ≤640px -> reset.
+  window.addEventListener('resize', () => {
+    if (window.innerWidth <= 640) sidebar.style.width = '';
+  });
+})();

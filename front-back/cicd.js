@@ -9,7 +9,7 @@ function toggleCardTag(cardId) {
   if(window._taggedCards.has(cardId)){window._taggedCards.delete(cardId);showToast(t('cicd.untagged'));}
   else{window._taggedCards.add(cardId);showToast(t('cicd.tagged'));}
   var btn=document.getElementById('tagBtn-'+cardId);
-  if(btn){var t=window._taggedCards.has(cardId);btn.style.borderColor=t?'#c084fc':'var(--border)';btn.style.color=t?'#c084fc':'var(--gray)';btn.textContent=t?'Tagged':'Tag';}
+  if(btn){var tagged=window._taggedCards.has(cardId);btn.style.borderColor=tagged?'#c084fc':'var(--border)';btn.style.color=tagged?'#c084fc':'var(--gray)';btn.textContent=tagged?t('codecards.tagged'):t('codecards.tag');}
   var badge=document.getElementById('cicdBadge');
   if(badge) badge.textContent=window._taggedCards.size>0?' ('+window._taggedCards.size+')':'';
 }

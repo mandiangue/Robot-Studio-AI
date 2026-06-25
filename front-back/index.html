@@ -228,8 +228,8 @@
       <div class="opt-row">
         <label data-i18n="browserLabel">BROWSER</label>
         <select id="optHeadless" style="font-size:11px">
-          <option value="visible">🖥️ Non Headless</option>
-          <option value="headless">🔇 Headless</option>
+          <option value="visible" data-i18n="opt.headlessOff">🖥️ Headless off</option>
+          <option value="headless" data-i18n="opt.headlessOn">🔇 Headless on</option>
         </select>
       </div>
       <div class="opt-row">
@@ -248,6 +248,9 @@
     </div>
 
   </nav>
+
+  <!-- Poignée de redimensionnement de la sidebar (desktop only, sans persistance) -->
+  <div class="sidebar-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical"></div>
 
   <!-- Chat -->
   <main class="chat-area" id="main-chat" role="main">

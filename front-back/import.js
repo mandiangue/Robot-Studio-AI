@@ -396,7 +396,7 @@ function _importRFFiles(files, source) {
     window._taggedCards.add(existing.cardId);
     setTimeout(function(){
       var btn = document.getElementById('tagBtn-' + existing.cardId);
-      if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent='Tagged'; }
+      if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent=t('codecards.tagged'); }
     }, 100);
     saveCodeCards();
     _savePulledBlock(existing.cardId, source, rf, true);
@@ -426,7 +426,7 @@ function _importRFFiles(files, source) {
   window._taggedCards.add(stableId);
   setTimeout(function(){
     var btn = document.getElementById('tagBtn-' + stableId);
-    if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent='Tagged'; }
+    if (btn) { btn.style.background='rgba(192,132,252,0.18)'; btn.style.color='#c084fc'; btn.style.borderColor='#c084fc'; btn.textContent=t('codecards.tagged'); }
   }, 100);
 
   saveCodeCards();
