@@ -19,6 +19,10 @@ function openDashboard() {
   }
   panel.style.display       = 'flex';
   panel.style.flexDirection = 'column';
+  // Re-fetch l'historique à chaque ouverture : le fetch initial (boot de l'iframe) peut avoir
+  // raté Mongo pas encore prêt -> dashboard vide figé. Rouvrir relance loadHistory (Mongo chaud)
+  // et capte aussi les runs effectués depuis la dernière ouverture.
+  document.getElementById('dashboardIframe')?.contentWindow?.postMessage({ type: 'refresh-history' }, '*');
   const btn = document.querySelector('[onclick="openDashboard()"]');
   if (btn) btn.classList.add('active');
   // Setup resize handle

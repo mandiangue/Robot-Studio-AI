@@ -193,7 +193,8 @@ window.loadHistory = async function loadHistory() {
     try {
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), 5000);
-      const r = await fetch('/api/storage/all', { signal: ctrl.signal });
+      // cache:'no-store' -> jamais resservir une reponse vide depuis le cache navigateur.
+      const r = await fetch('/api/storage/all', { cache: 'no-store', signal: ctrl.signal });
       clearTimeout(timeout);
       const d = await r.json();
       if (d.ok && d.cards?.length > 0) {
@@ -205,22 +206,32 @@ window.loadHistory = async function loadHistory() {
     } catch(e) {
       if (attempt < 2) {
         await new Promise(function(res){ setTimeout(res, 2000); });
-      } else {
-        cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]');
       }
     }
+  }
+  // Filet : si toujours vide apres les 3 tentatives — que ce soit un 200+cards:[] (Mongo pas
+  // encore pret au boot) OU une exception epuisee — retomber sur le cache local qa_code_cards
+  // au lieu d'afficher un dashboard vide a tort. (Avant : le fallback ne couvrait QUE l'exception.)
+  if (!cards.length) {
+    try { cards = JSON.parse(localStorage.getItem('qa_code_cards') || '[]'); } catch(e) {}
   }
   const simple = JSON.parse(localStorage.getItem('qa_run_history') || '[]');
   const suiteRuns = cards
     .filter(c => c.type === 'suite-report' && c.data)
-    .map(c => ({ ...c.data, blockNames: c.blockNames || [], suiteTitle: c.suiteTitle }))
+    .map(c => ({ ...c.data, blockNames: c.blockNames || [], suiteTitle: c.suiteTitle, _ts: c._ts }))
     .filter(d => !simple.some(r => r.runNumber === d.runNumber));
   const reportRuns = cards
     .filter(c => c.type === 'report' && c.data && !c.data.isSuite)
-    .map(c => c.data)
+    .map(c => ({ ...c.data, _ts: c._ts }))
     .filter(d => !simple.some(r => r.runNumber === d.runNumber));
+  // Tri chronologique stable par _ts (timestamp serveur, numerique des DEUX cotes : simples ET suites).
+  // Fallback : runNumber SI numerique (runs simples = Date.now()), sinon 0. Remplace l'ancien tri sur
+  // runNumber qui renvoyait NaN pour les suites (runNumber = chaine 'result-...') -> Array.sort instable
+  // -> ordre aleatoire. ASC (ancien -> recent) : le tableau fait .reverse() -> plus recent en haut, et la
+  // section "failing tests" (runs[0]=since, runs[last]=lastError) devient chronologiquement correcte.
+  const tsOf = x => x._ts || (typeof x.runNumber === 'number' ? x.runNumber : 0);
   return [...simple, ...reportRuns, ...suiteRuns]
-    .sort((a,b) => (b.runNumber||0) - (a.runNumber||0));
+    .sort((a,b) => tsOf(a) - tsOf(b));
 }
 let history = [];
 
@@ -415,6 +426,20 @@ document.getElementById('runsTableBody').innerHTML = [...history].reverse().map(
 }).join('');
 }
 }
+
+// ── Re-fetch déclenché par le parent à CHAQUE ouverture du panneau (cross-frame) ──
+// Le fetch initial (au boot de l'iframe) peut tomber sur Mongo pas encore prêt -> history vide
+// FIGÉ toute la session (openDashboard ne rechargeait pas). Ici on relance loadHistory : la
+// connexion est désormais chaude -> données à jour. Capte aussi les runs faits depuis le boot.
+window.refreshDashboard = async function refreshDashboard(){
+  history = await loadHistory();
+  document.getElementById('_dashLoading')?.remove();
+  document.getElementById('_dashEmpty')?.remove();  // retirer la banniere "aucun run" du boot vide
+  if (history.length) initDashboard(); else renderEmptyState();
+};
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'refresh-history') window.refreshDashboard();
+});
 
 // ── Bascule de langue déclenchée par le parent (appel cross-frame same-origin) ──
 window.applyDashboardLang = function(lang){
