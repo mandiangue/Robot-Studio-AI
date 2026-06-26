@@ -189,7 +189,7 @@ async function runSuiteGroup(idx) {
   window._suiteStopped = false;
   window._currentSuiteTitle = suite.title;
   // Live broadcast suite-start
-  fetch('/api/rf/live-suite-start', {
+  fetch(window._runnerBase + '/api/rf/live-suite-start', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: suite.title, blocCount: tests.length }),
@@ -276,7 +276,7 @@ async function runSuiteGroup(idx) {
         const check = setInterval(async () => {
           if (window._suiteStopped) { clearInterval(check); resolve(); return; }
           try {
-            const r = await fetch('/api/rf/status');
+            const r = await fetch(window._runnerBase + '/api/rf/status');
             const d = await r.json();
             if (d.status === 'idle') { clearInterval(check); resolve(); }
           } catch(e) { clearInterval(check); resolve(); }

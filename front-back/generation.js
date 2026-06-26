@@ -486,16 +486,16 @@ function installLibrary(library) {
   const log = document.getElementById('installLog');
   const addLog = (msg) => { log.innerHTML += '<br>' + msg; log.scrollTop = log.scrollHeight; };
 
-  const es = new EventSource('/api/install-library?library=' + encodeURIComponent(library));
+  const es = new EventSource(window._runnerBase + '/api/install-library?library=' + encodeURIComponent(library));
 
-  fetch('/api/install-library', {
+  fetch(window._runnerBase + '/api/install-library', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ library })
   });
 
   // Use SSE-style polling via fetch + ReadableStream
-  fetch('/api/install-library', {
+  fetch(window._runnerBase + '/api/install-library', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ library })
@@ -661,7 +661,7 @@ async function fetchDomSnapshot(text) {
   try {
     const m = String(text || '').match(/https?:\/\/[^\s"'<>)]+/);
     if (!m) return '';
-    const r = await fetch('/api/inspect-dom', {
+    const r = await fetch(window._runnerBase + '/api/inspect-dom', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: m[0], wait: 3 })

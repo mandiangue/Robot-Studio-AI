@@ -22,6 +22,10 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  // Private Network Access : Chrome (M104+) exige ce header pour qu'une origine PUBLIQUE (page Render
+  // HTTPS) puisse appeler une ressource LOCALE (ce runner sur localhost). Sans lui, le preflight PNA
+  // échoue et le run/SSE depuis Render est bloqué par le navigateur.
+  res.header('Access-Control-Allow-Private-Network', 'true');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
@@ -2729,6 +2733,7 @@ app.get('/api/rf/live-stream', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
   res.flushHeaders();
   liveClients.add(res);
   res.write(`event: state\ndata: ${JSON.stringify(liveState)}\n\n`);

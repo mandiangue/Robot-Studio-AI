@@ -882,7 +882,7 @@ function renderResultCard(files, existingCardId) {
         const editedFile = files[activeTab];
         if (editedFile?.filename) {
           try {
-            await fetch('/api/rf/write-file', {
+            await fetch(window._runnerBase + '/api/rf/write-file', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ filepath: editedFile.filename, content: ta.value }),

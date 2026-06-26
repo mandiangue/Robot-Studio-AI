@@ -3,6 +3,17 @@
 // Extrait de qa-agent.js (découpage par domaine). Script classique, fonctions globales.
 // ============================================================================
 
+// ── RUNNER_BASE ─────────────────────────────────────────────────────────────────
+// Les appels d'EXÉCUTION (run/write-file/pause/resume/stop/status/SSE live/install/inspect)
+// pointent vers le RUNNER LOCAL (la machine où tourne `node server.js` + Robot Framework +
+// navigateur), MÊME quand le front est servi par Render. Les appels de DONNÉES (storage, azure,
+// jira, cicd, config) restent en chemin relatif (same-origin). Défini UNE seule fois (core.js est
+// le 1er script chargé) ; non-déclaré en `const` pour éviter une collision globale entre scripts.
+// Surchargeable sans toucher au code via localStorage qa_runner_base (ex. autre port/tunnel HTTPS).
+// ⚠️ Depuis une page Render (HTTPS) vers http://localhost:3001 : OK dans Chrome (localhost = exception
+// mixed-content) si le serveur local renvoie le header Access-Control-Allow-Private-Network.
+window._runnerBase = (function(){ try { return localStorage.getItem('qa_runner_base') || 'http://localhost:3001'; } catch(e) { return 'http://localhost:3001'; } })();
+
 // ── State ──────────────────────────────────────────────────────────────────────
 
 
@@ -1003,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Poll server every 3s to check if run completed
       const pollInterval = setInterval(async () => {
         try {
-          const resp = await fetch('/api/rf/status');
+          const resp = await fetch(window._runnerBase + '/api/rf/status');
           if (!resp.ok) return;
           const data = await resp.json();
           if (data.status === 'idle' && data.results) {
@@ -1083,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Connexion SSE permanente pour sync VS Code → UI
   (function connectSyncSSE() {
-    const es = new EventSource('/api/rf/live-stream');
+    const es = new EventSource(window._runnerBase + '/api/rf/live-stream');
     es.addEventListener('file-changed', e => {
       const { filepath, content } = JSON.parse(e.data);
       let updated = false;
