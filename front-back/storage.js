@@ -116,6 +116,9 @@ const LS = {
             if (_msgs) _msgs.appendChild(_loadingDiv);
 
             let cards = [];
+            // Par defaut : source supposee saine (Mongo). Passe a true seulement si on retombe sur
+            // le cache localStorage "light" (code:'') -> saveCodeCards refusera de resauver ces cartes.
+            window._loadedFromLightFallback = false;
             // Retry 3x ~2s : au cold-start (Render/Atlas froid) Mongo peut ne pas etre pret -> reponse
             // vide. On re-tente avant de retomber sur le cache local. cache:'no-store' -> jamais resservir
             // une reponse vide depuis le cache. break SEULEMENT si le serveur renvoie des cards.
@@ -143,6 +146,13 @@ const LS = {
             if (cards.length === 0) {
               const stored = localStorage.getItem('qa_code_cards');
               if (stored) { try { cards = JSON.parse(stored); } catch(e2) {} }
+              if (cards.length > 0) {
+                // GARDE ANTI-CORRUPTION : ces cartes viennent du cache localStorage "light" (code:'').
+                // On marque la session -> saveCodeCards ne renverra PAS ces cartes vides a Mongo
+                // (sinon elles ecraseraient le vrai code en base).
+                window._loadedFromLightFallback = true;
+                console.error('[ANTI-CORRUPTION] Cartes chargees depuis le fallback localStorage "light" (sans code RF) : sauvegarde Mongo de ces cartes desactivee pour proteger le code en base.');
+              }
             }
             if (cards.length > 0) {
               window._codeCards = cards;
@@ -216,12 +226,36 @@ function deleteTCFromDB() {
 }
 function saveCodeCards() {
   updateStatsBar();
-  // Sauvegarde MongoDB (principal)
-  fetch('/api/storage/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cards: window._codeCards || [] }),
-  }).catch(e => console.warn('MongoDB save error:', e.message));
+  // ── GARDE ANTI-CORRUPTION ───────────────────────────────────────────────────
+  // Si la session a ete chargee du fallback localStorage "light" (code:''), NE PAS renvoyer
+  // ces cartes vides a Mongo : elles ECRASERAIENT le vrai code en base. Critere PRIMAIRE = le
+  // flag d'origine fallback (sûr). On filtre alors les cartes "light corrompues" (multi/single
+  // dont TOUS les files ont un code vide) — tout en laissant passer les cartes NEUVES (code reel)
+  // creees apres le chargement. Le check "code vide" n'est applique QUE si le flag est leve
+  // (donc aucun faux positif sur un fichier volontairement vide en session Mongo normale).
+  const _isLightCorrupted = (c) =>
+    (c.type === 'multi' || c.type === 'single') &&
+    (c.files || []).length > 0 &&
+    (c.files || []).every(f => !f.code || f.code === '');
+  let cardsToSave = window._codeCards || [];
+  if (window._loadedFromLightFallback) {
+    const suspects = cardsToSave.filter(_isLightCorrupted);
+    if (suspects.length) {
+      console.error('[ANTI-CORRUPTION] saveCodeCards : ' + suspects.length +
+        ' carte(s) issue(s) du fallback localStorage "light" (code vide) NON envoyee(s) a Mongo ' +
+        '(protection du code en base). cardIds: ' + suspects.map(c => c.cardId).join(', '));
+    }
+    cardsToSave = cardsToSave.filter(c => !_isLightCorrupted(c));
+  }
+  // Sauvegarde MongoDB (principal) — seulement s'il reste au moins une carte saine a sauver.
+  // (L'endpoint upsert par cardId : omettre une carte ne la supprime PAS de Mongo -> code preserve.)
+  if (cardsToSave.length) {
+    fetch('/api/storage/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cards: cardsToSave }),
+    }).catch(e => console.warn('MongoDB save error:', e.message));
+  }
   // localStorage fallback léger (sans code RF)
   try {
     const light = (window._codeCards||[]).map(c => {
