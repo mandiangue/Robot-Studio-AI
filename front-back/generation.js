@@ -377,7 +377,10 @@ async function generateFromUs(us, apiKey) {
 async function callClaude(apiKey, userText) {
   const library = document.getElementById('optLibrary')?.value || 'SeleniumLibrary';
   const style   = document.getElementById('optStyle')?.value   || 'keyword-driven';
-  const system  = `Tu es un expert QA spécialisé Robot Framework. Tu aides à générer, analyser et améliorer des tests automatisés. Sois concis et pratique. Si on te demande de générer des tests RF, génère-les directement. ${getSessionRules()}`;
+  // getSessionRules() = keywords Selenium en dur -> UNIQUEMENT SeleniumLibrary (sinon mélange
+  // Library SeleniumLibrary + Library Browser, ou keywords navigateur parasites pour API/DB/Appium).
+  const sessionRules = library === 'SeleniumLibrary' ? ' ' + getSessionRules() : '';
+  const system  = `Tu es un expert QA spécialisé Robot Framework. Tu aides à générer, analyser et améliorer des tests automatisés. Sois concis et pratique. Si on te demande de générer des tests RF, génère-les directement.${sessionRules}`;
 
   // Build messages with history — filter out system/invalid/non-string messages
   const messages = [
@@ -758,13 +761,17 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
     return raw;
   }
 }async function callClaudeRaw(apiKey, prompt, library) {
-  // Contexte navigateur DESKTOP : règles de session (Open Browser No Popup) + snapshot DOM web
-  // ne s'appliquent QU'au web desktop (Selenium/Playwright).
-  // API (RequestsLibrary), DB (DatabaseLibrary) -> aucun navigateur.
-  // Appium (AppiumLibrary) -> mobile via Open Application/browserName=Chrome, pas de keyword desktop ni de sélecteurs css desktop.
-  const isWebContext = library !== 'RequestsLibrary' && library !== 'DatabaseLibrary' && library !== 'AppiumLibrary';
-  const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax.${isWebContext ? ' ' + getSessionRules() : ''}`;
-  const domSnap = isWebContext ? await fetchDomSnapshot(prompt) : '';
+  // Deux usages distincts, NE PAS confondre :
+  // - getSessionRules() = keywords Selenium en dur (Open Browser No Popup / executable_path / Close Browser)
+  //   -> UNIQUEMENT SeleniumLibrary. Browser/Playwright gère sa session via New Browser/New Context/New Page
+  //      (cf. buildRfPromptBrowser) : y injecter getSessionRules force un import SeleniumLibrary parasite
+  //      => mélange "Library SeleniumLibrary + Library Browser" = code inexécutable.
+  // - fetchDomSnapshot() = sélecteurs réels du web. S'applique à TOUT web desktop (Selenium ET Browser),
+  //   PAS à API (RequestsLibrary), DB (DatabaseLibrary), mobile (AppiumLibrary).
+  const needsSessionRules = library === 'SeleniumLibrary';
+  const needsDomSnapshot  = library !== 'RequestsLibrary' && library !== 'DatabaseLibrary' && library !== 'AppiumLibrary';
+  const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax.${needsSessionRules ? ' ' + getSessionRules() : ''}`;
+  const domSnap = needsDomSnapshot ? await fetchDomSnapshot(prompt) : '';
   if (domSnap) console.log('[DOM-AWARE] snapshot injecte (' + domSnap.length + ' chars)');
   return await callAI(apiKey, [{ role: 'user', content: prompt + domSnap }], sys, 4096);
 }

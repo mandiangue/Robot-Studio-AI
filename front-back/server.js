@@ -1975,6 +1975,102 @@ app.get('/api/rf/status', (req, res) => {
 // ── Cross-check keyword names between tests.robot and keywords.robot ──────────
 
 // ── Final cleanup of robot files — remove duplicates and fix keywords ─────────
+// ── Filet déterministe : auto-injection des Library standard manquantes ────────
+// Le LLM appelle parfois des keywords de libs standard (String/Collections/DateTime/
+// OperatingSystem) sans importer la Library -> RF: "No keyword found". On scanne le code
+// RF du fichier et on ajoute "Library    <lib>" dans *** Settings *** si un de ses keywords
+// est APPELÉ et la lib pas déjà importée. Les keywords BuiltIn (Log, Should Be Equal,
+// Create List, Create Dictionary, Get Length, Length Should Be, Should Match Regexp,
+// Should Contain, Set Variable...) ne sont JAMAIS dans le mapping -> aucun import parasite.
+// Selenium/Browser/Appium/Requests/Database = gérés par les templates -> hors mapping.
+// Import déjà présent ou keyword absent -> code inchangé (pas de faux positif, pas de doublon).
+const STD_LIB_KEYWORDS = {
+  String: [
+    'Convert To Lower Case', 'Convert To Upper Case', 'Replace String',
+    'Replace String Using Regexp', 'Remove String', 'Remove String Using Regexp',
+    'Get Substring', 'Strip String', 'Split String', 'Split String From Right',
+    'Split String To Characters', 'Get Line', 'Get Lines Containing String',
+    'Get Lines Matching Pattern', 'Get Lines Matching Regexp', 'Fetch From Left',
+    'Fetch From Right', 'Get Regexp Matches', 'Generate Random String',
+  ],
+  Collections: [
+    'Append To List', 'Insert Into List', 'Combine Lists', 'Get From List',
+    'Get From Dictionary', 'Set To Dictionary', 'Remove From Dictionary',
+    'Remove From List', 'Sort List', 'Reverse List', 'Get Slice From List',
+    'Count Values In List', 'List Should Contain Value', 'List Should Not Contain Value',
+    'Lists Should Be Equal', 'Dictionary Should Contain Key', 'Dictionary Should Contain Value',
+    'Dictionary Should Contain Item', 'Get Dictionary Keys', 'Get Dictionary Values',
+    'Get Dictionary Items', 'Copy Dictionary', 'Copy List', 'Pop From Dictionary',
+  ],
+  DateTime: [
+    'Get Current Date', 'Convert Date', 'Convert Time', 'Subtract Date From Date',
+    'Subtract Time From Date', 'Subtract Time From Time', 'Add Time To Date', 'Add Time To Time',
+  ],
+  OperatingSystem: [
+    'Normalize Path', 'Create File', 'Append To File', 'Remove File', 'Remove Files',
+    'Get File', 'File Should Exist', 'File Should Not Exist', 'Directory Should Exist',
+    'Directory Should Not Exist', 'List Directory', 'Create Directory', 'Remove Directory',
+    'Copy File', 'Move File', 'Join Path', 'Get File Size', 'Get Environment Variable',
+    'Set Environment Variable',
+  ],
+};
+// RF normalise les noms de keyword : insensible à la casse, espaces et underscores ignorés.
+const _normKw = (s) => s.toLowerCase().replace(/[\s_]/g, '');
+const STD_KW_TO_LIB = (() => {
+  const map = new Map();
+  for (const lib of Object.keys(STD_LIB_KEYWORDS))
+    for (const kw of STD_LIB_KEYWORDS[lib]) map.set(_normKw(kw), lib);
+  return map;
+})();
+
+function ensureLibraryImports(code) {
+  if (!code || typeof code !== 'string') return code;
+
+  // 1. Détecter les libs dont un keyword est APPELÉ. Un appel RF est TOUJOURS indenté
+  //    (corps de keyword / test case) ; les lignes non indentées sont des noms de KW/TC,
+  //    des en-têtes de section ou des settings -> jamais un appel -> on les ignore (évite
+  //    de confondre une définition de keyword homonyme avec un appel).
+  const used = new Set();
+  for (const raw of code.split(/\r?\n/)) {
+    if (!/^\s/.test(raw)) continue;
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('*')) continue;
+    for (const c of raw.split(/\t| {2,}/)) {       // cellules RF = séparées par 2+ espaces / tab
+      const cell = c.trim();
+      if (!cell) continue;
+      if (cell.startsWith('#')) break;             // début de commentaire -> reste de ligne ignoré
+      const lib = STD_KW_TO_LIB.get(_normKw(cell));
+      if (lib) used.add(lib);
+    }
+  }
+  if (used.size === 0) return code;
+
+  // 2. Ne garder que les libs PAS déjà importées (insensible casse/espaces).
+  const missing = [...used].filter(
+    (lib) => !new RegExp('^[ \\t]*Library[ \\t]+' + lib + '(?:\\s|$)', 'im').test(code)
+  );
+  if (missing.length === 0) return code;
+
+  // 3. Injecter "Library    <lib>" dans *** Settings *** (après les Library existantes).
+  const importLines = missing.map((l) => 'Library    ' + l).join('\n');
+  const headerRe = /^[^\S\n]*\*{3}\s*Settings\s*\*{3}[^\n]*\n/im;
+  const m = headerRe.exec(code);
+  if (!m) {
+    // Aucune section *** Settings *** -> en créer une en tête du fichier.
+    return '*** Settings ***\n' + importLines + '\n\n' + code;
+  }
+  const headerEnd = m.index + m[0].length;
+  const after = code.slice(headerEnd).split('\n');
+  let insertAt = 0;                                // défaut : juste après l'en-tête Settings
+  for (let i = 0; i < after.length; i++) {
+    const t = after[i].trim();
+    if (t.startsWith('*')) break;                  // section suivante atteinte
+    if (/^Library[ \t]+/i.test(t)) insertAt = i + 1;
+  }
+  after.splice(insertAt, 0, importLines);
+  return code.slice(0, headerEnd) + after.join('\n');
+}
+
 function finalCleanupRobotFile(filePath) {
   if (!fs.existsSync(filePath)) return;
   try {
@@ -2014,6 +2110,10 @@ function finalCleanupRobotFile(filePath) {
     if (isBrowser) {
       code = code.replace(/Capture Page Screenshot/g, 'Take Screenshot');
     }
+
+    // Filet : injecter les Library standard manquantes (String/Collections/DateTime/OS)
+    // sur le fichier RÉELLEMENT exécuté (ce point couvre tous les chemins de run).
+    code = ensureLibraryImports(code);
 
     fs.writeFileSync(filePath, code, 'utf8');
   } catch(e) { console.error('  Cleanup error:', e.message); }
@@ -2769,7 +2869,10 @@ app.post('/api/rf/write-file', (req, res) => {
     if (/^data:.*;base64,/.test(content)) {
       fs.writeFileSync(safePath, Buffer.from(content.split(',')[1] || '', 'base64'));
     } else {
-      fs.writeFileSync(safePath, content, 'utf8');
+      // Filet : injecter les Library standard manquantes (String/Collections/DateTime/OS)
+      // dans les fichiers RF texte. Binaires (base64) et non-.robot/.resource : intacts.
+      const textOut = /\.(robot|resource)$/i.test(filepath) ? ensureLibraryImports(content) : content;
+      fs.writeFileSync(safePath, textOut, 'utf8');
     }
     // Marquer comme modifié manuellement (expire après 30 min)
     manuallyEditedFiles.set(safePath, Date.now());

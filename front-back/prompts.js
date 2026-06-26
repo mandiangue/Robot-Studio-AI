@@ -225,7 +225,9 @@ function buildRfPromptBrowser(description, style) {
     '8. Use EXACTLY the browser value shown in the template: ' + getBrowserType() + ' — do NOT change it to chrome or any other value',
     '',
     bdd ? '- BDD: Given/When/Then/And in English' : '',
-    getSessionRules(),
+    // PAS de getSessionRules() : Browser/Playwright gère sa session via New Browser/New Context/New Page
+    // (Open Browser Session ci-dessus). getSessionRules() injecterait des keywords Selenium (Open Browser /
+    // executable_path / Close Browser) -> import SeleniumLibrary parasite + mélange avec Library Browser.
   ];
   return lines.filter(function(l){ return l !== false; }).join('\n');
 }
