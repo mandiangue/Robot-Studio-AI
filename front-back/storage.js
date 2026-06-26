@@ -116,25 +116,33 @@ const LS = {
             if (_msgs) _msgs.appendChild(_loadingDiv);
 
             let cards = [];
-            try {
-              const _ctrl = new AbortController();
-              const _timeout = setTimeout(() => _ctrl.abort(), 5000);
-              const r = await fetch('/api/storage/all', { signal: _ctrl.signal });
-              clearTimeout(_timeout);
-              const d = await r.json();
-              if (d.ok && d.cards?.length > 0) {
-                cards = d.cards;
-              } else {
-                // Fallback localStorage
-                const stored = localStorage.getItem('qa_code_cards');
-                if (stored) cards = JSON.parse(stored);
+            // Retry 3x ~2s : au cold-start (Render/Atlas froid) Mongo peut ne pas etre pret -> reponse
+            // vide. On re-tente avant de retomber sur le cache local. cache:'no-store' -> jamais resservir
+            // une reponse vide depuis le cache. break SEULEMENT si le serveur renvoie des cards.
+            for (var _attempt = 0; _attempt < 3; _attempt++) {
+              try {
+                const _ctrl = new AbortController();
+                const _timeout = setTimeout(() => _ctrl.abort(), 5000);
+                const r = await fetch('/api/storage/all', { cache: 'no-store', signal: _ctrl.signal });
+                clearTimeout(_timeout);
+                const d = await r.json();
+                if (d.ok && d.cards?.length > 0) {
+                  cards = d.cards;
+                  break;
+                } else if (_attempt < 2) {
+                  await new Promise(function(res){ setTimeout(res, 2000); });
+                }
+              } catch(e) {
+                if (_attempt < 2) {
+                  await new Promise(function(res){ setTimeout(res, 2000); });
+                }
               }
-            } catch(e) {
+            }
+            // Filet : UNIQUEMENT si le serveur n'a jamais renvoye de cards (vide/echec persistant apres
+            // les 3 essais). PRIORITE Mongo : ne JAMAIS ecraser des donnees serveur par un localStorage.
+            if (cards.length === 0) {
               const stored = localStorage.getItem('qa_code_cards');
               if (stored) { try { cards = JSON.parse(stored); } catch(e2) {} }
-              // Supprimer le loader en cas d'erreur
-              const _liErr = document.getElementById('_loadingIndicator');
-              if (_liErr) _liErr.remove();
             }
             if (cards.length > 0) {
               window._codeCards = cards;

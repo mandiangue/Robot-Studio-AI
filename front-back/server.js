@@ -12,7 +12,9 @@ const PORT    = process.env.PORT || 3001;
 
 const { connectDB } = require('./db');
 const pulledBlocksRouter = require('./routes/pulledblocks');
-connectDB();
+// connectDB() n'est PAS appele ici (fire-and-forget) : on l'attend (cape) dans start() en fin de
+// fichier, AVANT app.listen -> le serveur n'accepte du trafic qu'une fois Mongo pret (ou cap 8s).
+// Evite le cold-start Render ou /api/storage/all repond vide car Mongo pas encore connecte.
 
 app.use(express.json({ limit: '20mb' }));
 app.use('/api/pulledblocks', pulledBlocksRouter);
@@ -3178,7 +3180,15 @@ app.post('/api/cicd/jenkins', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 RF × IA Server démarré sur http://localhost:${PORT}`);
-  console.log(`📂 Ouvre http://localhost:${PORT}\n`);
-});
+// Démarrage : attendre Mongo (capé à 8s pour ne jamais bloquer le boot si Atlas est froid/down),
+// PUIS ouvrir le port. Render ne route le trafic qu'une fois app.listen appelé -> la 1ère requête
+// /api/storage/all tombe sur une DB prête. connectDB() avale ses erreurs -> start() ne crashe pas.
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+async function start() {
+  await Promise.race([ connectDB(), wait(8000) ]);
+  app.listen(PORT, () => {
+    console.log(`\n🚀 RF × IA Server démarré sur http://localhost:${PORT}`);
+    console.log(`📂 Ouvre http://localhost:${PORT}\n`);
+  });
+}
+start();
