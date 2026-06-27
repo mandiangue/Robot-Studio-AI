@@ -921,7 +921,11 @@ function renderResultCard(files, existingCardId) {
           fname    = filesToRun[0].filename;
         }
         window._lastCardId = cardId;
-        runTestsFromCard(combined, fname);
+        // Marqueur import vs généré (défaut: généré). Fallback desc/type pour vieilles cartes.
+        const _card = (window._codeCards || []).find(c => c.cardId === cardId);
+        const imported = !!(_card && (_card.imported || _card.type === 'pulled'
+          || (_card.files || []).some(f => f.desc === 'Importé')));
+        runTestsFromCard(combined, fname, { imported });
       } else if (action === 'copy') {
         navigator.clipboard.writeText(files[activeTab].code)
           .then(() => showToast(t('codecards.copied')));

@@ -139,7 +139,7 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     const r    = await fetch(window._runnerBase + '/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '', suiteFilter: window._runSuiteFilter || null }),
+      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '', suiteFilter: window._runSuiteFilter || null, imported: !!(suiteCtx && suiteCtx.imported) }),
     });
     const data = await r.json();
     hideTyping();

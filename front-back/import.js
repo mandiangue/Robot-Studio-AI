@@ -275,7 +275,7 @@ function _rfImportModal(title, files) {
     const cardId = 'result-' + Date.now();
     window._lastGeneratedTitle = title;
     window._codeCards = window._codeCards || [];
-    window._codeCards.push({ type: 'multi', cardId, title, files: files.map(f => ({ ...f })) });
+    window._codeCards.push({ type: 'multi', cardId, title, imported: true, files: files.map(f => ({ ...f })) });
     if (typeof saveCodeCards === 'function') saveCodeCards();
     if (typeof renderResultCard === 'function') renderResultCard(files, cardId);
     close();
@@ -410,6 +410,7 @@ function _importRFFiles(files, source) {
     existing.files = rf;
     existing.title = source;
     existing.source = source;
+    existing.imported = true;
     existing.tagged = true;
     var el = document.getElementById(existing.cardId);
     if (el) { el.remove(); renderResultCard(rf, existing.cardId); }
@@ -439,6 +440,7 @@ function _importRFFiles(files, source) {
     cardId: stableId,
     title:  source,
     source: source,
+    imported: true,
     files:  rf,
     tagged: true,
   });

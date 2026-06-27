@@ -222,7 +222,7 @@ app.post('/api/inspect-dom', (req, res) => {
 });
 
 app.post('/api/rf/run', async (req, res) => {
-  const { code, filename, headless, browserType, suiteFilter } = req.body;
+  const { code, filename, headless, browserType, suiteFilter, imported } = req.body;
   if (!code) return res.status(400).json({ error: "code requis" });
   console.log("[BROWSER] type:", browserType, "headless:", headless);
   console.log("[CODE] first200:", code.slice(0,200).replace(/\n/g,"|"));  console.log("[CODE] hasLibBrowser:", code.includes("Library    Browser"), "hasNewBrowser:", code.includes("New Browser"));
@@ -354,16 +354,13 @@ app.post('/api/rf/run', async (req, res) => {
   // false = projet IMPORTÉ standard (POM multi-fichiers sans structure maison)
   // -> on PRÉSERVE ses Open Browser/Go To intacts.
   // Réutilisée par : injectScreenshotOnFailure (blob + par-fichier), fixBrowser/Appium, walkAndFix.
-  // ⚠️ Le chemin MONO-fichier (non-POM) = tests générés par l'app (standard Open Browser,
-  // sans marqueur maison) -> doit rester true (sinon régression anti-popup). Seuls les blobs
-  // POM (>=2 fichiers, là où vivent les imports) sont soumis à la détection import.
-  const _fileCount = (code.match(/\*{5}\s*FILE:/g) || []).length;
-  const _isPOMBlob = _fileCount >= 2;
-  const defAvailable = !_isPOMBlob
-    || isSuiteBloc
-    || /\*{5}\s*FILE:[^\n|]*keywords\.robot/i.test(code)
-    || /(^|\n)Open Browser No Popup(?=\s|$)/.test(code);
-  if (!defAvailable) console.log('  [IMPORT] defAvailable=false -> transformations maison désactivées (Open Browser/Go To importés préservés)');
+  // MARQUEUR EXPLICITE (req.body.imported) au lieu d'une heuristique sur le blob :
+  //  - généré (ou flag absent : vieilles cartes, run direct, debug) -> true -> transformations maison
+  //    (fiable : un POM généré sans ***** FILE: keywords.robot littéral n'est plus classé import à tort).
+  //  - import avéré (carte imported:true / pulled / desc 'Importé') -> false -> Open Browser/Go To préservés.
+  //  - mode suite -> toujours maison.
+  const defAvailable = isSuiteBloc || !imported;
+  if (!defAvailable) console.log('  [IMPORT] imported=true -> transformations maison désactivées (Open Browser/Go To importés préservés)');
   // Remplacer le navigateur si browserType specifie et different de chrome
   if (browserType && browserType !== 'chrome') {
     finalCode = finalCode.replace(/(\${BROWSER}\s+)chrome/g, '$1' + browserType);
@@ -635,28 +632,29 @@ app.post('/api/rf/run', async (req, res) => {
   const fileParts   = finalCode.split(/\*{5}\s*FILE:[^\n]+\n/);
 
   if (fileHeaders.length >= 2) {
-    // Clean old POM files before writing new ones
-    ['resources', 'tests'].forEach(dir => {
+    // Clean old POM files before writing new ones — only remove .robot, keep XML/logs.
+    const removeRobots = (d) => {
+      fs.readdirSync(d).forEach(f => {
+        const fp = path.join(d, f);
+        if (fs.statSync(fp).isDirectory()) removeRobots(fp);
+        else if (f.endsWith('.robot')) {
+          // Ne pas supprimer si modifié manuellement récemment
+          const editedAt = manuallyEditedFiles.get(fp);
+          const isProtected = editedAt && (Date.now() - editedAt) < 30 * 60 * 1000;
+          if (!isProtected) fs.unlinkSync(fp);
+        }
+      });
+    };
+    // Généré : purge resources/ + tests/. IMPORT (defAvailable=false) : purge TOUT le
+    // périmètre (sauf suite_runs) pour ne pas mélanger avec les résidus d'un import précédent.
+    const cleanDirs = defAvailable
+      ? ['resources', 'tests']
+      : (() => { try { return fs.readdirSync(TESTS_DIR).filter(f => {
+          try { return fs.statSync(path.join(TESTS_DIR, f)).isDirectory() && f !== 'suite_runs'; } catch(e) { return false; }
+        }); } catch(e) { return ['resources', 'tests']; } })();
+    cleanDirs.forEach(dir => {
       const dirPath = path.join(TESTS_DIR, dir);
-      if (fs.existsSync(dirPath)) {
-        try {
-          // Only remove .robot files, keep output XMLs and logs
-          const removeRobots = (d) => {
-            fs.readdirSync(d).forEach(f => {
-              const fp = path.join(d, f);
-              if (fs.statSync(fp).isDirectory()) removeRobots(fp);
-              else if (f.endsWith('.robot')) {
-                // Ne pas supprimer si modifié manuellement récemment
-                const editedAt = manuallyEditedFiles.get(fp);
-                const isProtected = editedAt && (Date.now() - editedAt) < 30 * 60 * 1000;
-                if (!isProtected) fs.unlinkSync(fp);
-              }
-            });
-          };
-          removeRobots(dirPath);
-          console.log('  POM: cleaned', dir);
-        } catch(e) {}
-      }
+      if (fs.existsSync(dirPath)) { try { removeRobots(dirPath); console.log('  POM: cleaned', dir); } catch(e) {} }
     });
 
     // POM multi-file — save each file separately
@@ -935,6 +933,39 @@ app.post('/api/rf/run', async (req, res) => {
     }
     /* AUTOSPLIT DISABLED */ // if (_srcName) splitTestsByFeature(_splitDir, _srcName);
   } catch (eSplit) { console.log('  [SPLIT] skip:', eSplit.message); }
+
+    // ── FIX import : cibler le PROJET RÉEL (pas tests/ en dur ni placeholder) ──────
+    // Pour un projet importé (defAvailable=false), on cherche les .robot contenant des
+    // *** Test Cases ***/Tasks dans tout le périmètre (hors suite_runs) et on cible leur
+    // dossier ancêtre commun -> robot le parcourt récursivement et exécute tous les suites.
+    if (!defAvailable) {
+      const _runRoot = (typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR;
+      const _testRobots = [];
+      const _scanTests = (dir) => {
+        let items; try { items = fs.readdirSync(dir); } catch (e) { return; }
+        for (const f of items) {
+          if (f === 'suite_runs' || f === 'node_modules' || f === '__pycache__' || f === '.git') continue;
+          const fp = path.join(dir, f);
+          let st; try { st = fs.statSync(fp); } catch (e) { continue; }
+          if (st.isDirectory()) { _scanTests(fp); continue; }
+          if (!f.endsWith('.robot')) continue;
+          try { if (/\*{3}\s*(Test Cases|Tasks)\s*\*{3}/i.test(fs.readFileSync(fp, 'utf8'))) _testRobots.push(fp.replace(/\\/g, '/')); } catch (e) {}
+        }
+      };
+      _scanTests(_runRoot);
+      if (_testRobots.length) {
+        // Dossier ancêtre commun des fichiers de test
+        const _parts = _testRobots.map(p => p.split('/'));
+        let _common = _parts[0].slice(0, -1);
+        for (const pr of _parts) { let i = 0; while (i < _common.length && i < pr.length - 1 && _common[i] === pr[i]) i++; _common = _common.slice(0, i); }
+        const _commonDir = _common.join('/');
+        execFile = (_commonDir && fs.existsSync(_commonDir)) ? _commonDir : _testRobots[0];
+        console.log('  [IMPORT] exécution du projet réel ->', path.relative(TESTS_DIR, execFile), '(' + _testRobots.length + ' fichier(s) de test détecté(s))');
+      } else {
+        console.log('  [IMPORT] aucun *** Test Cases *** trouvé dans le projet importé');
+      }
+    }
+
     // Si plusieurs fichiers tests/feature_*.robot existent, lancer le dossier
     const testsDir = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
     const testFiles = fs.existsSync(testsDir)
@@ -943,7 +974,8 @@ app.post('/api/rf/run', async (req, res) => {
     if (testFiles.length > 1) {
       execFile = testsDir; // Lancer robot tests/ (tout le dossier)
     }
-    if (!execFile) {
+    // IMPORT : pas de fallback/placeholder tests/ — la cible réelle est posée plus bas (override import).
+    if (!execFile && defAvailable) {
       const fallback = path.join(TESTS_DIR, 'tests', 'tests.robot');
       const _featFiles = (() => { try { return fs.readdirSync(path.join(TESTS_DIR, 'tests')).filter(x => x.startsWith('feature_') && x.endsWith('.robot')); } catch (e) { return []; } })();
       if (_featFiles.length > 0) {
@@ -1202,8 +1234,9 @@ def get_no_popup_options(browser="chrome"):
     } else {
       console.log('  [IMPORT] __init__.robot maison NON généré (projet importé garde ses propres setups)');
     }
-  // Executer le dossier tests/ pour que __init__.robot soit pris en compte
-  execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
+  // Executer le dossier tests/ pour que __init__.robot soit pris en compte (PROJET GÉNÉRÉ).
+  // IMPORT (defAvailable=false) : on garde l'execFile ciblé sur le projet réel (override import).
+  if (defAvailable) execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
     // Retirer Test Setup/Teardown des fichiers feature_*.robot — UNIQUEMENT en mode maison
     // (un projet importé doit conserver ses propres Test Setup/Teardown).
     const testsDir4 = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
@@ -1220,6 +1253,46 @@ def get_no_popup_options(browser="chrome"):
   } else {
     // Supprimer __init__.robot si mode suite
     if (fs.existsSync(initFile)) fs.unlinkSync(initFile);
+  }
+
+  // ── FILET §5 : garantir la def "Open Browser No Popup" pour un GÉNÉRÉ non-suite ──
+  // Si le keyword est RÉFÉRENCÉ (setup/tests/__init__) mais DÉFINI nulle part (POM sans
+  // resources/keywords.robot littéral), on crée/complète resources/keywords.robot avec la def.
+  // (NoPopupOptions.py est déjà écrit inconditionnellement plus haut.) Un projet Browser ne
+  // référence jamais "Open Browser No Popup" -> filet inactif pour lui.
+  if (defAvailable && !isSuiteBloc) {
+    let _refd = false, _defd = false;
+    const _scanNP = (dir) => {
+      let items; try { items = fs.readdirSync(dir); } catch (e) { return; }
+      for (const f of items) {
+        if (f === 'suite_runs') continue;
+        const fp = path.join(dir, f);
+        let st; try { st = fs.statSync(fp); } catch (e) { continue; }
+        if (st.isDirectory()) { _scanNP(fp); continue; }
+        if (!f.endsWith('.robot')) continue;
+        let c; try { c = fs.readFileSync(fp, 'utf8'); } catch (e) { continue; }
+        if (/Open Browser No Popup/.test(c)) _refd = true;
+        if (/(^|\n)Open Browser No Popup(?=\s|$)/.test(c)) _defd = true;
+      }
+    };
+    _scanNP(TESTS_DIR);
+    if (_refd && !_defd) {
+      try {
+        const _resDir = path.join(TESTS_DIR, 'resources');
+        if (!fs.existsSync(_resDir)) fs.mkdirSync(_resDir, { recursive: true });
+        const _kwPath = path.join(_resDir, 'keywords.robot');
+        if (fs.existsSync(_kwPath)) {
+          let _kc = fs.readFileSync(_kwPath, 'utf8');
+          _kc = _kc.includes('*** Keywords ***')
+            ? _kc.replace('*** Keywords ***', '*** Keywords ***\n' + noPopupKw + '\n')
+            : '*** Keywords ***\n' + noPopupKw + '\n\n' + _kc;
+          fs.writeFileSync(_kwPath, _kc, 'utf8');
+        } else {
+          fs.writeFileSync(_kwPath, '*** Keywords ***\n' + noPopupKw + '\n', 'utf8');
+        }
+        console.log('  [SAFETY] def "Open Browser No Popup" auto-créée (référencée sans définition)');
+      } catch (eSafe) { console.log('  [SAFETY] skip:', eSafe.message); }
+    }
   }
 
   // [SPLIT@EXEC] decoupage par fonctionnalite, point de passage garanti
