@@ -120,6 +120,81 @@ function importTCFromFile(file) {
 }
 
 // ── Import projet Robot Framework (dossier) -> bloc multi-fichiers ──────────
+// Règles d'exclusion PARTAGÉES (sélecteur dossier + drag-drop). On EXCLUT uniquement
+// les artefacts et le technique ; tout le reste (source, data, images) est CONSERVÉ.
+const _RF_SKIP_DIR = /(^|\/)(node_modules|\.git|__pycache__|\.venv|venv|env|\.idea|\.vscode|\.cache|dist|build)(\/|$)/i;
+const _RF_SKIP_SYS = /(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini|\.gitignore|\.gitkeep|\.gitattributes|\.dockerignore|\.editorconfig)$/i;
+// Artefacts RF : output.xml (+ variantes *-output.xml/*_output.xml), log.html, report.html,
+// screenshots selenium. ⚠️ on ne touche PAS aux autres .xml (data de test légitime).
+const _RF_SKIP_ARTEFACT = /(^|\/)(output\.xml|log\.html|report\.html)$|[-_]output\.xml$|[-_]log\.html$|(^|\/)selenium-screenshot-[^/]*\.(png|jpe?g)$/i;
+// Binaires non utiles à un projet RF (jamais des sources/data).
+const _RF_SKIP_BIN = /\.(pyc|zip|tar|gz|rar|7z|exe|dll|so|dylib|class|jar|woff2?|eot|ttf|mp4|avi|mov|mkv|webm|flv|wmv|m4v|mp3|wav|ogg|aac|tmp|temp|bak|swp|swo)$/i;
+// Fichiers lus en BINAIRE (base64 dataURL) au lieu de texte.
+const _RF_IMG = /\.(png|jpe?g|gif|bmp|webp|svg|ico|tiff?|pdf|dcm|dicom)$/i;
+
+// ── Détection des SCREENSHOTS de résultats (à exclure) vs images SOURCES (à garder) ──
+// Dossiers où une image est considérée comme une RESSOURCE source (match par segment, casse ignorée).
+// ⚠️ ne PAS inclure resources/tests/pages/PO/keywords (trop génériques) ni downloads/results/output/logs/reports/browser (artefacts).
+const _RF_SRC_DIRS = new Set(['files','file','images','image','imgs','img','data','datas','dataset',
+  'assets','asset','fixtures','fixture','uploads','upload','medias','media',
+  'ref','refs','reference','references','baseline','baselines','expected','visual']);
+// Segments de chemin = dossiers d'artefacts (screenshots/sorties) -> image exclue d'office.
+const _RF_ARTEFACT_DIRS = new Set(['downloads','results','output','logs','reports']);
+const _rfBase = p => String(p || '').replace(/\\/g, '/').split('/').pop();
+// Construit { screenshotNames, inputNames } à partir des fichiers TEXTE (.robot/.resource).
+function _rfScanImageRefs(entries) {
+  const screenshotNames = new Set();
+  const inputNames = new Set();
+  // capture le dernier token *.png/.jpg... d'une ligne (nom de fichier image)
+  const imgTok = /([^\s"'|=\\/]+\.(?:png|jpe?g|gif|bmp|webp|svg|tiff?))\b/ig;
+  const isScreenshotKw = /\b(Capture Page Screenshot|Capture Element Screenshot|Take Screenshot)\b/i;
+  entries.forEach(e => {
+    if (e.binary) return;
+    if (!/\.(robot|resource|txt)$/i.test(e.relPath)) return;
+    String(e.content || '').split(/\r?\n/).forEach(line => {
+      const screenshot = isScreenshotKw.test(line);
+      let m;
+      imgTok.lastIndex = 0;
+      while ((m = imgTok.exec(line)) !== null) {
+        const bn = _rfBase(m[1]).toLowerCase();
+        if (screenshot) screenshotNames.add(bn);
+        else inputNames.add(bn);
+      }
+    });
+  });
+  return { screenshotNames, inputNames };
+}
+// Décision : true => EXCLURE l'image (artefact/screenshot), false => GARDER.
+function _rfIsArtefactImage(relPath, screenshotNames, inputNames) {
+  const rp = String(relPath || '').replace(/\\/g, '/');
+  const base = _rfBase(rp).toLowerCase();
+  const segs = rp.toLowerCase().split('/');
+  // a. artefacts connus (noms par défaut + dossiers de sortie)
+  if (/^selenium-screenshot-/.test(base) || /^fail-screenshot-/.test(base)) return true;
+  if (segs.some((s, i) => s === 'screenshot' && segs[i-1] === 'browser')) return true;
+  if (segs.slice(0, -1).some(s => _RF_ARTEFACT_DIRS.has(s))) return true;
+  // b. nommée comme une SORTIE de Capture Screenshot -> exclure même si rangée dans images/
+  if (screenshotNames && screenshotNames.has(base)) return true;
+  // c. référencée comme ENTRÉE (Choose File/upload/...) -> garder même mal rangée / racine
+  if (inputNames && inputNames.has(base)) return false;
+  // d. rangée dans un dossier-source connu -> garder
+  if (segs.slice(0, -1).some(s => _RF_SRC_DIRS.has(s))) return false;
+  // e. sinon (racine / dossier inconnu, non référencée) -> screenshot éparpillé probable
+  return true;
+}
+// Retire des entrées les images détectées comme screenshots de résultats (garde le reste).
+function _rfFilterScreenshots(entries) {
+  const { screenshotNames, inputNames } = _rfScanImageRefs(entries);
+  let dropped = 0;
+  const kept = entries.filter(e => {
+    if (!_RF_IMG.test(e.relPath)) return true;            // non-image -> garder
+    const drop = _rfIsArtefactImage(e.relPath, screenshotNames, inputNames);
+    if (drop) dropped++;
+    return !drop;
+  });
+  if (dropped) console.log('[IMPORT] ' + dropped + ' screenshot(s)/image(s) artefact exclu(s)');
+  return kept;
+}
 function _rfResolve(baseDir, rel) {
   rel = String(rel || '').replace(/\\/g, '/').trim();
   if (!rel || rel.startsWith('/') || /^[a-zA-Z]:/.test(rel)) return null;
@@ -141,52 +216,10 @@ function _rfRelPath(fromDir, toPath) {
   return out || t[t.length - 1];
 }
 function _rfClassify(relPath, content) {
-  const parts = relPath.split('/');
-  const base = parts.pop();
-  const dir = parts.join('/');
-  const lower = base.toLowerCase();
-  const ext = (lower.split('.').pop() || '');
-  const strip = (re) => dir.replace(re, '').replace(/^\/+|\/+$/g, '');
-  if (ext === 'yml' || ext === 'yaml') return base;
-  if (/^requirements([._-].*)?\.txt$/i.test(base)) return base;
-  if (ext === 'py') {
-    const sub = strip(/^(libs?|resources?|res)(\/|$)/i);
-    return 'resources/libs/' + (sub ? sub + '/' : '') + base;
-  }
-  if (lower === '__init__.robot') {
-    const sub = strip(/^(tests?|suites?)(\/|$)/i);
-    return 'tests/' + (sub ? sub + '/' : '') + '__init__.robot';
-  }
-  const isRF = ext === 'robot' || ext === 'resource' ||
-    (ext === 'txt' && /\*\*\*+\s*(settings|variables|keywords|test cases|tasks)\s*\*\*\*+/i.test(content));
-  if (isRF) {
-    const hasTests = /\*\*\*+\s*(test cases|tasks)\s*\*\*\*+/i.test(content);
-    const newBase = base.replace(/\.(resource|txt)$/i, '.robot');
-    if (hasTests) {
-      const sub = strip(/^(tests?|suites?|tc)(\/|$)/i);
-      return 'tests/' + (sub ? sub + '/' : '') + newBase;
-    }
-    const sub = strip(/^(resources?|res)(\/|$)/i);
-    return 'resources/' + (sub ? sub + '/' : '') + newBase;
-  }
-  const sub = strip(/^(resources?|res)(\/|$)/i);
-  return 'resources/' + (sub ? sub + '/' : '') + base;
-}
-function _rewriteRFImports(content, fromOldDir, fromNewPath, mapOldToNew) {
-  const fromNewDir = fromNewPath.split('/').slice(0, -1).join('/');
-  return content.split('\n').map(line => {
-    const m = line.match(/^(\s*)(Resource|Library|Variables)(\s{2,}|\t+)(\S+)(.*)$/i);
-    if (!m) return line;
-    const token = m[4];
-    const cands = [token, token + '.py', token + '.robot', token + '.resource'];
-    for (const cand of cands) {
-      const resolved = _rfResolve(fromOldDir, cand);
-      if (resolved && mapOldToNew[resolved]) {
-        return m[1] + m[2] + m[3] + _rfRelPath(fromNewDir, mapOldToNew[resolved]) + m[5];
-      }
-    }
-    return line;
-  }).join('\n');
+  // Refonte import : PR\u00c9SERVER l'arborescence d'origine telle quelle.
+  // Plus de reclassement POM (tests/resources/pages/libs), plus de renommage d'extension
+  // (.resource/.txt conserv\u00e9s). Les chemins relatifs internes du projet restent valides.
+  return String(relPath || '').replace(/\\/g, '/').replace(/^\/+/, '');
 }
 function _buildRFCard(entries) {
   const used = {};
@@ -202,26 +235,15 @@ function _buildRFCard(entries) {
     used[np] = true;
     mapOldToNew[e.relPath] = np;
   });
+  // Arbo pr\u00e9serv\u00e9e -> aucune r\u00e9\u00e9criture des imports Resource/Library/Variables :
+  // les chemins relatifs d'origine pointent toujours vers les m\u00eames fichiers.
   const files = entries.map(e => {
     const np = mapOldToNew[e.relPath];
-    const oldDir = e.relPath.split('/').slice(0, -1).join('/');
-    let code = e.content;
-    if (/\.robot$/i.test(np)) code = _rewriteRFImports(code, oldDir, np, mapOldToNew);
     const base = np.split('/').pop();
-    return { filename: np, code, label: base.replace(/\.[^.]+$/, ''), desc: 'Import\u00e9' };
+    return { filename: np, code: e.content, binary: !!e.binary, label: base.replace(/\.[^.]+$/, ''), desc: 'Import\u00e9' };
   });
-  const rank = f => {
-    const fn = f.filename;
-    if (fn === 'resources/variables.robot') return 0;
-    if (fn === 'resources/keywords.robot') return 1;
-    if (fn.startsWith('resources/pages/')) return 2;
-    if (fn.startsWith('resources/libs/')) return 3;
-    if (fn.startsWith('resources/')) return 4;
-    if (fn === 'tests/__init__.robot') return 5;
-    if (fn.startsWith('tests/')) return 6;
-    return 7;
-  };
-  files.sort((a, b) => rank(a) - rank(b) || a.filename.localeCompare(b.filename));
+  // Tri alphab\u00e9tique simple (cosm\u00e9tique) \u2014 l'arbo r\u00e9elle est port\u00e9e par filename.
+  files.sort((a, b) => a.filename.localeCompare(b.filename));
   return files;
 }
 function _rfImportModal(title, files) {
@@ -260,10 +282,10 @@ function _rfImportModal(title, files) {
 showToast('📂 ' + t('imp.projectImportedTxt').replace('{title}', title).replace('{n}', files.length));
   };
 }
+// Exclusions à l'import : UNIQUEMENT artefacts + technique. Les images/pdf sont INCLUS
+// (lus en base64). Voir aussi _rfArtefact / _rfTechBin partagés avec le sélecteur de dossier.
 function _rfMediaDrop(rp) {
-  return /(^|\/)(node_modules|\.git|__pycache__|\.venv|venv|\.idea|\.vscode|\.cache)(\/|$)/i.test(rp)
-    || /(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini|\.gitignore|\.gitkeep|\.gitattributes|\.dockerignore|\.editorconfig|output\.xml|log\.html|report\.html)$/i.test(rp)
-    || /\.(png|jpe?g|gif|bmp|webp|svg|ico|tiff?|mp4|avi|mov|mkv|webm|flv|wmv|m4v|mp3|wav|ogg|aac|log|zip|tar|gz|rar|7z|exe|dll|so|dylib|class|jar|woff2?|eot|ttf|pyc|tmp|temp|bak|swp|swo|pdf)$/i.test(rp);
+  return _RF_SKIP_DIR.test(rp) || _RF_SKIP_SYS.test(rp) || _RF_SKIP_ARTEFACT.test(rp) || _RF_SKIP_BIN.test(rp);
 }
 async function _rfReadDropEntry(entry, prefix, out) {
   if (!entry) return;
@@ -280,18 +302,19 @@ async function _rfProcessDropped(fileRecs) {
   const kept = fileRecs.filter(r => !_rfMediaDrop(r.rel));
   if (!kept.length) { showToast(t('imp.noUsableFile')); return; }
   const rootSeg = (kept[0].rel.split('/')[0]) || 'Projet RF';
-  const DCM = /\.(dcm|dicom)$/i;
   const readDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
   const entries = await Promise.all(kept.map(async r => {
     const relPath = r.rel.split('/').slice(1).join('/') || r.rel;
-    const cap = DCM.test(r.rel) ? 8 * 1024 * 1024 : 1024 * 1024;
+    const isImg = _RF_IMG.test(r.rel);
+    const cap = isImg ? 8 * 1024 * 1024 : 1024 * 1024;
     if (r.file.size > cap) return null;
-    if (DCM.test(r.rel)) return { relPath, content: await readDataURL(r.file), binary: true };
+    if (isImg) return { relPath, content: await readDataURL(r.file), binary: true };
     return { relPath, content: await r.file.text(), binary: false };
   }));
   const clean = entries.filter(Boolean);
   if (!clean.filter(e => /\.(robot|resource)$/i.test(e.relPath)).length) { showToast(t('imp.noRobotFound')); return; }
-  _rfImportModal(rootSeg, _buildRFCard(clean));
+  const kept2 = _rfFilterScreenshots(clean);
+  _rfImportModal(rootSeg, _buildRFCard(kept2));
 }
 function _rfOpenImportModal() {
   const ov = document.createElement('div');
@@ -325,33 +348,32 @@ function _rfOpenImportModal() {
 async function importRFProject(fileList) {
   const all = Array.from(fileList || []);
   if (!all.length) return;
-  const SKIP_DIR = /(^|\/)(node_modules|\.git|__pycache__|\.venv|venv|env|results?|output|logs?|dist|build|\.idea|\.vscode)(\/|$)/i;
-  const SKIP_FILE = /(output\.xml|log\.html|report\.html|\.(png|jpe?g|gif|svg|zip|tar|gz|pyc|exe|dll|class|jar|ico|pdf|mp4|woff2?|ttf))$/i;
-  const KEEP = /\.(robot|resource|txt|py|yaml|yml|json|csv)$/i;
   const rootSeg = (all[0].webkitRelativePath || all[0].name).split('/')[0];
   const title = rootSeg || 'Projet RF';
+  // Exclusions PARTAGÉES (artefacts + technique uniquement). Images/data CONSERVÉS.
   const picked = all.filter(f => {
     const rp = (f.webkitRelativePath || f.name);
-    if (SKIP_DIR.test(rp) || SKIP_FILE.test(rp)) return false;
-    if (/(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini|\.gitignore|\.gitkeep|\.gitattributes|\.dockerignore|\.editorconfig)$/i.test(rp)) return false;
-    if (/\.(png|jpe?g|gif|bmp|webp|svg|ico|tiff?|mp4|avi|mov|mkv|webm|flv|wmv|m4v|mp3|wav|ogg|aac|log|zip|tar|gz|rar|7z|exe|dll|so|dylib|class|jar|woff2?|eot|ttf|pyc|tmp|temp|bak|swp|swo|pdf)$/i.test(rp)) return false;
-    const _max = /\.(png|jpe?g|gif|bmp|webp|ico|pdf|dcm|dicom)$/i.test(rp) ? 8 * 1024 * 1024 : 1024 * 1024;
+    if (_RF_SKIP_DIR.test(rp) || _RF_SKIP_SYS.test(rp) || _RF_SKIP_ARTEFACT.test(rp) || _RF_SKIP_BIN.test(rp)) return false;
+    const _max = _RF_IMG.test(rp) ? 8 * 1024 * 1024 : 1024 * 1024;
     if (f.size > _max) return false;
     return true;
   });
   if (!picked.length) { showToast(t('imp.noRfInFolder')); return; }
   showToast(t('imp.readingProject'));
   try {
+    const _readDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
     const entries = await Promise.all(picked.map(async f => {
       const rp = (f.webkitRelativePath || f.name);
       const relPath = rp.split('/').slice(1).join('/') || rp;
+      if (_RF_IMG.test(rp)) return { relPath, content: await _readDataURL(f), binary: true };
       const content = await f.text();
-      return { relPath, content };
+      return { relPath, content, binary: false };
     }));
     if (!entries.filter(e => /\.(robot|resource)$/i.test(e.relPath)).length) {
       showToast(t('imp.noRobotFound')); return;
     }
-    _rfImportModal(title, _buildRFCard(entries));
+    const kept = _rfFilterScreenshots(entries);
+    _rfImportModal(title, _buildRFCard(kept));
   } catch (e) {
     showToast(t('imp.projectImportError') + e.message);
   }

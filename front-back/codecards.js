@@ -707,8 +707,6 @@ function renderResultCard(files, existingCardId) {
                        font-weight:700;cursor:pointer;white-space:nowrap">
                 ▶️ Run
               </button>
-              <button data-card="${cardId}" data-raction="merge-code" data-i18n="codecards.select" data-i18n-title="codecards.tSelectMerge"
-                style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.3);color:#c084fc;padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer" title="Sélectionner des blocs à fusionner">☑ Sélectionner</button>
               <button data-card="${cardId}" data-raction="copy" data-i18n-title="codecards.tCopy"
                 style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">📋</button>
               <button data-card="${cardId}" data-raction="download" data-i18n-title="codecards.tDownload"
@@ -828,8 +826,6 @@ function renderResultCard(files, existingCardId) {
       } else if (action === 'tab') {
         activeTab = parseInt(btn.dataset.ridx);
         buildCard(activeTab);
-      } else if (action === 'merge-code') {
-              openCodeMergeSelector(cardId, files);
       } else if (action === 'toggleedit') {
         const eid   = cardId + '-edit-' + activeTab;
         const view  = document.getElementById(eid + '-view');
@@ -914,9 +910,10 @@ function renderResultCard(files, existingCardId) {
         // For multi-file POM: send combined code WITH delimiters so server can split
         let combined, fname;
         if (filesToRun.length > 1) {
-          // Always send ALL files with FILE: delimiters so server writes them all to disk
+          // Always send ALL files with FILE: delimiters so server writes them all to disk.
+          // Fichiers binaires (images) -> marqueur ` | BINARY` ; f.code = dataURL base64.
           combined = filesToRun.map(f =>
-            '***** FILE: ' + f.filename + ' | ' + (f.label || f.filename.split('/').pop().replace('.robot','')) + ' | ' + (f.desc || f.filename) + '\n' + f.code
+            '***** FILE: ' + f.filename + ' | ' + (f.label || f.filename.split('/').pop().replace('.robot','')) + ' | ' + (f.desc || f.filename) + (f.binary ? ' | BINARY' : '') + '\n' + f.code
           ).join('\n');
           fname = 'tests/tests';
         } else {

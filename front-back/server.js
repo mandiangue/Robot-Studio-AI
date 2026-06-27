@@ -175,6 +175,26 @@ function fixOldNoPopup(c) {
   return fixCloseBrowserAll(fixHeadlessBool(out.join('\n')));
 }
 
+// ── Vrai si un .robot de l'arbre DÉFINIT "Open Browser No Popup" (ligne en colonne 0 = ──
+// définition de keyword, pas un appel). Sert à ne réécrire Open Browser -> Open Browser No
+// Popup QUE si la def est disponible (projet maison) ; sinon laisser Open Browser standard
+// (projet importé en SeleniumLibrary standard).
+function hasNoPopupDefInTree(dir) {
+  try {
+    if (!fs.existsSync(dir)) return false;
+    for (const f of fs.readdirSync(dir)) {
+      // Ne JAMAIS scanner les runs résiduels d'autres exécutions (pollution defAvailable)
+      if (f === 'suite_runs') continue;
+      const fp = path.join(dir, f);
+      let st; try { st = fs.statSync(fp); } catch (e) { continue; }
+      if (st.isDirectory()) { if (hasNoPopupDefInTree(fp)) return true; continue; }
+      if (!f.endsWith('.robot')) continue;
+      try { if (/^Open Browser No Popup\b/m.test(fs.readFileSync(fp, 'utf8'))) return true; } catch (e) {}
+    }
+  } catch (e) {}
+  return false;
+}
+
 if (!fs.existsSync(TESTS_DIR)) fs.mkdirSync(TESTS_DIR);
 
 // ── POST /api/rf/run ──────────────────────────────────────────
@@ -327,6 +347,23 @@ app.post('/api/rf/run', async (req, res) => {
 
   // Inject headless option if requested — works with SeleniumLibrary and BrowserLibrary
   let finalCode = code;
+
+  // ── FIX import : SOURCE UNIQUE de defAvailable, calculée TÔT (avant toute ──────
+  // transformation maison) à partir du blob brut. true = projet GÉNÉRÉ (maison)
+  // -> on applique les transformations anti-popup / screenshot / réécritures.
+  // false = projet IMPORTÉ standard (POM multi-fichiers sans structure maison)
+  // -> on PRÉSERVE ses Open Browser/Go To intacts.
+  // Réutilisée par : injectScreenshotOnFailure (blob + par-fichier), fixBrowser/Appium, walkAndFix.
+  // ⚠️ Le chemin MONO-fichier (non-POM) = tests générés par l'app (standard Open Browser,
+  // sans marqueur maison) -> doit rester true (sinon régression anti-popup). Seuls les blobs
+  // POM (>=2 fichiers, là où vivent les imports) sont soumis à la détection import.
+  const _fileCount = (code.match(/\*{5}\s*FILE:/g) || []).length;
+  const _isPOMBlob = _fileCount >= 2;
+  const defAvailable = !_isPOMBlob
+    || isSuiteBloc
+    || /\*{5}\s*FILE:[^\n|]*keywords\.robot/i.test(code)
+    || /(^|\n)Open Browser No Popup(?=\s|$)/.test(code);
+  if (!defAvailable) console.log('  [IMPORT] defAvailable=false -> transformations maison désactivées (Open Browser/Go To importés préservés)');
   // Remplacer le navigateur si browserType specifie et different de chrome
   if (browserType && browserType !== 'chrome') {
     finalCode = finalCode.replace(/(\${BROWSER}\s+)chrome/g, '$1' + browserType);
@@ -566,9 +603,12 @@ app.post('/api/rf/run', async (req, res) => {
   );
 
     // Inject screenshot on failure into each test case
-  finalCode = fixAppiumKeywords(finalCode);
-  finalCode = fixBrowserKeywords(finalCode);
-  finalCode = injectScreenshotOnFailure(finalCode, req.body.browserSession || 'per-test');
+  // FIX import : transformations maison gatées — un projet importé garde ses keywords intacts.
+  if (defAvailable) {
+    finalCode = fixAppiumKeywords(finalCode);
+    finalCode = fixBrowserKeywords(finalCode);
+    finalCode = injectScreenshotOnFailure(finalCode, req.body.browserSession || 'per-test');
+  }
 
   // Also apply to POM resource files on disk
   if (finalCode.includes('Library    Browser')) {
@@ -630,13 +670,37 @@ app.post('/api/rf/run', async (req, res) => {
       const absPath = path.join(baseForFile, relPath);
       const absDir  = path.dirname(absPath);
       if (!fs.existsSync(absDir)) fs.mkdirSync(absDir, { recursive: true });
+
+      // ── Refonte import : GARDE extension/binaire ───────────────────────────
+      // Les nettoyeurs robot ne s'appliquent QU'aux .robot/.resource. Le reste est
+      // écrit verbatim (texte) ou décodé (binaire) pour ne pas corrompre les sources.
+      const isBinaryFile = /\|\s*BINARY\b/i.test(h[0]);
+      const isRobotFile  = /\.(robot|resource)$/i.test(relPath);
+      if (isBinaryFile) {
+        try {
+          let b64 = content;
+          const ci = b64.indexOf('base64,');           // dataURL data:...;base64,XXXX
+          if (ci >= 0) b64 = b64.slice(ci + 7);
+          fs.writeFileSync(absPath, Buffer.from(b64.replace(/\s+/g, ''), 'base64'));
+          console.log('  POM: wrote (binary)', relPath);
+        } catch (eBin) { console.error('  POM: binary write error', relPath, eBin.message); }
+        return;
+      }
+      if (!isRobotFile) {
+        try { fs.writeFileSync(absPath, content, 'utf8'); console.log('  POM: wrote (verbatim)', relPath); }
+        catch (eV) { console.error('  POM: verbatim write error', relPath, eV.message); }
+        return;
+      }
+
       let injected = cleanRobotCodeServer(fixSelectors(fixAppiumKeywords(
         isSuiteBloc
           ? fixResourcePaths(content, relPath, runBaseDir)  // use isolated dir for suite blocs
           : fixResourcePaths(content, relPath)
       )));
       injected = fixBrowserKeywords(injected);
-      injected = injectScreenshotOnFailure(injected, req.body.browserSession || 'per-test');
+      // FIX import : injectScreenshotOnFailure (réécritures maison Go To/Open Browser/Setup)
+      // n'est appliqué qu'aux projets générés ; un import garde ses keywords intacts.
+      if (defAvailable) injected = injectScreenshotOnFailure(injected, req.body.browserSession || 'per-test');
       // Deduplicate all sections before writing
       injected = deduplicateRobotSettings(injected);
       if (relPath.includes('variables.robot')) {
@@ -743,6 +807,8 @@ app.post('/api/rf/run', async (req, res) => {
       '    Dismiss Password Popup',
     ].join('\n');
 
+    // defAvailable : source unique calculée tôt (cf. début du handler). Réutilisée ici par walkAndFix.
+
     const walkAndFix = (dir) => {
       if (!fs.existsSync(dir)) return;
       if (dir.includes('suite_runs') && !isSuiteBloc) return;
@@ -769,7 +835,7 @@ app.post('/api/rf/run', async (req, res) => {
         // Skip files that use Browser/Playwright library or contain keyword definition
         const strippedForCheck = c.replace(/Open Browser No Popup[\s\S]*?(?=\n[A-Za-z]|$)/g, '__KW_DEF__');
         const isPlaywrightFile = c.includes('Library    Browser') || c.includes('Library     Browser') || c.includes('New Browser') || c.includes('New Page');
-        if (!isPlaywrightFile && strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
+        if (defAvailable && !isPlaywrightFile && strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
           const before = c;
           c = c.replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
           c = c.replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
@@ -1125,15 +1191,23 @@ def get_no_popup_options(browser="chrome"):
       'Test Teardown   Close Browser',
       '',
     ].join('\n');
-    if (!fs.existsSync(initFile)) {
-      fs.writeFileSync(initFile, initContent, 'utf8');
+    // FIX import (Défaut B) : ne créer le __init__.robot maison (Test Setup Open Browser No
+    // Popup + Resource keywords.robot) QUE si la def est disponible. Sinon -> projet importé :
+    // garder ses propres setups, ne rien injecter (sinon keyword absent -> "No keyword found").
+    if (defAvailable) {
+      if (!fs.existsSync(initFile)) {
+        fs.writeFileSync(initFile, initContent, 'utf8');
+      }
+      console.log('  POM: created tests/__init__.robot (per-test mode)');
+    } else {
+      console.log('  [IMPORT] __init__.robot maison NON généré (projet importé garde ses propres setups)');
     }
-    console.log('  POM: created tests/__init__.robot (per-test mode)');
   // Executer le dossier tests/ pour que __init__.robot soit pris en compte
   execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
-    // Retirer Test Setup/Teardown des fichiers feature_*.robot
+    // Retirer Test Setup/Teardown des fichiers feature_*.robot — UNIQUEMENT en mode maison
+    // (un projet importé doit conserver ses propres Test Setup/Teardown).
     const testsDir4 = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
-    if (fs.existsSync(testsDir4)) {
+    if (defAvailable && fs.existsSync(testsDir4)) {
       fs.readdirSync(testsDir4).filter(f => f.endsWith('.robot') && f !== '__init__.robot').forEach(f => {
         const fp4 = path.join(testsDir4, f);
         let c4 = fs.readFileSync(fp4, 'utf8');
@@ -1263,16 +1337,27 @@ def get_no_popup_options(browser="chrome"):
       .replace(/Resource\s+\.\.\/\.\.\/resources\//g, 'Resource    ' + absRes + '/');
   }
   
-  // Final fix: ensure Suite Setup uses Open Browser not Go To
-  cleanFinal = cleanFinal.replace(
-    /^Suite Setup([ \t]+)Go To([ \t]+)(\S+)([ \t]*)(.*)$/gm,
-    'Suite Setup$1Open Browser No Popup    $3    ${BROWSER}'
-  );
-  // Replace remaining Open Browser with Open Browser No Popup (strip old options=)
-  if (cleanFinal.includes('Open Browser') && !cleanFinal.includes('Open Browser No Popup')) {
-    cleanFinal = cleanFinal
-      .replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5')
-      .replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
+  // FIX import : ne réécrire vers Open Browser No Popup QUE si la def est disponible
+  // (mode suite, keywords.robot maison, ou def déjà présente dans le fichier / les resources).
+  // Sinon -> projet importé standard : laisser Open Browser SeleniumLibrary intact.
+  const defAvailableSingle = isSuiteBloc
+    || fs.existsSync(path.join(TESTS_DIR, 'resources', 'keywords.robot'))
+    || /^Open Browser No Popup\b/m.test(cleanFinal)
+    || hasNoPopupDefInTree(path.join(TESTS_DIR, 'resources'));
+  if (defAvailableSingle) {
+    // Final fix: ensure Suite Setup uses Open Browser not Go To
+    cleanFinal = cleanFinal.replace(
+      /^Suite Setup([ \t]+)Go To([ \t]+)(\S+)([ \t]*)(.*)$/gm,
+      'Suite Setup$1Open Browser No Popup    $3    ${BROWSER}'
+    );
+    // Replace remaining Open Browser with Open Browser No Popup (strip old options=)
+    if (cleanFinal.includes('Open Browser') && !cleanFinal.includes('Open Browser No Popup')) {
+      cleanFinal = cleanFinal
+        .replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5')
+        .replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
+    }
+  } else {
+    console.log('  [IMPORT] Mono-fichier sans def "Open Browser No Popup" -> Open Browser standard conservé');
   }
   fs.writeFileSync(robotFile, cleanFinal, 'utf8');
   finalCleanupRobotFile(robotFile);
@@ -2079,6 +2164,8 @@ function ensureLibraryImports(code) {
 
 function finalCleanupRobotFile(filePath) {
   if (!fs.existsSync(filePath)) return;
+  // Refonte import : ne JAMAIS nettoyer un non-robot (data/images/.py) -> corruption.
+  if (!/\.(robot|resource)$/i.test(filePath)) return;
   try {
     let code = fs.readFileSync(filePath, 'utf8');
     const isBrowser  = code.includes('Library    Browser') && !code.includes('SeleniumLibrary');
