@@ -19,10 +19,15 @@ function updateKeyStatus(val) {
 // ── Azure connect — direct browser call ───────────────────────────────────────
 function parseAzureUrl(url) {
   const parsed = new URL(url.trim());
-  const parts  = parsed.pathname.replace(/^\//, '').split('/').filter(Boolean);
+  let parts  = parsed.pathname.replace(/^\//, '').split('/').filter(Boolean);
+  // URL repo (.../_git/{repo}) : retirer _git + repo pour ne garder que {org?}/{project?}.
+  // project omis -> = repo. Évite project='_git' qui produit une URL API invalide -> HTML.
+  let repo = null;
+  const gi = parts.indexOf('_git');
+  if (gi >= 0) { repo = parts[gi + 1] || null; parts = parts.slice(0, gi); }
   let org, project;
-  if (parsed.hostname === 'dev.azure.com') { org = parts[0]; project = parts[1]; }
-  else { org = parsed.hostname.split('.')[0]; project = parts[0]; }
+  if (parsed.hostname === 'dev.azure.com') { org = parts[0]; project = parts[1] || repo; }
+  else { org = parsed.hostname.split('.')[0]; project = parts[0] || repo; }
   return { org, project };
 }
 
@@ -42,23 +47,27 @@ async function handleAzureConnect(url, token, apiKey, originalMsg) {
   showTyping();
   try {
     const { org, project } = parseAzureUrl(url);
-    if (!org || !project) {
+    if (!org) {   // projet non requis : récup US au niveau org (IDs uniques par organisation)
       hideTyping();
       renderAgentMsg(t('conn.msg.urlInvalid'));
       return;
     }
 
-    const testUrl = `z`;
+    // Valide au niveau ORGANISATION (le projet n'est pas requis : work items uniques par org).
+    const testUrl = `https://dev.azure.com/${org}/_apis/projects?api-version=7.0`;
     const r = await azureFetch(testUrl, token);
     hideTyping();
 
     if (r.status === 401) { renderAgentMsg(t('conn.msg.tokenInvalid')); return; }
-    if (r.status === 404) { renderAgentMsg(t('conn.msg.projectNotFound').replace('{project}', project).replace('{org}', org)); return; }
+    if (r.status === 404) { renderAgentMsg(t('conn.msg.projectNotFound').replace('{project}', project || org).replace('{org}', org)); return; }
+    // Page HTML (page de connexion) = PAT rejeté / SSO requis, même avec un statut 2xx (203 fréquent).
+    const _ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (!_ct.includes('json')) { renderAgentMsg(t('conn.msg.tokenInvalid')); return; }
     if (!r.ok)            { renderAgentMsg(t('conn.msg.azureHttpError').replace('{status}', r.status)); return; }
 
     azureSession = { org, project, token };
     LS.save();
-    renderAgentMsg(`${t('conn.msg.azureConnected')}\n\n<span class="tag azure">📁 ${org}</span> <span class="tag rf">🗂 ${project}</span>\n\n${t('conn.msg.askUsNumber')}`);
+    renderAgentMsg(`${t('conn.msg.azureConnected')}\n\n<span class="tag azure">📁 ${org}</span> <span class="tag rf">🗂 ${project || org}</span>\n\n${t('conn.msg.askUsNumber')}`);
 
   } catch(err) {
     hideTyping();
@@ -75,10 +84,22 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
       'System.Id','System.Title','System.Description','System.WorkItemType',
       'System.State','Microsoft.VSTS.Common.AcceptanceCriteria','System.Tags',
     ].join(',');
-    const url = `https://dev.azure.com/${org}/${project}/_apis/wit/workitems/${id}?fields=${fields}&api-version=7.0`;
+    // Niveau ORG (sans projet) : les IDs de work items sont uniques dans l'organisation.
+    const url = `https://dev.azure.com/${org}/_apis/wit/workitems/${id}?fields=${fields}&api-version=7.0`;
     const r   = await azureFetch(url, token);
-    const data = await r.json();
     hideTyping();
+    // Azure renvoie une page HTML (connexion) si le PAT est invalide/expiré ou si SSO/accès
+    // conditionnel est requis -> r.json() planterait sur "<!DOCTYPE" ("Unexpected token <").
+    const _ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (!_ct.includes('json')) {
+      renderAgentMsg(currentLang === 'en'
+        ? '❌ Azure returned a non-JSON (HTML) response — invalid PAT or SSO/conditional access required. Check your token and the org/project URL.'
+        : '❌ Azure a renvoyé une réponse non-JSON (HTML) — token (PAT) invalide ou SSO/accès conditionnel requis. Vérifie ton token et l’URL org/projet.');
+      return;
+    }
+    let data;
+    try { data = await r.json(); }
+    catch(e) { renderAgentMsg(currentLang === 'en' ? '❌ Azure: invalid JSON response.' : '❌ Azure : réponse JSON invalide.'); return; }
     if (data && data.stopped === true) { window._rfRunning = false; window._currentRunMsg = null; return; }
 
     if (!r.ok) {
@@ -99,23 +120,70 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
 
     // Show US card
     const cardHtml = renderUsCard(us);
+    const usCardId = 'azure-us-' + Date.now();
     const div = document.createElement('div');
     div.className = 'msg agent';
-    div.innerHTML = `
+    div.id = usCardId;
+
+    if (shouldGenerate) {
+      // Comportement direct (appelé avec shouldGenerate=true ailleurs) — inchangé.
+      div.innerHTML = `
       <div class="msg-avatar">🤖</div>
       <div class="msg-body">
         <div class="msg-bubble">
           ${t('conn.card.usRetrieved')} #${id} :${cardHtml}
-          ${shouldGenerate ? '<br>' + t('conn.card.generating') : t('conn.card.askGenerate')}
+          <br>${t('conn.card.generating')}
         </div>
       </div>`;
-    document.getElementById('messages').appendChild(div);
-    chatHistory.push({ role: 'assistant', content: `[US Card #${id}: ${us.title}]` });
-    LS.save();
-    scrollToBottom();
-
-    if (shouldGenerate) {
+      document.getElementById('messages').appendChild(div);
+      chatHistory.push({ role: 'assistant', content: `[US Card #${id}: ${us.title}]` });
+      LS.save();
+      scrollToBottom();
       await generateTestCasesFromIssue(us, apiKey);
+    } else {
+      // Carte + question + 2 boutons (aligné sur handleJiraFetch) -> ATTEND le clic.
+      div.innerHTML = `
+      <div class="msg-avatar">🤖</div>
+      <div class="msg-body">
+        <div class="msg-bubble">
+          ${t('conn.card.usRetrieved')} #${id} :${cardHtml}
+          <div style="margin-top:12px;font-size:13px;color:#8ab4c4">
+            ${t('conn.card.askGenerateCases')}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button data-issue-card="${usCardId}" data-action="yes"
+              style="background:rgba(0,212,170,0.12);border:1px solid var(--teal);color:var(--teal);padding:8px 20px;border-radius:7px;font-size:13px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer">
+              ${t('conn.card.yesGenerate')}
+            </button>
+            <button data-issue-card="${usCardId}" data-action="no"
+              style="background:transparent;border:1px solid var(--border);color:var(--gray);padding:8px 16px;border-radius:7px;font-size:13px;font-family:'Syne',sans-serif;cursor:pointer">
+              ${t('conn.card.noThanks')}
+            </button>
+          </div>
+        </div>
+      </div>`;
+      document.getElementById('messages').appendChild(div);
+
+      // Stocker l'US pour le clic (même mécanisme que Jira : window._pendingIssues)
+      window._pendingIssues = window._pendingIssues || {};
+      window._pendingIssues[usCardId] = { issue: us, apiKey };
+
+      div.addEventListener('click', async e => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const stored = window._pendingIssues[usCardId];
+        // Retirer les boutons après le choix
+        div.querySelectorAll('[data-action]').forEach(b => b.remove());
+        if (action === 'yes' && stored) {
+          await generateTestCasesFromIssue(stored.issue, stored.apiKey);
+        }
+        // "no" -> ne rien générer
+      });
+
+      chatHistory.push({ role: 'assistant', content: `[US Card #${id}: ${us.title}]` });
+      LS.save();
+      scrollToBottom();
     }
 
   } catch(err) {
@@ -549,7 +617,7 @@ async function uiFetchAzure() {
     const data = await r.json();
     if (!r.ok) { showConnError('azure', '❌ ' + (data.error || t('conn.err.httpError').replace('{status}', r.status))); return; }
     const apiKey = window._serverApiKey || document.getElementById('apiKey').value.trim();
-    await handleFetchAndGenerate(id, true, apiKey, '', data);  // true = génère les cas
+    await handleFetchAndGenerate(id, false, apiKey, '', data);  // false = afficher carte + question + 2 boutons (génère au clic "Oui", comme Jira)
   } catch(err) {
     showConnError('azure', err.message.includes('fetch') ? '❌ Serveur proxy non démarré' : '❌ ' + err.message);
   } finally {

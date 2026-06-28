@@ -3223,7 +3223,34 @@ watchDirs.forEach(dir => {
 // CI/CD — GitLab / Azure DevOps / Jenkins
 // ══════════════════════════════════════════════════════════════════════════════
 
-// POST 
+// ── Azure DevOps : transforme l'URL WEB du repo en base API REST Git ──────────────
+// Web  : https://dev.azure.com/{org}/{project}/_git/{repo}  (ou .../{org}/_git/{repo} -> project=repo)
+//        https://{org}.visualstudio.com/{project}/_git/{repo}
+// API  : https://dev.azure.com/{org}/{project}/_apis/git/repositories/{repo}
+// Sans ça, ${url}/items|/pushes|/refs tape l'UI web (_git) -> Azure renvoie du HTML
+// -> "Unexpected token '<'". (Équivalent Azure de la transformation GitLab ; GitLab non touché.)
+function toAzureGitApiBase(rawUrl) {
+  let u = String(rawUrl || '').trim().replace(/\/+$/, '');
+  if (!u) return u;
+  if (/\/_apis\/git\/repositories\//i.test(u)) return u;        // déjà une base API -> idempotent
+  const m = u.match(/^(https?:\/\/[^/]+)\/(.*?)\/_git\/([^/?#]+)/i);
+  if (!m) return u;                                              // pas une URL web _git -> laisser tel quel
+  const host = m[1];
+  const mid  = m[2].split('/').filter(Boolean);                 // segments entre host et _git
+  const repo = decodeURIComponent(m[3]);
+  let orgProj;
+  if (/^https?:\/\/dev\.azure\.com/i.test(host)) {
+    const org = mid[0];
+    const project = mid[1] || repo;                             // project omis -> = repo
+    orgProj = org + '/' + project;
+  } else {
+    // {org}.visualstudio.com/{project}/_git/{repo} -> org dans le host
+    orgProj = (mid[0] || repo);
+  }
+  return host + '/' + orgProj + '/_apis/git/repositories/' + encodeURIComponent(repo);
+}
+
+// POST
 // POST /api/cicd/pull — récupère les fichiers RF depuis GitLab ou Azure
 app.post('/api/cicd/pull', async (req, res) => {
   const { provider, url, token, branch, folder } = req.body;
@@ -3262,10 +3289,11 @@ app.post('/api/cicd/pull', async (req, res) => {
       }
 
     } else if (provider === 'azure') {
+      const apiUrl = toAzureGitApiBase(url);   // URL web _git -> base API _apis/git/repositories
       const ref   = branch || 'main';
       const scope = folder ? `&scopePath=${encodeURIComponent('/' + folder)}` : '';
       const listRes = await fetch(
-        `${url}/items?api-version=7.0&recursionLevel=Full${scope}`,
+        `${apiUrl}/items?api-version=7.0&recursionLevel=Full${scope}`,
         { headers: { 'Authorization': 'Basic ' + Buffer.from(':' + token).toString('base64') } }
       );
       if (!listRes.ok) return res.json({ ok: false, error: 'Impossible de lister Azure : ' + listRes.statusText });
@@ -3274,7 +3302,7 @@ app.post('/api/cicd/pull', async (req, res) => {
 
       for (const item of robots) {
         const fileRes = await fetch(
-          `${url}/items?api-version=7.0&path=${encodeURIComponent(item.path)}&versionDescriptor.version=${ref}`,
+          `${apiUrl}/items?api-version=7.0&path=${encodeURIComponent(item.path)}&versionDescriptor.version=${ref}`,
           { headers: { 'Authorization': 'Basic ' + Buffer.from(':' + token).toString('base64') } }
         );
         if (fileRes.ok) {
@@ -3339,12 +3367,13 @@ app.post('/api/cicd/diff', async (req, res) => {
 
     } else if (provider === 'azure') {
       const auth = 'Basic ' + Buffer.from(':' + token).toString('base64');
+      const apiUrl = toAzureGitApiBase(url);   // URL web _git -> base API _apis/git/repositories
 
       // Lister les fichiers du repo pour detecter les suppressions
       try {
         const scope = folder ? '&scopePath=' + encodeURIComponent('/' + folder) : '';
         const listRes = await fetch(
-          url + '/items?api-version=7.0&recursionLevel=Full' + scope,
+          apiUrl + '/items?api-version=7.0&recursionLevel=Full' + scope,
           { headers: { 'Authorization': auth } }
         );
         if (listRes.ok) {
@@ -3359,7 +3388,7 @@ app.post('/api/cicd/diff', async (req, res) => {
       for (const f of files) {
         const filePath = '/' + (folder ? folder + '/' : '') + f.path;
         const fileRes  = await fetch(
-          url + '/items?api-version=7.0&path=' + encodeURIComponent(filePath) + '&versionDescriptor.version=' + ref,
+          apiUrl + '/items?api-version=7.0&path=' + encodeURIComponent(filePath) + '&versionDescriptor.version=' + ref,
           { headers: { 'Authorization': auth } }
         );
         if (fileRes.status === 404) { added.push(f.path); }
@@ -3436,15 +3465,16 @@ app.post('/api/cicd/push', async (req, res) => {
     } else if (provider === 'azure') {
       // Azure DevOps REST API — récupérer le SHA de la branche
       const auth = 'Basic ' + Buffer.from(':' + token).toString('base64');
+      const apiUrl = toAzureGitApiBase(url);   // URL web _git -> base API _apis/git/repositories
       let oldObjectId = '0000000000000000000000000000000000000000';
       try {
-        const branchRes = await fetch(`${url}/refs?filter=heads/${targetBranch}&api-version=7.0`, { headers: { 'Authorization': auth } });
+        const branchRes = await fetch(`${apiUrl}/refs?filter=heads/${targetBranch}&api-version=7.0`, { headers: { 'Authorization': auth } });
         if (branchRes.ok) {
           const branchData = await branchRes.json();
           if (branchData.value && branchData.value.length > 0) oldObjectId = branchData.value[0].objectId;
         }
       } catch(e) {}
-      const pushRes = await fetch(`${url}/pushes?api-version=7.0`, {
+      const pushRes = await fetch(`${apiUrl}/pushes?api-version=7.0`, {
         method: 'POST',
         headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
         body: JSON.stringify({

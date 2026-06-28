@@ -101,7 +101,7 @@ function _cicdProviderTab(c,provider){
   var files=getTaggedFiles();
   var fHtml=files.length?files.map(function(f){return'<div style="font-size:11px;color:var(--teal);font-family:monospace">'+escHtml(f.path)+'</div>';}).join(''):'<div style="font-size:11px;color:var(--red)" data-i18n="cicd.noTagged">Aucun bloc tagué</div>';
   c.innerHTML='<div style="padding:16px 14px"><div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:14px">'+label+'</div><div style="display:flex;flex-direction:column;gap:10px">'
-    +'<div><label data-i18n="cicd.repoUrl" style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">URL repo</label>'+_cicdInp(provider+'_url',stored.url,isGL?'https://gitlab.com/org/repo':'https://dev.azure.com/org/repo')+'</div>'
+    +'<div><label data-i18n="cicd.repoUrl" style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">URL repo</label>'+_cicdInp(provider+'_url',stored.url,isGL?'https://gitlab.com/org/repo':'https://dev.azure.com/org/project/_git/repo')+'</div>'
     +'<div><label style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Token</label>'+_cicdInp(provider+'_token',stored.token,'token',true)+'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label data-i18n="cicd.branch" style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Branche</label>'+_cicdInp(provider+'_branch',stored.branch||'main','main')+'</div>'
     +'<div><label data-i18n="cicd.newBranch" style="font-size:11px;color:var(--gray);display:block;margin-bottom:3px">Nouvelle branche</label>'+_cicdInp(provider+'_newbranch',stored.newbranch,'feature/tests-rf')+'</div></div>'
