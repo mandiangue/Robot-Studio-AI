@@ -694,6 +694,7 @@ body.theme-light {
   --gray:    #334155;   /* texte secondaire */
   --muted:   #e2e8f0;
   --code:    #e2e8f0;
+  --rf-modal-text: #000;   /* texte modale d'import : NOIR franc en thème clair (sombre = fallback clair) */
 }
 
 /* Surfaces */

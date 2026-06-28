@@ -36,7 +36,7 @@ async function treeHandleUpload(event, cardId) {
         await readAndAddFile(file, name, ext, card, true);
         saveCodeCards();
         const el = document.getElementById(cardId);
-        if (el) { el.remove(); renderResultCard(card.files, cardId); }
+        if (el) { renderResultCard(card.files, cardId); }
       });
       continue;
     }
@@ -48,7 +48,7 @@ async function treeHandleUpload(event, cardId) {
   if (count > 0) {
     saveCodeCards();
     const el = document.getElementById(cardId);
-    if (el) { el.remove(); renderResultCard(card.files, cardId); }
+    if (el) { renderResultCard(card.files, cardId); }
     showToast(t('editor.imported').replace('{n}', count));
   }
 
@@ -116,7 +116,7 @@ function treeAddFolder(parentFolder, cardId) {
     card.files.push({ filename: keepFile, code: '# placeholder' });
     saveCodeCards();
     const el = document.getElementById(cardId);
-    if (el) { el.remove(); renderResultCard(card.files, cardId); }
+    if (el) { renderResultCard(card.files, cardId); }
     showToast(t('editor.folderCreated').replace('{path}', folderPath));
   });
 }
@@ -131,7 +131,7 @@ function treeAddFile(folder, cardId) {
     card.files.push({ filename: fullPath, code: '*** Settings ***\n\n*** Keywords ***\n\n' });
     saveCodeCards();
     const el = document.getElementById(cardId);
-    if (el) { el.remove(); renderResultCard(card.files, cardId); }
+    if (el) { renderResultCard(card.files, cardId); }
     showToast(t('editor.fileCreated').replace('{path}', fullPath));
   });
 }
@@ -150,7 +150,7 @@ function treeRename(e, idx, cardId) {
     card.files[idx].filename = parts.join('/');
     saveCodeCards();
     const el = document.getElementById(cardId);
-    if (el) { el.remove(); renderResultCard(card.files, cardId); }
+    if (el) { renderResultCard(card.files, cardId); }
     showToast(t('editor.renamed').replace('{name}', newName.trim()));
   });
 }
@@ -165,7 +165,7 @@ function treeDelete(e, idx, cardId) {
     saveCodeCards();
     deleteFromDB(cardId); // re-sauvegarde la version mise à jour
     const el = document.getElementById(cardId);
-    if (el) { el.remove(); renderResultCard(card.files, cardId); }
+    if (el) { renderResultCard(card.files, cardId); }
     showToast(t('editor.fileDeleted'));
   });
 }
@@ -206,7 +206,7 @@ function treeDropToFolder(e, targetFolder, cardId) {
 
   saveCodeCards();
   const el = document.getElementById(cardId);
-  if (el) { el.remove(); renderResultCard(card.files, cardId); }
+  if (el) { renderResultCard(card.files, cardId); }
 }
 
 // ── Save helper ───────────────────────────────────────────────────────────────
@@ -347,7 +347,7 @@ function treeFolderRename(e, folder, cardId) {
     }));
     saveCodeCards();
     const el = document.getElementById(cardId);
-    if (el) { el.remove(); renderResultCard(card.files, cardId); }
+    if (el) { renderResultCard(card.files, cardId); }
     showToast(t('editor.folderRenamed').replace('{name}', newName.trim()));
   });
 }
@@ -366,7 +366,7 @@ function treeFolderDelete(e, folder, cardId) {
       card.files = card.files.filter(f => !f.filename.startsWith(folder + '/'));
       saveCodeCards();
       const el = document.getElementById(cardId);
-      if (el) { el.remove(); renderResultCard(card.files, cardId); }
+      if (el) { renderResultCard(card.files, cardId); }
       showToast(t('editor.folderDeleted'));
     }
   );

@@ -31,16 +31,9 @@ function _rerenderCardIfRendered(card) {
     if (window._rfRunning || window._suiteRunning) return;
     const el = document.getElementById(card.cardId);
     if (el && typeof renderResultCard === 'function') {
-      // memoriser la position d origine (le noeud qui suit)
-      const parent = el.parentNode;
-      const nextSibling = el.nextSibling;
-      el.remove();
+      // renderResultCard gère lui-même la suppression de l'ancienne carte + la conservation de
+      // sa position dans #messages (cf. codecards.js). Plus besoin de remove()/insertBefore ici.
       renderResultCard(card.files, card.cardId);
-      // renderResultCard a fait appendChild (en dernier) -> on replace a l origine
-      const fresh = document.getElementById(card.cardId);
-      if (fresh && parent && nextSibling && nextSibling.parentNode === parent) {
-        parent.insertBefore(fresh, nextSibling);
-      }
     }
   } catch(e) {}
 }

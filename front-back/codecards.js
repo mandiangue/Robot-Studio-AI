@@ -612,7 +612,7 @@ function treeFolderToggle(e, colKey, cardId) {
   }
   // Re-render complet du bloc pour mettre à jour l'arbre
   const el = document.getElementById(cardId);
-  if (el && card) { el.remove(); renderResultCard(card.files, cardId); }
+  if (el && card) { renderResultCard(card.files, cardId); }
 }
 // Bascule de langue : retraduit SEULEMENT le toggle (état via emoji) et le compteur d'en-tête.
 // Le reste du chrome est géré par applyI18n(document) ; on n'appelle JAMAIS buildCard ici
@@ -637,10 +637,20 @@ function renderResultCard(files, existingCardId) {
   const isMulti = files.length > 1;
   let activeTab = 0;
 
+  // Position préservée en re-render : si une carte de même cardId existe déjà dans #messages, on
+  // capture sa place (parent + nœud suivant) et on insère le nouveau div AU MÊME endroit, au lieu
+  // de le rejeter en bas (appendChild). renderResultCard gère lui-même la suppression de l'ancien
+  // -> les appelants ne pré-suppriment plus. Carte NEUVE (génération/restore) -> appendChild en fin.
+  const _existing  = document.getElementById(cardId);
+  const _parent    = _existing ? _existing.parentNode : null;
+  const _savedNext = _existing ? _existing.nextSibling : null;
+  if (_existing) _existing.remove();
+
   const div = document.createElement('div');
   div.className = 'msg agent';
   div.id = cardId;
-  document.getElementById('messages').appendChild(div);
+  if (_parent) _parent.insertBefore(div, _savedNext);
+  else document.getElementById('messages').appendChild(div);
 
   function buildCard(active) {
     const tabsHtml = isMulti ? files.map((f, i) =>
@@ -653,18 +663,31 @@ function renderResultCard(files, existingCardId) {
     ).join('') : '';
 
     const f    = files[active];
-    const rawCode = cleanRobotCodeFromHtml(f.code);
-    const safe = escHtml(rawCode);
-    // Fichier binaire (image/PDF) : NE PAS afficher le base64 en texte ni le linter -> aperçu/placeholder.
-    const isBinary = !!f.binary;
+    const _code = String(f.code || '');
+    // Fichier binaire (image/PDF/DICOM) : NE JAMAIS passer le base64 au linter/syntaxHL (charabia
+    // + freeze). Détection ROBUSTE par signaux qui SURVIVENT aux round-trips (Mongo strippe f.binary,
+    // CI ne le pose pas) : flag OU dataURL OU EXTENSION du nom (même liste que _RF_IMG côté import).
+    const _imgExt  = /\.(png|jpe?g|gif|bmp|webp|svg|ico|tiff?)$/i.test(f.filename || '');
+    const isBinary = !!f.binary || /^data:/i.test(_code) || _imgExt || /\.(pdf|dcm|dicom)$/i.test(f.filename || '');
+    const isImage  = !!f.isImage || /^data:image\//i.test(_code) || _imgExt;
     const isRf = !isBinary && /\.(robot|resource)$/i.test(f.filename || '');
+    // rawCode/safe : vides en binaire -> ni cleanRobotCodeFromHtml, ni syntaxHL, ni la textarea
+    // ne reçoivent le base64 géant. (Conservés en variables : utilisés plus bas pour la textarea.)
+    const rawCode = isBinary ? '' : cleanRobotCodeFromHtml(f.code);
+    const safe    = isBinary ? '' : escHtml(rawCode);
     let hl;
     if (isBinary) {
-      const _kb   = Math.round((String(f.code||'').length * 0.75) / 1024);
+      const _kb   = Math.round((_code.length * 0.75) / 1024);
       const _name = escHtml((f.filename||'').split('/').pop());
-      hl = f.isImage
-        ? `<img src="${f.code}" alt="${_name}" style="max-width:100%;max-height:320px;border-radius:6px;display:block;margin:8px auto"/><div style="text-align:center;color:var(--gray);font-size:12px;margin-top:6px">🖼️ ${_name} · ${_kb} Ko</div>`
-        : `<div style="padding:32px;text-align:center;color:var(--gray);font-size:13px">📎 ${_name}<div style="font-size:12px;margin-top:6px">fichier binaire · ${_kb} Ko</div></div>`;
+      if (isImage) {
+        // src direct si déjà dataURL ; sinon (base64 NU, cas CI) on synthétise le dataURL via l'extension.
+        const _ext  = (f.filename||'').split('.').pop().toLowerCase();
+        const _mime = _ext === 'svg' ? 'image/svg+xml' : (_ext === 'jpg' ? 'image/jpeg' : (_ext === 'ico' ? 'image/x-icon' : 'image/' + _ext));
+        const _src  = /^data:/i.test(_code) ? f.code : ('data:' + _mime + ';base64,' + _code);
+        hl = `<img src="${_src}" alt="${_name}" style="max-width:100%;max-height:320px;border-radius:6px;display:block;margin:8px auto"/><div style="text-align:center;color:var(--gray);font-size:12px;margin-top:6px">🖼️ ${_name} · ${_kb} Ko</div>`;
+      } else {
+        hl = `<div style="padding:32px;text-align:center;color:var(--gray);font-size:13px">📄 ${_name}<div style="font-size:12px;margin-top:6px">fichier binaire · ${_kb} Ko</div></div>`;
+      }
     } else {
       hl = isRf ? syntaxHLLinted(rawCode) : syntaxHL(safe);
     }

@@ -252,7 +252,7 @@ function _rfImportModal(title, files) {
   const ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   const rows = files.map(f =>
-    '<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-family:monospace;font-size:12px;color:var(--text,#e2e8f0)">'
+    '<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-family:monospace;font-size:12px;color:var(--rf-modal-text,var(--white))">'
     + '<span style="color:' + (f.binary ? '#c084fc' : 'var(--teal,#2dd4bf)') + '">' + (f.binary ? '\u25A0' : '\u25A1') + '</span>'
     + '<span>' + esc(f.filename) + '</span>'
     + (f.binary ? ' <span style="color:var(--gray,#9ca3af);font-size:10px">' + t('imp.binaryTag') + '</span>' : '')
@@ -260,11 +260,11 @@ function _rfImportModal(title, files) {
   ).join('');
   ov.innerHTML =
     '<div style="background:var(--surface,#15202b);border:1px solid var(--border,#2a3744);border-radius:14px;max-width:660px;width:100%;max-height:82vh;display:flex;flex-direction:column;overflow:hidden">'
-    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--text,#e2e8f0)">\uD83D\uDCC2 ' + t('imp.importProjectTitleTxt').replace('{title}', esc(title)) + '</div>'
+    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--rf-modal-text,var(--white))">\uD83D\uDCC2 ' + t('imp.importProjectTitleTxt').replace('{title}', esc(title)) + '</div>'
     + '<div style="padding:10px 20px 6px;color:var(--gray,#9ca3af);font-size:13px">' + t('imp.fileBinarySubline').replace('{n}', files.length).replace('{bin}', bin ? t('imp.binarySuffix').replace('{n}', bin) : '') + '</div>'
     + '<div style="padding:0 20px 8px;overflow:auto;flex:1">' + rows + '</div>'
     + '<div style="padding:14px 20px;border-top:1px solid var(--border,#2a3744);display:flex;gap:10px;justify-content:flex-end">'
-    + '<button id="_rfCancel" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--text,#e2e8f0);padding:8px 16px;border-radius:8px;cursor:pointer">' + t('imp.cancel') + '</button>'
+    + '<button id="_rfCancel" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--rf-modal-text,var(--white));padding:8px 16px;border-radius:8px;cursor:pointer">' + t('imp.cancel') + '</button>'
     + '<button id="_rfOk" style="background:var(--teal,#2dd4bf);border:none;color:#06202a;font-weight:700;padding:8px 18px;border-radius:8px;cursor:pointer">' + t('imp.import') + '</button>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -321,11 +321,11 @@ function _rfOpenImportModal() {
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML =
     '<div style="background:var(--surface,#15202b);border:1px solid var(--border,#2a3744);border-radius:14px;max-width:560px;width:100%;overflow:hidden">'
-    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--text,#e2e8f0)">\uD83D\uDCC2 ' + t('imp.importProjectDropTitleTxt') + '</div>'
+    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border,#2a3744);font-family:Syne,sans-serif;font-weight:700;font-size:16px;color:var(--rf-modal-text,var(--white))">\uD83D\uDCC2 ' + t('imp.importProjectDropTitleTxt') + '</div>'
     + '<div id="_rfDrop" style="margin:20px;padding:42px 20px;border:2px dashed var(--border,#2a3744);border-radius:12px;text-align:center;color:var(--gray,#9ca3af);font-size:14px">' + t('imp.dropHint') + '<br><span style="font-size:12px">' + t('imp.dropHintSub') + '</span></div>'
     + '<div style="padding:0 20px 16px;display:flex;gap:10px;justify-content:space-between;align-items:center">'
     + '<span style="color:var(--gray,#9ca3af);font-size:12px">' + t('imp.orChooseFolder') + '</span>'
-    + '<button id="_rfClose" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--text,#e2e8f0);padding:8px 16px;border-radius:8px;cursor:pointer">' + t('imp.close') + '</button>'
+    + '<button id="_rfClose" style="background:transparent;border:1px solid var(--border,#2a3744);color:var(--rf-modal-text,var(--white));padding:8px 16px;border-radius:8px;cursor:pointer">' + t('imp.close') + '</button>'
     + '</div></div>';
   document.body.appendChild(ov);
   const close = () => ov.remove();
@@ -413,7 +413,7 @@ function _importRFFiles(files, source) {
     existing.imported = true;
     existing.tagged = true;
     var el = document.getElementById(existing.cardId);
-    if (el) { el.remove(); renderResultCard(rf, existing.cardId); }
+    if (el) { renderResultCard(rf, existing.cardId); }
     // Restaurer tag visuel
     if (!window._taggedCards) window._taggedCards = new Set();
     window._taggedCards.add(existing.cardId);
