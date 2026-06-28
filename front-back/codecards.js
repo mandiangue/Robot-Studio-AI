@@ -728,7 +728,7 @@ function renderResultCard(files, existingCardId) {
           <div style="display:flex;min-height:360px;flex:1">
 
             <!-- File tree (multi only) -->
-            ${isMulti ? `<div style="width:200px;min-width:140px;flex-shrink:0;background:#060a10;border-right:1px solid var(--border);padding:10px 0;overflow-y:auto;resize:horizontal;overflow:auto"
+            ${isMulti ? `<div style="width:200px;min-width:140px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:10px 0;overflow-y:auto;resize:horizontal;overflow:auto"
   ondragover="event.preventDefault()"
   ondrop="treeDropToFolder(event,'','${cardId}')">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px 8px;border-bottom:1px solid var(--border);margin-bottom:6px">

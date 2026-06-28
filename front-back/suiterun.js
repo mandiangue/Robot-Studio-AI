@@ -203,6 +203,10 @@ async function runSuiteGroup(idx) {
   // Create ONE progress message for the whole suite
   const suiteProgressDiv = document.createElement('div');
   suiteProgressDiv.className = 'msg agent';
+  // Id unique + réf globale : permet à deleteReportCard de retirer CET indicateur de suite
+  // ("Suite : <nom> — N/N terminé") en même temps que son rapport (lien via merged.suiteMsgId).
+  suiteProgressDiv.id = 'suiteMsg-' + Date.now();
+  window._currentSuiteMsgId = suiteProgressDiv.id;
   suiteProgressDiv.style.cssText = 'width:100%';
   suiteProgressDiv.innerHTML =
     '<div class="msg-avatar">🤖</div>' +

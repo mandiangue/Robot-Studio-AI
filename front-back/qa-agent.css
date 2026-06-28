@@ -741,6 +741,11 @@ body.theme-light #userInput { color:#0f172a; }
 body.theme-light #userInput::placeholder { color:#94a3b8; }
 body.theme-light .input-hint { color:#94a3b8; }
 body.theme-light .send-btn { background:linear-gradient(135deg,#0e7490,#0891b2); color:#ffffff; }
+/* Icônes de la barre d'input (son/trombone/import) : color:#cbd5e1 inline (pensé sombre) ->
+   noires en thème clair. !important car le style inline prime sur le CSS externe. SVG = currentColor. */
+body.theme-light #rfProjectBtn,
+body.theme-light #tcImportBtn,
+body.theme-light #micBtn { color:#0f172a !important; }
 
 /* US Cards */
 body.theme-light .us-card { background:#ffffff; border-color:#cbd5e1; }

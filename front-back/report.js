@@ -75,6 +75,12 @@ function openTestReport(data, suiteCtx) {
 
   // qa_run_history supprimé — données dans qa_code_cards
 
+  // Lien indicateur ↔ rapport (chat) : on stocke l'id du message-indicateur (bandeau vert
+  // #runMsg-<ts>, _currentRunMsg) sur les données du rapport AVANT renderReportCard, pour que
+  // deleteReportCard puisse retirer le bandeau en même temps que le rapport. msgId est capté
+  // plus haut (avant la mise à null de _currentRunMsgId). undefined si pas d'indicateur -> no-op.
+  data.runMsgId = msgId || data.runMsgId || null;
+
   renderReportCard(data);
 }
 
@@ -316,6 +322,9 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function fmtD(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(2)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
 
 function buildInlineReport(data) {
+  // Thème : l'iframe blob est un document isolé -> on détecte le thème du parent au build et on
+  // émet une palette claire/sombre via des variables --r-* (résolues même dans les styles inline).
+  const isLight = (typeof document !== 'undefined' && document.body.classList.contains('theme-light'));
   const _t      = t; // alias traducteur : le param 't' du .map ci-dessous masque la fonction globale
   const _loc    = currentLang === 'en' ? 'en-GB' : 'fr-FR';
   const rate    = data.total > 0 ? Math.round(data.passed / data.total * 100) : 0;
@@ -332,19 +341,19 @@ function buildInlineReport(data) {
     const tags     = (t.tags||[]).map(tg=>`<span style="background:rgba(0,212,170,0.12);color:#00d4aa;border:1px solid rgba(0,212,170,0.25);padding:2px 8px;border-radius:10px;font-size:10px;font-family:monospace;margin:0 2px">${esc(tg)}</span>`).join('');
 
     const stepsHtml = (t.steps||[]).map(s => {
-      const sColor = s.status==='PASS'?'#22c55e':s.status==='FAIL'?'#DC2626':s.status==='INFO'?'#60a5fa':'#94afc8';
+      const sColor = s.status==='PASS'?'#22c55e':s.status==='FAIL'?'#DC2626':s.status==='INFO'?'#60a5fa':'var(--r-muted)';
       const sIcon  = s.status==='PASS'?'✓':s.status==='FAIL'?'✗':s.status==='INFO'?'ℹ':'○';
       const screenshot = s.screenshot ? `
         <div style="margin:8px 0">
           <div style="font-size:10px;color:#60a5fa;font-family:monospace;margin-bottom:4px">${_t('report.screenshotLabel')}</div>
-          <img src="${s.screenshot}" style="max-width:100%;border-radius:6px;border:1px solid #1c2a38;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'none':'100%'" />
+          <img src="${s.screenshot}" style="max-width:100%;border-radius:6px;border:1px solid var(--r-border);cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'none':'100%'" />
         </div>` : '';
       return `
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <tr style="border-bottom:1px solid var(--r-line)">
           <td style="padding:6px 8px;font-size:13px;color:${sColor};font-weight:600;white-space:nowrap">${sIcon}</td>
-          <td style="padding:6px 8px;font-family:monospace;font-size:12px;color:#e8f0f8">${esc(s.name)} ${s.lib?`<span style="color:#94afc8;font-size:10px">(${esc(s.lib)})</span>`:''}</td>
-          <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:#94afc8;white-space:nowrap">${fmtD(s.duration)}</td>
-          <td style="padding:6px 8px;font-size:11px;color:${s.status==='FAIL'?'#fca5a5':'#94afc8'}">${esc(s.message)}${screenshot}</td>
+          <td style="padding:6px 8px;font-family:monospace;font-size:12px;color:var(--r-text)">${esc(s.name)} ${s.lib?`<span style="color:var(--r-muted);font-size:10px">(${esc(s.lib)})</span>`:''}</td>
+          <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:var(--r-muted);white-space:nowrap">${fmtD(s.duration)}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${s.status==='FAIL'?'#fca5a5':'var(--r-muted)'}">${esc(s.message)}${screenshot}</td>
         </tr>`;
     }).join('');
 
@@ -355,7 +364,7 @@ function buildInlineReport(data) {
       <div style="background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.2);border-radius:8px;padding:14px;margin:12px 0">
         <div style="font-size:11px;font-family:monospace;color:#DC2626;letter-spacing:1px;margin-bottom:8px;font-weight:700">${_t('report.failureAnalysis')}</div>
         <div style="font-size:13px;color:#fca5a5;margin-bottom:10px;line-height:1.65">${esc(t.failureAnalysis||'')}</div>
-        ${t.message?`<div style="background:#060c14;border-radius:6px;padding:10px 12px;font-family:monospace;font-size:12px;color:#fca5a5;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;border:1px solid rgba(220,38,38,0.15)">${esc(t.message)}</div>`:''}
+        ${t.message?`<div style="background:var(--r-code);border-radius:6px;padding:10px 12px;font-family:monospace;font-size:12px;color:#fca5a5;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;border:1px solid rgba(220,38,38,0.15)">${esc(t.message)}</div>`:''}
         ${t.suggestion?`<div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:12px;font-size:13px;color:#fcd34d;line-height:1.65">
           <div style="font-size:10px;font-family:monospace;color:#f59e0b;margin-bottom:4px;letter-spacing:1px">${_t('report.suggestedFix')}</div>
           ${esc(t.suggestion)}</div>`:''}
@@ -364,30 +373,30 @@ function buildInlineReport(data) {
       </div>` : '';
 
     return `
-      <div style="background:#111820;border:1px solid #1c2a38;border-left:5px solid ${color};border-radius:10px;margin-bottom:12px;overflow:hidden">
+      <div style="background:var(--r-card);border:1px solid var(--r-border);border-left:5px solid ${color};border-radius:10px;margin-bottom:12px;overflow:hidden">
         <!-- Test header -->
         <div onclick="var b=document.getElementById('tb${i}');b.style.display=b.style.display==='none'?'block':'none'"
-          style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0d1117">
+          style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:var(--r-panel)">
           <span style="font-size:18px">${icon}</span>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:700;color:#e8f0f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px" title="${esc(t.name)}">${esc(t.name)}</div>
-            <div style="font-size:11px;color:#94afc8;font-family:monospace;margin-top:2px">${iconEn} · ${fmtD(t.duration)}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--r-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px" title="${esc(t.name)}">${esc(t.name)}</div>
+            <div style="font-size:11px;color:var(--r-muted);font-family:monospace;margin-top:2px">${iconEn} · ${fmtD(t.duration)}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end;overflow:hidden;max-width:300px;flex-shrink:0">${tags}</div>
-          <span style="color:#94afc8;font-size:12px;margin-left:8px">▼</span>
+          <span style="color:var(--r-muted);font-size:12px;margin-left:8px">▼</span>
         </div>
         <!-- Test body -->
-        <div id="tb${i}" style="display:${t.status==='FAIL'?'block':'none'};padding:14px 16px;border-top:1px solid #1c2a38">
+        <div id="tb${i}" style="display:${t.status==='FAIL'?'block':'none'};padding:14px 16px;border-top:1px solid var(--r-border)">
           ${failHtml}
           ${stepsHtml?`
-            <div style="font-size:10px;color:#94afc8;font-family:monospace;letter-spacing:1px;margin:12px 0 6px">${_t('report.execSteps')}</div>
+            <div style="font-size:10px;color:var(--r-muted);font-family:monospace;letter-spacing:1px;margin:12px 0 6px">${_t('report.execSteps')}</div>
             <table style="width:100%;border-collapse:collapse">
               <thead>
-                <tr style="border-bottom:1px solid #1c2a38">
-                  <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">ST</th>
-                  <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">STEP</th>
-                  <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">${_t('report.colDuration')}</th>
-                  <th style="padding:4px 8px;font-size:10px;color:#94afc8;font-family:monospace;text-align:left">MESSAGE</th>
+                <tr style="border-bottom:1px solid var(--r-border)">
+                  <th style="padding:4px 8px;font-size:10px;color:var(--r-muted);font-family:monospace;text-align:left">ST</th>
+                  <th style="padding:4px 8px;font-size:10px;color:var(--r-muted);font-family:monospace;text-align:left">STEP</th>
+                  <th style="padding:4px 8px;font-size:10px;color:var(--r-muted);font-family:monospace;text-align:left">${_t('report.colDuration')}</th>
+                  <th style="padding:4px 8px;font-size:10px;color:var(--r-muted);font-family:monospace;text-align:left">MESSAGE</th>
                 </tr>
               </thead>
               <tbody>${stepsHtml}</tbody>
@@ -404,36 +413,40 @@ function buildInlineReport(data) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <style>
+  /* Palette du rapport — sombre par défaut, surchargée en clair via body.theme-light.
+     Les var(--r-*) sont résolues aussi dans les styles inline (même document iframe). */
+  :root { --r-bg:#07090f; --r-text:#e8f0f8; --r-muted:#94afc8; --r-panel:#0d1117; --r-card:#111820; --r-border:#1c2a38; --r-code:#060c14; --r-line:rgba(255,255,255,0.04); }
+  body.theme-light { --r-bg:#f1f5f9; --r-text:#0f172a; --r-muted:#475569; --r-panel:#ffffff; --r-card:#f8fafc; --r-border:#cbd5e1; --r-code:#eef2f7; --r-line:rgba(0,0,0,0.06); }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',Arial,sans-serif; background:#07090f; color:#e8f0f8; min-height:100vh; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--r-bg); color:var(--r-text); min-height:100vh; }
   @media print {
     body { background:#fff; color:#111; }
     .no-print { display:none !important; }
     .test-body { display:block !important; }
   }
   .page { max-width:900px; margin:0 auto; padding:28px 24px; }
-  .header-bar { background:linear-gradient(135deg,#0d1117,#111820); border:1px solid #1c2a38; border-radius:12px; padding:24px 28px; margin-bottom:24px; }
-  .report-title { font-size:22px; font-weight:800; color:#e8f0f8; margin-bottom:4px; }
-  .report-meta { font-size:12px; color:#94afc8; font-family:monospace; margin-top:6px; }
+  .header-bar { background:linear-gradient(135deg,var(--r-panel),var(--r-card)); border:1px solid var(--r-border); border-radius:12px; padding:24px 28px; margin-bottom:24px; }
+  .report-title { font-size:22px; font-weight:800; color:var(--r-text); margin-bottom:4px; }
+  .report-meta { font-size:12px; color:var(--r-muted); font-family:monospace; margin-top:6px; }
   .badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; font-family:monospace; }
   .badge-pass { background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
   .badge-fail { background:rgba(220,38,38,0.15); color:#DC2626; border:1px solid rgba(220,38,38,0.3); }
   .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px; }
-  .stat { background:#0d1117; border:1px solid #1c2a38; border-radius:10px; padding:16px; text-align:center; position:relative; overflow:hidden; }
+  .stat { background:var(--r-panel); border:1px solid var(--r-border); border-radius:10px; padding:16px; text-align:center; position:relative; overflow:hidden; }
   .stat::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
   .stat.s-pass::before { background:#22c55e; } .stat.s-fail::before { background:#DC2626; }
-  .stat.s-total::before { background:#00d4aa; } .stat.s-dur::before { background:#94afc8; }
+  .stat.s-total::before { background:#00d4aa; } .stat.s-dur::before { background:var(--r-muted); }
   .stat-n { font-size:34px; font-weight:800; line-height:1; margin-bottom:4px; }
-  .stat-l { font-size:10px; color:#94afc8; font-family:monospace; letter-spacing:1px; }
-  .prog { height:10px; background:#0d1117; border-radius:5px; overflow:hidden; display:flex; margin-bottom:20px; border:1px solid #1c2a38; }
-  .comment-box { background:#111820; border-left:3px solid #00d4aa; border-radius:0 8px 8px 0; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#94afc8; line-height:1.65; border:1px solid #1c2a38; border-left-width:3px; }
-  .section-title { font-size:11px; font-family:monospace; letter-spacing:1.5px; color:#94afc8; margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid #1c2a38; }
-  .footer { margin-top:32px; padding-top:16px; border-top:1px solid #1c2a38; font-size:11px; color:#94afc8; font-family:monospace; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .stat-l { font-size:10px; color:var(--r-muted); font-family:monospace; letter-spacing:1px; }
+  .prog { height:10px; background:var(--r-panel); border-radius:5px; overflow:hidden; display:flex; margin-bottom:20px; border:1px solid var(--r-border); }
+  .comment-box { background:var(--r-card); border-left:3px solid #00d4aa; border-radius:0 8px 8px 0; padding:12px 16px; margin-bottom:20px; font-size:13px; color:var(--r-muted); line-height:1.65; border:1px solid var(--r-border); border-left-width:3px; }
+  .section-title { font-size:11px; font-family:monospace; letter-spacing:1.5px; color:var(--r-muted); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--r-border); }
+  .footer { margin-top:32px; padding-top:16px; border-top:1px solid var(--r-border); font-size:11px; color:var(--r-muted); font-family:monospace; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   .print-btn { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; padding:8px 18px; border-radius:7px; font-size:12px; font-family:monospace; cursor:pointer; font-weight:600; }
   .print-btn:hover { background:rgba(59,130,246,0.22); }
 </style>
 </head>
-<body>
+<body class="${isLight ? 'theme-light' : ''}">
 <div class="page">
 
   <!-- Header -->
@@ -456,7 +469,7 @@ function buildInlineReport(data) {
     ${data.logUrl ? `<a href="${data.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logRf')}</a>` : ''}
     ${(data.isSuite && Array.isArray(data.blocs)) ? data.blocs.filter(b => b.logUrl).map(b => `<a href="${b.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logBloc')} ${b.idx}</a>`).join('') : ''}
     <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">${_t('report.expandAll')}</button>
-    <button class="print-btn" style="background:transparent;border-color:#1c2a38;color:#94afc8" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='none')">${_t('report.collapseAll')}</button>
+    <button class="print-btn" style="background:transparent;border-color:var(--r-border);color:var(--r-muted)" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='none')">${_t('report.collapseAll')}</button>
   </div>
 
   <!-- Stats -->
@@ -465,8 +478,8 @@ function buildInlineReport(data) {
     <div class="stat s-pass"><div class="stat-n" style="color:#22c55e">${data.passed}</div><div class="stat-l">${_t('report.statPassed')}</div></div>
     <div class="stat s-fail"><div class="stat-n" style="color:#DC2626">${data.failed}</div><div class="stat-l">${_t('report.statFailed')}</div></div>
     ${data.skipped>0?`<div class="stat s-dur"><div class="stat-n" style="color:#f59e0b">${data.skipped}</div><div class="stat-l">${_t('report.statSkipped')}</div></div>`:''}
-    <div class="stat s-dur"><div class="stat-n" style="color:#94afc8;font-size:24px">${rate}%</div><div class="stat-l">${_t('report.statRate')}</div></div>
-    <div class="stat s-dur"><div class="stat-n" style="color:#94afc8;font-size:22px">${fmtD(data.duration)}</div><div class="stat-l">${_t('report.statDuration')}</div></div>
+    <div class="stat s-dur"><div class="stat-n" style="color:var(--r-muted);font-size:24px">${rate}%</div><div class="stat-l">${_t('report.statRate')}</div></div>
+    <div class="stat s-dur"><div class="stat-n" style="color:var(--r-muted);font-size:22px">${fmtD(data.duration)}</div><div class="stat-l">${_t('report.statDuration')}</div></div>
   </div>
 
   <!-- Progress bar -->
@@ -623,8 +636,18 @@ function fmtDuration(ms) {
 // ── Delete report card ────────────────────────────────────────────────────────
 function deleteReportCard(cardId, runNum) {
   showConfirmDialog('🗑 Supprimer le rapport', 'Supprimer le rapport <b>RUN #' + runNum + '</b> ?', () => {
+    // Récupère les ids des indicateurs liés AVANT la purge du registre (_openReports).
+    // Champs INDÉPENDANTS : runMsgId (run simple) et suiteMsgId (suite) — on retire celui présent.
+    const linkedRunMsgId   = window._openReports?.[cardId]?.data?.runMsgId;
+    const linkedSuiteMsgId = window._openReports?.[cardId]?.data?.suiteMsgId;
     // Remove from DOM
     document.getElementById(cardId)?.remove();
+    // Retire AUSSI le bandeau vert "PASS — N/N..." (#runMsg-<ts>) du run simple. no-op si absent
+    // (suite run, après reload, ou ancien rapport sans runMsgId).
+    if (linkedRunMsgId) document.getElementById(linkedRunMsgId)?.remove();
+    // Retire AUSSI l'indicateur de suite "Suite : <nom> — N/N terminé" (#suiteMsg-<ts>). no-op
+    // si absent (run simple, après reload, ou ancien rapport de suite sans suiteMsgId).
+    if (linkedSuiteMsgId) document.getElementById(linkedSuiteMsgId)?.remove();
     // Purge le registre de re-render i18n + révoque le blob
     if (window._openReports && window._openReports[cardId]) {
       try { URL.revokeObjectURL(window._openReports[cardId].blobUrl); } catch(e) {}
@@ -763,6 +786,11 @@ function renderConsolidatedSuiteReport_inline() {
   merged.blockNames = _suite
     ? ((_suite.testIds||[]).map(id => (suiteRegistry||[]).find(t => t.id === id)?.name).filter(Boolean))
     : suiteReports.map(r => r.suiteName?.replace(/ \[\d+\/\d+\]$/, '')||'').filter(Boolean);
+
+  // Lien indicateur-suite ↔ rapport-suite : on stocke l'id du bandeau de suite (#suiteMsg-<ts>,
+  // suiterun.js) sur les données du rapport, pour que deleteReportCard retire le bandeau avec le
+  // rapport. Champ DISTINCT de runMsgId (run simple) -> coexistence sans casser le simple.
+  merged.suiteMsgId = window._currentSuiteMsgId || null;
 
   // Use the exact same renderReportCard as individual reports
   renderReportCard(merged, 'suite-report-' + merged.runNumber);

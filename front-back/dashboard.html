@@ -8,6 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{--bg:#07090f;--surface:#0d1117;--card:#111820;--border:#2a3f55;--teal:#00d4aa;--red:#ef4444;--green:#22c55e;--warn:#f59e0b;--purple:#a855f7;--blue:#60a5fa;--white:#e8f0f8;--gray:#94afc8}
+/* Thème clair — miroir des valeurs de qa-agent.css (body.theme-light) ; appliqué via classe sur body */
+body.theme-light{--bg:#f1f5f9;--surface:#ffffff;--card:#f8fafc;--border:#cbd5e1;--teal:#0e7490;--red:#dc2626;--green:#16a34a;--warn:#b45309;--purple:#6d28d9;--blue:#1d4ed8;--white:#0f172a;--gray:#334155}
+body.theme-light .runs-table tr:hover td{background:rgba(0,0,0,0.03)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-height:100vh}
 .topbar{display:flex;align-items:center;gap:12px;padding:12px 28px;background:var(--surface);border-bottom:2px solid var(--teal);position:sticky;top:0;z-index:10}
@@ -245,6 +248,9 @@ function renderEmptyState(){
 
 // Init async après DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
+  // Thème : l'iframe est un document isolé -> on lit qa_agent_theme (même origine) et on pose
+  // la classe theme-light pour que les var(--…) basculent en clair (sinon dashboard reste sombre).
+  try { applyDashboardTheme(localStorage.getItem('qa_agent_theme') === 'light'); } catch(e) {}
   // Traduit le DOM statique dès le premier paint (langue lue depuis le parent)
   applyStaticI18n();
 
@@ -440,6 +446,11 @@ window.refreshDashboard = async function refreshDashboard(){
 window.addEventListener('message', function(e){
   if (e && e.data && e.data.type === 'refresh-history') window.refreshDashboard();
 });
+
+// ── Bascule de thème déclenchée par le parent (appel cross-frame same-origin) ou au load ──
+window.applyDashboardTheme = function(isLight){
+  document.body.classList.toggle('theme-light', !!isLight);
+};
 
 // ── Bascule de langue déclenchée par le parent (appel cross-frame same-origin) ──
 window.applyDashboardLang = function(lang){

@@ -261,6 +261,8 @@ function toggleTheme() {
   btn.textContent = isLight ? '☀️' : '🌙';
   btn.title = isLight ? 'Passer en thème sombre' : 'Passer en thème clair';
   try { localStorage.setItem('qa_agent_theme', isLight ? 'light' : 'dark'); } catch(e) {}
+  // Propager au dashboard (iframe = document isolé : la classe theme-light ne s'y propage pas seule)
+  try { document.getElementById('dashboardIframe')?.contentWindow?.applyDashboardTheme?.(isLight); } catch(e) {}
 }
 
 // Restore theme on load

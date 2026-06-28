@@ -348,7 +348,7 @@
     <button onclick="closeDashboardPanel()" style="margin-left:auto;background:transparent;border:none;color:var(--gray);font-size:18px;cursor:pointer;line-height:1" data-i18n-title="ui.tClose" title="Fermer">&#x2715;</button>
   </div>
   <!-- Iframe dashboard.html -->
-  <iframe id="dashboardIframe" src="dashboard.html" onload="this.contentWindow.applyDashboardLang?.(currentLang)" style="flex:1;border:none;width:100%;height:100%;background:var(--surface)"></iframe>
+  <iframe id="dashboardIframe" src="dashboard.html" onload="this.contentWindow.applyDashboardLang?.(currentLang); this.contentWindow.applyDashboardTheme?.(document.body.classList.contains('theme-light'))" style="flex:1;border:none;width:100%;height:100%;background:var(--surface)"></iframe>
 </div>
 
 </body>
