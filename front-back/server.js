@@ -418,17 +418,34 @@ app.post('/api/rf/run', async (req, res) => {
     }
     // Dans tests.robot : remplacer Open Browser par Open Browser Session
     if (relPath.includes('tests/')) {
-      // Suite Setup Open Browser ... → Suite Setup Open Browser Session    ${BASE_URL}
-      content = content.replace(
-        /^(Suite Setup\s+)Open Browser(?!\s+(?:Session|No Popup))(\s+)(\S+)[^\n]*/gm,
-        '$1Open Browser Session    $3'
-      );
-      // Test Setup Go To si absent
-      if (!content.includes('Test Setup') && content.includes('Suite Setup')) {
+      // Détection du mode depuis le CODE généré (le payload run.js ne transmet pas optBrowserSession) :
+      //  - le navigateur s'ouvre dans un Test Setup -> PER-TEST (navigateur frais/fermé par test).
+      //  - sinon (Suite Setup) -> PER-SUITE (existant, à PRÉSERVER tel quel).
+      const opensInTestSetup = /^Test Setup\s+Open Browser(\s+Session)?\b/m.test(content);
+      if (opensInTestSetup) {
+        // PER-TEST : garantir Open Browser Session + Test Teardown Close Browser. On NE touche PAS
+        // au Suite Setup/Teardown (s'il existe, il reste ; mais le mode per-test n'en injecte pas).
         content = content.replace(
-          /^(Suite Setup[^\n]+)$/m,
-          '$1\nTest Setup        Go To    ${BASE_URL}\nTest Teardown     Take Screenshot'
+          /^(Test Setup\s+)Open Browser(?!\s+Session)(\s+)(\S+)[^\n]*/gm,
+          '$1Open Browser Session    $3'
         );
+        if (!/^Test Teardown\b/m.test(content)) {
+          content = content.replace(/^(Test Setup[^\n]+)$/m, '$1\nTest Teardown     Close Browser');
+        }
+      } else {
+        // PER-SUITE : comportement actuel INCHANGÉ (Suite Setup/Teardown préservés).
+        // Suite Setup Open Browser ... → Suite Setup Open Browser Session    ${BASE_URL}
+        content = content.replace(
+          /^(Suite Setup\s+)Open Browser(?!\s+(?:Session|No Popup))(\s+)(\S+)[^\n]*/gm,
+          '$1Open Browser Session    $3'
+        );
+        // Test Setup Go To si absent
+        if (!content.includes('Test Setup') && content.includes('Suite Setup')) {
+          content = content.replace(
+            /^(Suite Setup[^\n]+)$/m,
+            '$1\nTest Setup        Go To    ${BASE_URL}\nTest Teardown     Take Screenshot'
+          );
+        }
       }
     }
     // Partout : supprimer New Page dans *** Settings ***

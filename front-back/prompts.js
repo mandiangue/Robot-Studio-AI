@@ -121,6 +121,11 @@ ${description}`;
 function buildRfPromptBrowser(description, style) {
   const bdd = style === 'bdd';
   const bddNote = bdd ? 'Use BDD style: Given/When/Then/And/But prefixes on ALL test steps.' : 'Use Keyword-Driven style.';
+  // Mode session (per-test vs per-suite) — même source que getSessionRules() côté Selenium.
+  // PER-TEST  : Test Setup Open Browser Session + Test Teardown Close Browser (navigateur frais/fermé par test).
+  // PER-SUITE : Suite Setup Open Browser Session + Suite Teardown Close Browser + Test Setup Go To (existant, préservé).
+  const sessionMode = (typeof document !== 'undefined' && document.getElementById('optBrowserSession')?.value) || 'per-test';
+  const perTest = sessionMode !== 'per-suite';
   const lines = [
     'You are a Robot Framework + Browser library (Playwright) expert.',
     'Generate ONLY plain .robot code. NO markdown. NO explanations. NO code fences.',
@@ -170,10 +175,18 @@ function buildRfPromptBrowser(description, style) {
     '',
     '***** FILE: tests/feature_main.robot | tests | Main Tests',
     '*** Settings ***',
-    'Suite Setup       Open Browser Session    ${BASE_URL}',
-    'Suite Teardown    Close Browser',
-    'Test Setup        Go To    ${BASE_URL}',
-    'Test Teardown     Take Screenshot',
+    // PER-TEST : ouvre+ferme un navigateur frais par test. PER-SUITE : ouvre 1 fois, Go To par test, ferme à la fin.
+    ...(perTest
+      ? [
+          'Test Setup        Open Browser Session    ${BASE_URL}',
+          'Test Teardown     Close Browser',
+        ]
+      : [
+          'Suite Setup       Open Browser Session    ${BASE_URL}',
+          'Suite Teardown    Close Browser',
+          'Test Setup        Go To    ${BASE_URL}',
+          'Test Teardown     Take Screenshot',
+        ]),
     'Documentation     [test suite description]',
     'Library           Browser',
     'Resource          ../resources/variables.robot',
@@ -220,7 +233,9 @@ function buildRfPromptBrowser(description, style) {
     '        Upload File By Selector    selector    ${upload_path}   (<exact_name> = exact filename from the scenario, e.g. avatar.png)',
     '    Import `Library    OperatingSystem` in the page object using Normalize Path. NEVER invent another keyword name (NO "Select File To Upload", "Choose File", etc.). A business upload keyword MUST call `Upload File By Selector` inside. If no upload in the scenario, no upload keyword.',
     '',
-    '6. Suite Setup calls "Open Browser Session" ONLY',
+    (perTest
+      ? '6. PER-TEST session: Test Setup calls "Open Browser Session" ONLY, Test Teardown calls "Close Browser". A fresh browser opens and closes for EACH test. NO Suite Setup/Teardown for the browser, NO "Go To" in Test Setup.'
+      : '6. PER-SUITE session: Suite Setup calls "Open Browser Session" ONLY, Suite Teardown calls "Close Browser". Test Setup uses "Go To    ${BASE_URL}" to reuse the single browser, Test Teardown uses "Take Screenshot".'),
     '7. variables.robot has ONLY *** Settings *** + *** Variables ***',
     '8. Use EXACTLY the browser value shown in the template: ' + getBrowserType() + ' — do NOT change it to chrome or any other value',
     '',
