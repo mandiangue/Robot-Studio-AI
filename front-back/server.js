@@ -66,6 +66,20 @@ function fixHeadlessBool(c) {
   return out;
 }
 
+// ── FIX headless §1 : met à niveau les appels get_no_popup_options à 1 SEUL argument ──
+// get_no_popup_options("${browser}")  ->  get_no_popup_options("${browser}", ${HEADLESS})
+// Coupable prouvé : le template 2-args (server.js ~812) n'est injecté QUE si le keyword
+// est ABSENT (cf. 877). Un keywords.robot PÉRIMÉ sur disque (forme 1 arg) survit donc à
+// tous les runs et ouvre TOUJOURS en visible (headless=False par défaut côté Python).
+// Cette transformation est rétro-applicable : elle corrige les fichiers déjà présents.
+// Idempotente : la forme 2 args (avec virgule) n'est pas re-matchée.
+function upgradeNoPopupHeadless(c) {
+  return c.replace(
+    /get_no_popup_options\(\s*"?\$\{browser\}"?\s*\)/g,
+    'get_no_popup_options("${browser}", ${HEADLESS})'
+  );
+}
+
 // Qualifie l appel library quand un keyword custom Close Browser se rappelle lui-meme
 function fixCloseBrowserAll(c) {
   return c.replace(/^([ \t]+)Close Browser([ \t]+ALL[ \t]*)$/gm, '$1Browser.Close Browser$2');
@@ -172,7 +186,7 @@ function fixOldNoPopup(c) {
       out.push(ln);
     }
   }
-  return fixCloseBrowserAll(fixHeadlessBool(out.join('\n')));
+  return upgradeNoPopupHeadless(fixCloseBrowserAll(fixHeadlessBool(out.join('\n'))));
 }
 
 // ── Vrai si un .robot de l'arbre DÉFINIT "Open Browser No Popup" (ligne en colonne 0 = ──
@@ -193,6 +207,31 @@ function hasNoPopupDefInTree(dir) {
     }
   } catch (e) {}
   return false;
+}
+
+// ── Nettoyage des locks orphelins webdriver-manager (chemin SELENIUM only) ────────
+// Un .wdm-lock-* laissé par un webdriver-manager tué en force (taskkill /F mid-run) n'est
+// jamais supprimé (son finally/os.unlink ne s'exécute pas). webdriver-manager (_acquire_lock,
+// os.open O_CREAT|O_EXCL) re-poll alors 60s sur ce fichier existant -> TimeoutError -> ~1min05
+// CONSTANT à chaque run Selenium. On supprime ces locks AVANT de lancer robot.
+// SÉCURITÉ : appelé uniquement quand AUCUN run n'est actif (cf. garde !_rfProcess côté appelant) ;
+// l'app interdisant déjà les runs simultanés, aucun webdriver-manager légitime n'est en cours.
+// Playwright n'utilise pas webdriver-manager -> on n'appelle PAS ce nettoyage sur son chemin.
+function cleanOrphanWdmLocks() {
+  try {
+    const wdmDir = path.join(os.homedir(), '.wdm');
+    if (!fs.existsSync(wdmDir)) return 0;
+    let removed = 0;
+    for (const f of fs.readdirSync(wdmDir)) {
+      if (!f.startsWith('.wdm-lock')) continue;
+      try { fs.unlinkSync(path.join(wdmDir, f)); removed++; } catch (e) {}
+    }
+    if (removed > 0) console.log('  [WDM] lock orphelin supprimé (' + removed + ' fichier(s))');
+    return removed;
+  } catch (e) {
+    console.log('  [WDM] nettoyage lock skip:', e.message);
+    return 0;
+  }
 }
 
 if (!fs.existsSync(TESTS_DIR)) fs.mkdirSync(TESTS_DIR);
@@ -474,7 +513,7 @@ app.post('/api/rf/run', async (req, res) => {
       if (fs.existsSync(kwFile2)) {
         let kw2 = fs.readFileSync(kwFile2, 'utf8');
         if (!kw2.includes('Open Browser Session')) {
-          kw2 += '\n\nOpen Browser Session\n    [Arguments]    ${url}    ${browser}=chromium\n    New Browser    ${browser}    headless=${False}\n    New Context    acceptDownloads=True\n    New Page       ${url}\n';
+          kw2 += '\n\nOpen Browser Session\n    [Arguments]    ${url}    ${browser}=chromium\n    New Browser    ${browser}    headless=${HEADLESS}\n    New Context    acceptDownloads=True\n    New Page       ${url}\n';
           fs.writeFileSync(kwFile2, kw2, 'utf8');
           console.log('  Browser/Playwright: added Open Browser Session to keywords.robot');
         }
@@ -496,6 +535,27 @@ app.post('/api/rf/run', async (req, res) => {
       fs.readdirSync(pagesDir2).filter(f => f.endsWith('.robot')).forEach(f => {
         finalCleanupRobotFile(path.join(pagesDir2, f));
       });
+    }
+
+    // FIX headless (GÉNÉRÉ Browser) : poser ${HEADLESS} selon le flag (la def Open Browser
+    // Session utilise déjà headless=${HEADLESS}). Import (defAvailable=false) -> intact.
+    if (defAvailable) {
+      const varFileP = path.join(runBaseDir, 'resources', 'variables.robot');
+      if (fs.existsSync(varFileP)) {
+        try {
+          let vc = fs.readFileSync(varFileP, 'utf8');
+          const hv = headless ? '${True}' : '${False}';
+          if (/^\$\{HEADLESS\}/m.test(vc)) {
+            vc = vc.replace(/^(\$\{HEADLESS\}[ \t]+)\S+.*$/m, (m, p1) => p1 + hv);
+          } else if (/\*\*\*\s*Variables\s*\*\*\*/i.test(vc)) {
+            vc = vc.replace(/(\*\*\*\s*Variables\s*\*\*\*[^\n]*\n)/i, (m, p1) => p1 + '${HEADLESS}              ' + hv + '\n');
+          } else {
+            vc += '\n*** Variables ***\n${HEADLESS}              ' + hv + '\n';
+          }
+          fs.writeFileSync(varFileP, vc, 'utf8');
+          console.log('  [HEADLESS] (Browser) ${HEADLESS} =', hv);
+        } catch (eHP) { console.log('  [HEADLESS] skip:', eHP.message); }
+      }
     }
 
     // Lancer le test directement
@@ -556,6 +616,11 @@ app.post('/api/rf/run', async (req, res) => {
     });
     return;
   }
+  // ── SELENIUM only (après l'early-return Playwright) ──────────────────────────
+  // Nettoyer les locks webdriver-manager orphelins AVANT de lancer robot, sinon get_driver_path
+  // poll 60s dessus -> ~1min05 constant. Gaté !_rfProcess : si un run Selenium est déjà actif,
+  // son webdriver-manager peut tenir un lock légitime -> on ne touche à rien.
+  if (!_rfProcess) cleanOrphanWdmLocks();
   // Always inject popup-blocking Chrome options
   // Use SeleniumLibrary options string with add_argument only
   // Experimental options (password manager) require ChromeOptions.py
@@ -594,9 +659,14 @@ app.post('/api/rf/run', async (req, res) => {
   // Inject popup options on Suite Setup Open Browser
   // Build prefs string for SeleniumLibrary — use Python dict format
   const prefsStr = 'add_experimental_option("prefs",{"credentials_enable_service":false,"profile.password_manager_enabled":false,"profile.default_content_setting_values.notifications":2,"profile.default_content_settings.popups":0})';
+  // FIX headless §2 — Chemin B : un "Suite Setup Open Browser ${url} ${BROWSER}" brut n'a
+  // jamais --headless (popupArgs est statique, et la regex headless ci-dessus ne matche que
+  // les noms de navigateur LITTÉRAUX, pas ${BROWSER}). Quand headless=ON on préfixe donc les
+  // args headless ici pour que CE point d'ouverture soit invisible lui aussi.
+  const suiteHeadlessArgs = headless ? 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");' : '';
   finalCode = finalCode.replace(
     /^(Suite Setup[ \t]+Open Browser[ \t]+\S+[ \t]+\S+)$/gm,
-    '$1    options=' + popupArgs + ';' + prefsStr
+    '$1    options=' + suiteHeadlessArgs + popupArgs + ';' + prefsStr
   );
 
     // Inject screenshot on failure into each test case
@@ -788,7 +858,7 @@ app.post('/api/rf/run', async (req, res) => {
       '    [Arguments]    ${url}    ${browser}=' + (browserType || 'chrome'),
       '    Evaluate    __import__("sys").path.insert(0, r"${EXECDIR}") or __import__("sys").path.insert(0, r"${EXECDIR}${/}..")    sys',
       '    ${driver_path}=    Evaluate    __import__("NoPopupOptions").get_driver_path("${browser}")',
-      '    ${opts}=    Evaluate    __import__("NoPopupOptions").get_no_popup_options("${browser}")',
+      '    ${opts}=    Evaluate    __import__("NoPopupOptions").get_no_popup_options("${browser}", ${HEADLESS})',
       '    ${is_chrome}=    Evaluate    "${browser}".lower() in ("chrome", "chromium")',
       '    Run Keyword If    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}    options=${opts}',
       '    Run Keyword Unless    ${is_chrome}    Open Browser    ${url}    ${browser}    executable_path=${driver_path}',
@@ -1067,9 +1137,10 @@ def get_driver_path(browser="chrome"):
     except Exception as e:
         print("webdriver-manager error: " + str(e))
         return None
-def get_no_popup_options(browser="chrome"):
+def get_no_popup_options(browser="chrome", headless=False):
     browser = (browser or "chrome").lower()
     if browser not in ("chrome", "chromium"):
+        # Firefox/Edge : pas d'options anti-popup ici (comportement actuel) -> ne pas planter.
         return None
     opts = Options()
     opts.add_argument('--disable-notifications')
@@ -1078,6 +1149,11 @@ def get_no_popup_options(browser="chrome"):
     opts.add_argument('--disable-save-password-bubble')
     opts.add_argument('--disable-features=PasswordManagerEnabled,TranslateUI')
     opts.add_argument('--no-first-run')
+    if headless:
+        opts.add_argument('--headless=new')
+        opts.add_argument('--no-sandbox')
+        opts.add_argument('--disable-dev-shm-usage')
+        opts.add_argument('--window-size=1920,1080')
     opts.add_experimental_option('prefs', {
         'credentials_enable_service': False,
         'profile.password_manager_enabled': False,
@@ -1119,14 +1195,38 @@ def get_no_popup_options(browser="chrome"):
     // Log TC count to debug double run
   const tcCount = (finalCode.match(/^TC_\d+/gm) || []).length;
   // Remplacer chrome par browserType dans variables.robot avant execution
+  // FIX suite : cibler la copie ISOLÉE de la suite (runBaseDir) — c'est elle qui s'exécute.
   if (browserType && browserType !== 'chrome') {
-    const varFilePath = path.join(TESTS_DIR, 'resources', 'variables.robot');
+    const varFilePath = path.join((isSuiteBloc ? runBaseDir : TESTS_DIR), 'resources', 'variables.robot');
     if (fs.existsSync(varFilePath)) {
       let varContent = fs.readFileSync(varFilePath, 'utf8');
       // Remplacer la valeur apres ${BROWSER} quelle qu'elle soit
       varContent = varContent.replace(/(\$\{BROWSER\}[ 	]+)\S+/g, '$1' + browserType);
       fs.writeFileSync(varFilePath, varContent, 'utf8');
       console.log('  [BROWSER] replaced with', browserType);
+    }
+  }
+  // FIX headless (GÉNÉRÉ only) : poser ${HEADLESS} selon le flag UI (créer la ligne si absente,
+  // ex. Selenium dont le prompt ne déclare pas ${HEADLESS}). Import -> variables.robot intact.
+  // FIX suite : cibler la copie ISOLÉE (runBaseDir) — la suite exécute suite_runs/<id>/resources/
+  // variables.robot, pas celui de TESTS_DIR. Sinon ${HEADLESS} reste ${False} -> visible.
+  // (Reproduit le pattern Playwright ~518 qui cible déjà runBaseDir.)
+  if (defAvailable) {
+    const varFileH = path.join((isSuiteBloc ? runBaseDir : TESTS_DIR), 'resources', 'variables.robot');
+    if (fs.existsSync(varFileH)) {
+      try {
+        let vc = fs.readFileSync(varFileH, 'utf8');
+        const hv = headless ? '${True}' : '${False}';
+        if (/^\$\{HEADLESS\}/m.test(vc)) {
+          vc = vc.replace(/^(\$\{HEADLESS\}[ \t]+)\S+.*$/m, (m, p1) => p1 + hv);
+        } else if (/\*\*\*\s*Variables\s*\*\*\*/i.test(vc)) {
+          vc = vc.replace(/(\*\*\*\s*Variables\s*\*\*\*[^\n]*\n)/i, (m, p1) => p1 + '${HEADLESS}              ' + hv + '\n');
+        } else {
+          vc += '\n*** Variables ***\n${HEADLESS}              ' + hv + '\n';
+        }
+        fs.writeFileSync(varFileH, vc, 'utf8');
+        console.log('  [HEADLESS] ${HEADLESS} =', hv);
+      } catch (eH) { console.log('  [HEADLESS] skip:', eH.message); }
     }
   }
   // Nettoyer les anciens fichiers feature_*.robot qui ne font pas partie du run actuel
@@ -1295,6 +1395,36 @@ def get_no_popup_options(browser="chrome"):
     }
   }
 
+  // ── FIX headless §1 (RÉTRO-APPLICATION) : met à niveau TOUS les .robot du tree généré ──
+  // Ferme le trou 877 : un keywords.robot périmé (get_no_popup_options à 1 arg) présent sur
+  // disque n'est jamais régénéré -> on le réécrit ici en forme 2 args headless-aware. Gaté
+  // defAvailable (GÉNÉRÉS only) -> les projets importés restent intacts. ${HEADLESS} a déjà
+  // été posé dans variables.robot juste avant (cf. FIX headless ~1173). Idempotent.
+  if (defAvailable) {
+    const _npRoot = (typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR;
+    const _upgradeNP = (dir) => {
+      let items; try { items = fs.readdirSync(dir); } catch (e) { return; }
+      for (const f of items) {
+        // PERF : ne pas descendre dans les runs de suite résiduels (autres que le run courant).
+        // En suite, _npRoot EST déjà suite_runs/<id> -> on ne croise jamais un sous-dossier
+        // "suite_runs". En simple, ça évite de relire+réécrire toutes les vieilles suites.
+        if (f === 'suite_runs' || f === '__pycache__' || f === 'node_modules' || f === '.git') continue;
+        const fp = path.join(dir, f);
+        let st; try { st = fs.statSync(fp); } catch (e) { continue; }
+        if (st.isDirectory()) { _upgradeNP(fp); continue; }
+        if (!f.endsWith('.robot')) continue;
+        try {
+          const c = fs.readFileSync(fp, 'utf8');
+          // PERF : ne traiter que les fichiers réellement concernés (skip regex+write sinon).
+          if (!c.includes('get_no_popup_options')) continue;
+          const u = upgradeNoPopupHeadless(c);
+          if (u !== c) { fs.writeFileSync(fp, u, 'utf8'); console.log('  [HEADLESS §1] get_no_popup_options mis à niveau (2 args) dans', path.relative(_npRoot, fp)); }
+        } catch (e) {}
+      }
+    };
+    _upgradeNP(_npRoot);
+  }
+
   // [SPLIT@EXEC] decoupage par fonctionnalite, point de passage garanti
   try {
     const _sd = path.join(TESTS_DIR, 'tests');
@@ -1429,6 +1559,9 @@ def get_no_popup_options(browser="chrome"):
         .replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5')
         .replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
     }
+    // FIX headless §1 — cas keyword inline dans le mono-fichier (le walk disque ~1364 couvre
+    // resources/keywords.robot ; ceci couvre une def "Open Browser No Popup" portée par le .robot lui-même).
+    cleanFinal = upgradeNoPopupHeadless(cleanFinal);
   } else {
     console.log('  [IMPORT] Mono-fichier sans def "Open Browser No Popup" -> Open Browser standard conservé');
   }
