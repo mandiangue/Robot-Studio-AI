@@ -338,14 +338,14 @@ function buildInlineReport(data) {
     const icon     = t.status==='PASS'?'✅':t.status==='FAIL'?'❌':t.status==='SKIP'?'⏭️':'✅';
     const iconEn   = t.status==='PASS'?_t('report.statusPass'):t.status==='FAIL'?_t('report.statusFail'):t.status==='SKIP'?_t('report.statusSkip'):_t('report.statusPass');
     const color    = t.status==='PASS'?'#22c55e':t.status==='FAIL'?'#DC2626':t.status==='SKIP'?'#f59e0b':'#22c55e';
-    const tags     = (t.tags||[]).map(tg=>`<span style="background:rgba(0,212,170,0.12);color:#00d4aa;border:1px solid rgba(0,212,170,0.25);padding:2px 8px;border-radius:10px;font-size:10px;font-family:monospace;margin:0 2px">${esc(tg)}</span>`).join('');
+    const tags     = (t.tags||[]).map(tg=>`<span style="background:rgba(0,212,170,0.12);color:var(--r-teal);border:1px solid rgba(0,212,170,0.25);padding:2px 8px;border-radius:10px;font-size:10px;font-family:monospace;margin:0 2px">${esc(tg)}</span>`).join('');
 
     const stepsHtml = (t.steps||[]).map(s => {
-      const sColor = s.status==='PASS'?'#22c55e':s.status==='FAIL'?'#DC2626':s.status==='INFO'?'#60a5fa':'var(--r-muted)';
+      const sColor = s.status==='PASS'?'var(--r-green)':s.status==='FAIL'?'#DC2626':s.status==='INFO'?'var(--r-blue)':'var(--r-muted)';
       const sIcon  = s.status==='PASS'?'✓':s.status==='FAIL'?'✗':s.status==='INFO'?'ℹ':'○';
       const screenshot = s.screenshot ? `
         <div style="margin:8px 0">
-          <div style="font-size:10px;color:#60a5fa;font-family:monospace;margin-bottom:4px">${_t('report.screenshotLabel')}</div>
+          <div style="font-size:10px;color:var(--r-blue);font-family:monospace;margin-bottom:4px">${_t('report.screenshotLabel')}</div>
           <img src="${s.screenshot}" style="max-width:100%;border-radius:6px;border:1px solid var(--r-border);cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'none':'100%'" />
         </div>` : '';
       return `
@@ -353,7 +353,7 @@ function buildInlineReport(data) {
           <td style="padding:6px 8px;font-size:13px;color:${sColor};font-weight:600;white-space:nowrap">${sIcon}</td>
           <td style="padding:6px 8px;font-family:monospace;font-size:12px;color:var(--r-text)">${esc(s.name)} ${s.lib?`<span style="color:var(--r-muted);font-size:10px">(${esc(s.lib)})</span>`:''}</td>
           <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:var(--r-muted);white-space:nowrap">${fmtD(s.duration)}</td>
-          <td style="padding:6px 8px;font-size:11px;color:${s.status==='FAIL'?'#fca5a5':'var(--r-muted)'}">${esc(s.message)}${screenshot}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${s.status==='FAIL'?'var(--r-red)':'var(--r-muted)'}">${esc(s.message)}${screenshot}</td>
         </tr>`;
     }).join('');
 
@@ -362,13 +362,13 @@ function buildInlineReport(data) {
 
     const failHtml = t.status==='FAIL' ? `
       <div style="background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.2);border-radius:8px;padding:14px;margin:12px 0">
-        <div style="font-size:11px;font-family:monospace;color:#DC2626;letter-spacing:1px;margin-bottom:8px;font-weight:700">${_t('report.failureAnalysis')}</div>
-        <div style="font-size:13px;color:#fca5a5;margin-bottom:10px;line-height:1.65">${esc(t.failureAnalysis||'')}</div>
-        ${t.message?`<div style="background:var(--r-code);border-radius:6px;padding:10px 12px;font-family:monospace;font-size:12px;color:#fca5a5;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;border:1px solid rgba(220,38,38,0.15)">${esc(t.message)}</div>`:''}
-        ${t.suggestion?`<div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:12px;font-size:13px;color:#fcd34d;line-height:1.65">
-          <div style="font-size:10px;font-family:monospace;color:#f59e0b;margin-bottom:4px;letter-spacing:1px">${_t('report.suggestedFix')}</div>
+        <div style="font-size:11px;font-family:monospace;color:var(--r-red-strong);letter-spacing:1px;margin-bottom:8px;font-weight:700">${_t('report.failureAnalysis')}</div>
+        <div style="font-size:13px;color:var(--r-red);margin-bottom:10px;line-height:1.65">${esc(t.failureAnalysis||'')}</div>
+        ${t.message?`<div style="background:var(--r-code);border-radius:6px;padding:10px 12px;font-family:monospace;font-size:12px;color:var(--r-red);white-space:pre-wrap;word-break:break-all;margin-bottom:10px;border:1px solid rgba(220,38,38,0.15)">${esc(t.message)}</div>`:''}
+        ${t.suggestion?`<div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:12px;font-size:13px;color:var(--r-orange);line-height:1.65">
+          <div style="font-size:10px;font-family:monospace;color:var(--r-amber);margin-bottom:4px;letter-spacing:1px">${_t('report.suggestedFix')}</div>
           ${esc(t.suggestion)}</div>`:''}
-        ${failScreenshot?`<div style="margin-top:12px"><div style="font-size:10px;font-family:monospace;color:#60a5fa;letter-spacing:1px;margin-bottom:6px">${_t('report.screenshotLabel')}</div>
+        ${failScreenshot?`<div style="margin-top:12px"><div style="font-size:10px;font-family:monospace;color:var(--r-blue);letter-spacing:1px;margin-bottom:6px">${_t('report.screenshotLabel')}</div>
           <img src="${failScreenshot.screenshot}" style="max-width:100%;border-radius:8px;border:1px solid rgba(220,38,38,0.3);cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'none':'100%'" title="Cliquer pour agrandir" /></div>`:''}
       </div>` : '';
 
@@ -415,8 +415,10 @@ function buildInlineReport(data) {
 <style>
   /* Palette du rapport — sombre par défaut, surchargée en clair via body.theme-light.
      Les var(--r-*) sont résolues aussi dans les styles inline (même document iframe). */
-  :root { --r-bg:#07090f; --r-text:#e8f0f8; --r-muted:#94afc8; --r-panel:#0d1117; --r-card:#111820; --r-border:#1c2a38; --r-code:#060c14; --r-line:rgba(255,255,255,0.04); }
-  body.theme-light { --r-bg:#f1f5f9; --r-text:#0f172a; --r-muted:#475569; --r-panel:#ffffff; --r-card:#f8fafc; --r-border:#cbd5e1; --r-code:#eef2f7; --r-line:rgba(0,0,0,0.06); }
+  :root { --r-bg:#07090f; --r-text:#e8f0f8; --r-muted:#94afc8; --r-panel:#0d1117; --r-card:#111820; --r-border:#1c2a38; --r-code:#060c14; --r-line:rgba(255,255,255,0.04);
+          --r-teal:#00d4aa; --r-green:#22c55e; --r-amber:#f59e0b; --r-orange:#fcd34d; --r-red:#fca5a5; --r-red-strong:#DC2626; --r-blue:#60a5fa; }
+  body.theme-light { --r-bg:#f1f5f9; --r-text:#0f172a; --r-muted:#475569; --r-panel:#ffffff; --r-card:#f8fafc; --r-border:#cbd5e1; --r-code:#eef2f7; --r-line:rgba(0,0,0,0.06);
+          --r-teal:#0e7490; --r-green:#15803d; --r-amber:#92400e; --r-orange:#9a3412; --r-red:#b91c1c; --r-red-strong:#991b1b; --r-blue:#1e40af; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI',Arial,sans-serif; background:var(--r-bg); color:var(--r-text); min-height:100vh; }
   @media print {
@@ -429,7 +431,7 @@ function buildInlineReport(data) {
   .report-title { font-size:22px; font-weight:800; color:var(--r-text); margin-bottom:4px; }
   .report-meta { font-size:12px; color:var(--r-muted); font-family:monospace; margin-top:6px; }
   .badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; font-family:monospace; }
-  .badge-pass { background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+  .badge-pass { background:rgba(34,197,94,0.15); color:var(--r-green); border:1px solid rgba(34,197,94,0.3); }
   .badge-fail { background:rgba(220,38,38,0.15); color:#DC2626; border:1px solid rgba(220,38,38,0.3); }
   .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px; }
   .stat { background:var(--r-panel); border:1px solid var(--r-border); border-radius:10px; padding:16px; text-align:center; position:relative; overflow:hidden; }
@@ -442,7 +444,7 @@ function buildInlineReport(data) {
   .comment-box { background:var(--r-card); border-left:3px solid #00d4aa; border-radius:0 8px 8px 0; padding:12px 16px; margin-bottom:20px; font-size:13px; color:var(--r-muted); line-height:1.65; border:1px solid var(--r-border); border-left-width:3px; }
   .section-title { font-size:11px; font-family:monospace; letter-spacing:1.5px; color:var(--r-muted); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--r-border); }
   .footer { margin-top:32px; padding-top:16px; border-top:1px solid var(--r-border); font-size:11px; color:var(--r-muted); font-family:monospace; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
-  .print-btn { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; padding:8px 18px; border-radius:7px; font-size:12px; font-family:monospace; cursor:pointer; font-weight:600; }
+  .print-btn { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:var(--r-blue); padding:8px 18px; border-radius:7px; font-size:12px; font-family:monospace; cursor:pointer; font-weight:600; }
   .print-btn:hover { background:rgba(59,130,246,0.22); }
 </style>
 </head>
@@ -468,16 +470,16 @@ function buildInlineReport(data) {
     <button class="print-btn" onclick="window.print()">${_t('report.print')}</button>
     ${data.logUrl ? `<a href="${data.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logRf')}</a>` : ''}
     ${(data.isSuite && Array.isArray(data.blocs)) ? data.blocs.filter(b => b.logUrl).map(b => `<a href="${b.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logBloc')} ${b.idx}</a>`).join('') : ''}
-    <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">${_t('report.expandAll')}</button>
+    <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:var(--r-green)" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">${_t('report.expandAll')}</button>
     <button class="print-btn" style="background:transparent;border-color:var(--r-border);color:var(--r-muted)" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='none')">${_t('report.collapseAll')}</button>
   </div>
 
   <!-- Stats -->
   <div class="stats">
-    <div class="stat s-total"><div class="stat-n" style="color:#00d4aa">${data.total}</div><div class="stat-l">${_t('report.statTotal')}</div></div>
-    <div class="stat s-pass"><div class="stat-n" style="color:#22c55e">${data.passed}</div><div class="stat-l">${_t('report.statPassed')}</div></div>
+    <div class="stat s-total"><div class="stat-n" style="color:var(--r-teal)">${data.total}</div><div class="stat-l">${_t('report.statTotal')}</div></div>
+    <div class="stat s-pass"><div class="stat-n" style="color:var(--r-green)">${data.passed}</div><div class="stat-l">${_t('report.statPassed')}</div></div>
     <div class="stat s-fail"><div class="stat-n" style="color:#DC2626">${data.failed}</div><div class="stat-l">${_t('report.statFailed')}</div></div>
-    ${data.skipped>0?`<div class="stat s-dur"><div class="stat-n" style="color:#f59e0b">${data.skipped}</div><div class="stat-l">${_t('report.statSkipped')}</div></div>`:''}
+    ${data.skipped>0?`<div class="stat s-dur"><div class="stat-n" style="color:var(--r-amber)">${data.skipped}</div><div class="stat-l">${_t('report.statSkipped')}</div></div>`:''}
     <div class="stat s-dur"><div class="stat-n" style="color:var(--r-muted);font-size:24px">${rate}%</div><div class="stat-l">${_t('report.statRate')}</div></div>
     <div class="stat s-dur"><div class="stat-n" style="color:var(--r-muted);font-size:22px">${fmtD(data.duration)}</div><div class="stat-l">${_t('report.statDuration')}</div></div>
   </div>
@@ -489,7 +491,7 @@ function buildInlineReport(data) {
   </div>
 
   <!-- Comment -->
-  ${comment?`<div class="comment-box"><span style="font-size:10px;font-family:monospace;color:#00d4aa;display:block;margin-bottom:4px">${_t('report.commentLabel')}</span>${esc(comment)}</div>`:''}
+  ${comment?`<div class="comment-box"><span style="font-size:10px;font-family:monospace;color:var(--r-teal);display:block;margin-bottom:4px">${_t('report.commentLabel')}</span>${esc(comment)}</div>`:''}
 
   <!-- Tests -->
   <div class="section-title">${_t('report.detailTitle')}</div>

@@ -725,6 +725,9 @@ body.theme-light .copy-code-btn {
   background: #334155; border: none; color: #94a3b8;
 }
 body.theme-light .copy-code-btn:hover { background: #0e7490; color: #fff; }
+/* Treeview des code cards — foncer les 2 verts en dur peu lisibles en thème clair (clair UNIQUEMENT) */
+body.theme-light .tree-add-file                  { color: #0e7490 !important; }
+body.theme-light .tree-file-row.tree-file-active { background: rgba(14,116,144,0.12) !important; }
 
 /* Typing */
 body.theme-light .typing-indicator { background:#ffffff; border-color:#cbd5e1; }

@@ -256,6 +256,17 @@ function toggleTheme() {
   try { localStorage.setItem('qa_agent_theme', isLight ? 'light' : 'dark'); } catch(e) {}
   // Propager au dashboard (iframe = document isolé : la classe theme-light ne s'y propage pas seule)
   try { document.getElementById('dashboardIframe')?.contentWindow?.applyDashboardTheme?.(isLight); } catch(e) {}
+  // Propager aux RAPPORTS ouverts (iframes blob, même origine). Cible EXPLICITE via window._openReports
+  // (et non un sélecteur générique #messages iframe qui toucherait toute future iframe du chat).
+  // Couvre rapports simples ET de suite (tous enregistrés sous reportCard-<runNum>).
+  try {
+    const reps = window._openReports || {};
+    Object.keys(reps).forEach(cardId => {
+      const ifr = document.getElementById(cardId)?.querySelector('iframe');
+      const b = ifr && ifr.contentDocument && ifr.contentDocument.body;
+      if (b) b.classList.toggle('theme-light', isLight);
+    });
+  } catch(e) { console.debug('[theme] propagation thème aux rapports échouée:', e); }
 }
 
 // Restore theme on load

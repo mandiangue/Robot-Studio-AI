@@ -507,7 +507,7 @@ function buildFileTree(files, activeTab, cardId) {
 
   const fileItemHtml = (f, indent) => {
     const active = f.idx === activeTab;
-    return `<div class="tree-file-row" data-ridx="${f.idx}" data-card="${cardId}" data-raction="tab"
+    return `<div class="tree-file-row${active ? ' tree-file-active' : ''}" data-ridx="${f.idx}" data-card="${cardId}" data-raction="tab"
       draggable="true"
       ondragstart="window._treeDrag={idx:${f.idx},cardId:'${cardId}'};event.currentTarget.style.opacity='.4'"
       ondragend="event.currentTarget.style.opacity='1'"
@@ -559,7 +559,7 @@ function buildFileTree(files, activeTab, cardId) {
     </div>`;
   };
 
-  const addFileBtn = (folder) => `<button onclick="treeAddFile('${escHtml(folder)}','${cardId}')" data-i18n="codecards.newFile" data-i18n-title="codecards.tNewFile"
+  const addFileBtn = (folder) => `<button class="tree-add-file" onclick="treeAddFile('${escHtml(folder)}','${cardId}')" data-i18n="codecards.newFile" data-i18n-title="codecards.tNewFile"
     style="display:flex;align-items:center;gap:4px;padding:2px 8px 2px ${folder?'28px':'16px'};
            background:transparent;border:none;color:rgba(0,212,170,0.5);cursor:pointer;font-size:10px;
            font-family:'IBM Plex Mono',monospace;width:100%;text-align:left"
