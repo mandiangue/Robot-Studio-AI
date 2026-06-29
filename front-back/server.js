@@ -307,7 +307,7 @@ app.post('/api/rf/run', async (req, res) => {
         rfBroadcast('run-update', { ...run });
       } catch(e) {}
     }, 1500);
-    setTimeout(() => clearInterval(livePoller), 180000);
+    setTimeout(() => clearInterval(livePoller), 610000);
     req._livePoller = livePoller;
   } else {
     // Suite bloc — polling live aussi
@@ -330,7 +330,7 @@ app.post('/api/rf/run', async (req, res) => {
           rfBroadcast('suite-update', activeSuite);
         } catch(e) {}
       }, 1500);
-      setTimeout(() => clearInterval(suitePoller), 180000);
+      setTimeout(() => clearInterval(suitePoller), 610000);
       req._suitePoller = suitePoller;
       req._tempBloc    = tempBloc;
       req._activeSuite = activeSuite;
@@ -653,25 +653,30 @@ app.post('/api/rf/run', async (req, res) => {
   ].map(a => `add_argument("${a}")`).join(';');
   const popupPrefs = '';
 
-  if (headless) {
-    const headlessArgs = 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage")';
-    finalCode = finalCode.replace(
-      /Open Browser(\s+)(\S+)(\s+)(Chrome|chrome|Firefox|firefox|chromium)/g,
-      `Open Browser$1$2$3$4    options=${headlessArgs};${popupArgs};${popupPrefs}`
-    );
-    finalCode = finalCode.replace(
-      /New Browser(\s+)(chromium|chrome|firefox)/gi,
-      'New Browser$1$2    headless=${True}'
-    );
-  } else {
-    // Visible mode — inject popup options on all Open Browser calls
-    finalCode = finalCode.replace(
-      /Open Browser([ \t]+)(\S+)([ \t]+)(\S+)([ \t]*)$/gm,
-      function(m, s1, url, s2, browser, rest) {
-        if (rest && rest.includes('options=')) return m;
-        return 'Open Browser' + s1 + url + s2 + browser + '    options=' + popupArgs;
-      }
-    );
+  // [GATE LOT 1] Injection anti-popup : GÉNÉRÉS uniquement (defAvailable). Un projet IMPORTÉ
+  // garde ses Open Browser intacts — l'injection corrompait les keywords custom "Open Browser
+  // Firefox/Edge" (1 arg) en leur ajoutant options=... (-> "expected 1 argument, got 2").
+  if (defAvailable) {
+    if (headless) {
+      const headlessArgs = 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage")';
+      finalCode = finalCode.replace(
+        /Open Browser(\s+)(\S+)(\s+)(Chrome|chrome|Firefox|firefox|chromium)/g,
+        `Open Browser$1$2$3$4    options=${headlessArgs};${popupArgs};${popupPrefs}`
+      );
+      finalCode = finalCode.replace(
+        /New Browser(\s+)(chromium|chrome|firefox)/gi,
+        'New Browser$1$2    headless=${True}'
+      );
+    } else {
+      // Visible mode — inject popup options on all Open Browser calls
+      finalCode = finalCode.replace(
+        /Open Browser([ \t]+)(\S+)([ \t]+)(\S+)([ \t]*)$/gm,
+        function(m, s1, url, s2, browser, rest) {
+          if (rest && rest.includes('options=')) return m;
+          return 'Open Browser' + s1 + url + s2 + browser + '    options=' + popupArgs;
+        }
+      );
+    }
   }
   // Inject popup options on Suite Setup Open Browser
   // Build prefs string for SeleniumLibrary — use Python dict format
@@ -681,10 +686,13 @@ app.post('/api/rf/run', async (req, res) => {
   // les noms de navigateur LITTÉRAUX, pas ${BROWSER}). Quand headless=ON on préfixe donc les
   // args headless ici pour que CE point d'ouverture soit invisible lui aussi.
   const suiteHeadlessArgs = headless ? 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");' : '';
-  finalCode = finalCode.replace(
-    /^(Suite Setup[ \t]+Open Browser[ \t]+\S+[ \t]+\S+)$/gm,
-    '$1    options=' + suiteHeadlessArgs + popupArgs + ';' + prefsStr
-  );
+  // [GATE LOT 1] Idem Suite Setup Open Browser : GÉNÉRÉS uniquement.
+  if (defAvailable) {
+    finalCode = finalCode.replace(
+      /^(Suite Setup[ \t]+Open Browser[ \t]+\S+[ \t]+\S+)$/gm,
+      '$1    options=' + suiteHeadlessArgs + popupArgs + ';' + prefsStr
+    );
+  }
 
     // Inject screenshot on failure into each test case
   // FIX import : transformations maison gatées — un projet importé garde ses keywords intacts.
@@ -1464,7 +1472,7 @@ def get_no_popup_options(browser="chrome", headless=False):
     const cmd2 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
     _runStartTs = Date.now();
     _manualStop = false;
-    _rfProcess = exec(cmd2, { cwd: ((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), timeout: 120000 }, (err, stdout, stderr) => {
+    _rfProcess = exec(cmd2, { cwd: ((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), timeout: 600000 }, (err, stdout, stderr) => {
       _rfProcess = null;
       if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
       if (!fs.existsSync(outputXml)) {
@@ -1642,7 +1650,7 @@ def get_no_popup_options(browser="chrome", headless=False):
         const cmd3 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${robotFiles[0]}"`;
         _runStartTs = Date.now();
         _manualStop = false;
-        _rfProcess = exec(cmd3, { cwd: testsDir, timeout: 120000 }, (err, stdout, stderr) => {
+        _rfProcess = exec(cmd3, { cwd: testsDir, timeout: 600000 }, (err, stdout, stderr) => {
           _rfProcess = null;
           if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
           if (!fs.existsSync(outputXml)) {
@@ -1670,7 +1678,7 @@ def get_no_popup_options(browser="chrome", headless=False):
 
   _runStartTs = Date.now();
   _manualStop = false;
-  _rfProcess = exec(cmd, { cwd: execCwd, timeout: 120000 }, (err, stdout, stderr) => {
+  _rfProcess = exec(cmd, { cwd: execCwd, timeout: 600000 }, (err, stdout, stderr) => {
     _rfProcess = null;
     if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
     // Parse output.xml regardless of exit code (tests may fail but XML is generated)
@@ -1758,6 +1766,7 @@ function parseRobotOutput(xml, stdout, stderr) {
   // Extract individual test results
   const testRegex = /<test[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/test>/g;
   let testMatch;
+  const _tally = { pass: 0, fail: 0, skip: 0 };  // [LOT2-A] fallback si <stat>All Tests</stat> absent
 
   while ((testMatch = testRegex.exec(xml)) !== null) {
     const testName    = testMatch[1];
@@ -1774,6 +1783,10 @@ function parseRobotOutput(xml, stdout, stderr) {
     const lastStatus   = allStatusTags[allStatusTags.length - 1];
     const rawStatus    = lastStatus ? lastStatus[1] : (simpleStatus ? simpleStatus[1] : 'UNKNOWN');
     const status       = rawStatus === 'SKIPPED' ? 'SKIP' : rawStatus;
+    // [LOT2-A] tally pour fallback compteurs (XML partiel : <statistics> non flush)
+    if (status === 'PASS') _tally.pass++;
+    else if (status === 'FAIL') _tally.fail++;
+    else if (status === 'SKIP') _tally.skip++;
     const message      = lastStatus?.[3]?.trim() || '';
     // Fallback message from any ERROR msg
     const errMsg       = testContent.match(/<msg[^>]*level="(?:FAIL|ERROR)"[^>]*>([^<]+)<\/msg>/);
@@ -1892,6 +1905,16 @@ function parseRobotOutput(xml, stdout, stderr) {
     });
 
     results.duration += duration;
+  }
+
+  // [LOT2-A] Fallback compteurs : si <stat>All Tests</stat> absent/non parsable (ex. run tué au
+  // timeout avant le flush de <statistics>), reconstruire depuis les <test> complets.
+  if (!statMatch && (_tally.pass + _tally.fail + _tally.skip) > 0) {
+    results.passed  = _tally.pass;
+    results.failed  = _tally.fail;
+    results.skipped = _tally.skip;
+    results.total   = _tally.pass + _tally.fail + _tally.skip;
+    results.status  = results.failed > 0 ? 'FAIL' : (results.skipped > 0 && results.passed === 0 ? 'SKIP' : 'PASS');
   }
 
   return results;
