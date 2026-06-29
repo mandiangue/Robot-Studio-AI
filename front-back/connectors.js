@@ -381,7 +381,7 @@ async function generateFromJiraIssue(issue, apiKey) {
 async function generateTestCasesFromIssue(issue, apiKey) {
   showTyping();
 
-  const nb = 3;
+  // Nombre de cas ADAPTATIF — piloté par les critères d'acceptation (plus de plafond figé).
 
   // Build rich context from issue fields
   const contextParts = [];
@@ -399,7 +399,7 @@ async function generateTestCasesFromIssue(issue, apiKey) {
     pt: 'Gera os casos de teste em PORTUGUÊS.',
   }[currentLang] || 'Génère les cas de tests en FRANÇAIS.';
 
-  const prompt = `Tu es un expert QA. En lisant attentivement le contenu de cette user story / tâche, génère exactement ${nb} cas de tests FONCTIONNELS concrets en langage naturel.
+  const prompt = `Tu es un expert QA. En lisant attentivement le contenu de cette user story / tâche, génère des cas de tests FONCTIONNELS concrets en langage naturel, en couvrant TOUS les critères d'acceptation.
 
 ${langInstr}
 
@@ -412,18 +412,24 @@ RÈGLES STRICTES :
 - Génère des cas qui testent les FONCTIONNALITÉS décrites dans cette tâche spécifique
 - Chaque cas doit être directement lié au contenu de la tâche
 - NE génère PAS de tests génériques sur Robot Framework ou l'IA
+- COUVERTURE STRICTE / TRAÇABILITÉ des critères d'acceptation de cette US :
+  • Chaque critère d'acceptation doit être couvert par au moins un cas de test.
+  • Chaque cas de test doit se rattacher à un critère d'acceptation existant : ne génère AUCUN cas testant une fonctionnalité non décrite dans le titre, la description ou les critères de cette US.
+  • Un même critère PEUT donner plusieurs cas s'il contient une disjonction (X ou Y), plusieurs classes d'équivalence ou des valeurs limites (BVA) — dans ce cas, décline-les.
+  • Ajoute uniquement les cas d'erreur/limites DIRECTEMENT induits par les critères (champ obligatoire vide, format invalide, valeur hors borne), pas de cas sur d'autres écrans ou fonctionnalités.
+  Le nombre de cas découle des critères et de leurs déclinaisons, sans plafond ni nombre fixe. Numérote en continu TC_001, TC_002, …
 
-Format de réponse OBLIGATOIRE — UNIQUEMENT ce JSON, rien d'autre, sans backticks :
+Format de réponse OBLIGATOIRE — UNIQUEMENT ce JSON, rien d'autre, sans backticks.
+Le tableau "cases" contient AUTANT d'objets que de critères couverts (+ cas d'erreur/limites pertinents) — l'exemple ci-dessous ne FIXE PAS le nombre :
 {
   "cases": [
     { "id": 1, "testId": "TC_001", "name": "Nom concret du cas", "description": "Scénario détaillé basé sur la tâche", "expected": "Résultat attendu précis" },
-    { "id": 2, "testId": "TC_002", "name": "...", "description": "...", "expected": "..." },
-    { "id": 3, "testId": "TC_003", "name": "...", "description": "...", "expected": "..." }
+    { "id": 2, "testId": "TC_002", "name": "...", "description": "...", "expected": "..." }
   ]
 }`;
 
   try {
-    const raw    = await callClaudeRaw(apiKey, prompt);
+    const raw    = await callClaudeRaw(apiKey, prompt, null, 8192);
     const clean  = raw.replace(/\`\`\`json|\`\`\`/g, '').trim();
     const parsed = JSON.parse(clean);
     hideTyping();

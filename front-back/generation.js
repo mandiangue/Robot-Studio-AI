@@ -760,7 +760,7 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
     raw = raw.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
     return raw;
   }
-}async function callClaudeRaw(apiKey, prompt, library) {
+}async function callClaudeRaw(apiKey, prompt, library, maxTokens = 4096) {
   // Deux usages distincts, NE PAS confondre :
   // - getSessionRules() = keywords Selenium en dur (Open Browser No Popup / executable_path / Close Browser)
   //   -> UNIQUEMENT SeleniumLibrary. Browser/Playwright gère sa session via New Browser/New Context/New Page
@@ -773,7 +773,7 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
   const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax.${needsSessionRules ? ' ' + getSessionRules() : ''}`;
   const domSnap = needsDomSnapshot ? await fetchDomSnapshot(prompt) : '';
   if (domSnap) console.log('[DOM-AWARE] snapshot injecte (' + domSnap.length + ' chars)');
-  return await callAI(apiKey, [{ role: 'user', content: prompt + domSnap }], sys, 4096);
+  return await callAI(apiKey, [{ role: 'user', content: prompt + domSnap }], sys, maxTokens);
 }
 
 
