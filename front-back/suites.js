@@ -435,14 +435,18 @@ function deleteSchedule(idx) {
 document.addEventListener('DOMContentLoaded', () => {
   loadSuiteRegistry();
   loadSavedSuites();
-  loadSuitesFromDB().then(() => {
+  // [FIX race ordre] Mongo n'est lu qu'UNE FOIS (flag posé sur succès dans loadSuitesFromDB).
+  // Ouvertures suivantes -> mémoire/localStorage (déjà rafraîchis par loadSavedSuites ci-dessus) = source de vérité.
+  const _afterSuitesLoad = () => {
     // Ne nettoyer que si _codeCards est chargé et non vide
     if ((window._codeCards||[]).filter(c => c.type === 'multi' || c.type === 'single').length > 0) {
       cleanSuiteRegistry();
     }
     renderSuiteTestList();
     renderSavedSuites();
-  });
+  };
+  if (!window._suitesLoadedFromDB) { loadSuitesFromDB().then(_afterSuitesLoad); }
+  else { _afterSuitesLoad(); }
   // Restart active schedules
   suiteSchedules.filter(s => s.active).forEach(startScheduleTimer);
 });
@@ -497,14 +501,18 @@ function openSuitePanel() {
   if (btn) btn.classList.add('active');
   loadSuiteRegistry();
   loadSavedSuites();
-  loadSuitesFromDB().then(() => {
+  // [FIX race ordre] Mongo n'est lu qu'UNE FOIS (flag posé sur succès dans loadSuitesFromDB).
+  // Ouvertures suivantes -> mémoire/localStorage (déjà rafraîchis par loadSavedSuites ci-dessus) = source de vérité.
+  const _afterSuitesLoad = () => {
     // Ne nettoyer que si _codeCards est chargé et non vide
     if ((window._codeCards||[]).filter(c => c.type === 'multi' || c.type === 'single').length > 0) {
       cleanSuiteRegistry();
     }
     renderSuiteTestList();
     renderSavedSuites();
-  });
+  };
+  if (!window._suitesLoadedFromDB) { loadSuitesFromDB().then(_afterSuitesLoad); }
+  else { _afterSuitesLoad(); }
   try {
     const saved = localStorage.getItem('qa_suite_title');
     const input = document.getElementById('suiteTitleInput');
@@ -694,6 +702,7 @@ async function loadSuitesFromDB() {
     const r = await fetch('/api/storage/suites');
     const d = await r.json();
     if (d.ok) {
+      window._suitesLoadedFromDB = true;   // [FIX race ordre] Mongo lu avec succès -> ne plus re-fetch en session
       if (d.savedSuites?.length > 0) savedSuites = d.savedSuites;
       if (d.registry?.length > 0) suiteRegistry = d.registry;
     }
