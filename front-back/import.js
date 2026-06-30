@@ -298,13 +298,28 @@ async function _rfReadDropEntry(entry, prefix, out) {
     do { batch = await readBatch(); for (const e of batch) await _rfReadDropEntry(e, prefix + entry.name + '/', out); } while (batch.length);
   }
 }
+// Plus long préfixe de DOSSIERS commun à TOUS les chemins (segments entiers, hors basename).
+// '' si les fichiers ne partagent pas de dossier-wrapper commun (cas tests/ vs resources/ -> on
+// ne retire RIEN, l'arborescence est préservée). Retire le wrapper unique (cas fedia-testauto/).
+function _rfCommonPrefix(paths) {
+  if (!paths || !paths.length) return '';
+  var parts = String(paths[0]).split('/');
+  var prefix = [];
+  for (var pi = 0; pi < parts.length - 1; pi++) {
+    var seg = parts[pi];
+    if (paths.every(function (p) { return String(p).split('/')[pi] === seg; })) prefix.push(seg);
+    else break;
+  }
+  return prefix.length ? prefix.join('/') + '/' : '';
+}
 async function _rfProcessDropped(fileRecs) {
   const kept = fileRecs.filter(r => !_rfMediaDrop(r.rel));
   if (!kept.length) { showToast(t('imp.noUsableFile')); return; }
   const rootSeg = (kept[0].rel.split('/')[0]) || 'Projet RF';
   const readDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+  const _prefix = _rfCommonPrefix(kept.map(r => r.rel));
   const entries = await Promise.all(kept.map(async r => {
-    const relPath = r.rel.split('/').slice(1).join('/') || r.rel;
+    const relPath = (_prefix && r.rel.startsWith(_prefix)) ? r.rel.slice(_prefix.length) : r.rel;
     const isImg = _RF_IMG.test(r.rel);
     const cap = isImg ? 8 * 1024 * 1024 : 1024 * 1024;
     if (r.file.size > cap) return null;
@@ -362,9 +377,10 @@ async function importRFProject(fileList) {
   showToast(t('imp.readingProject'));
   try {
     const _readDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+    const _prefix = _rfCommonPrefix(picked.map(f => f.webkitRelativePath || f.name));
     const entries = await Promise.all(picked.map(async f => {
       const rp = (f.webkitRelativePath || f.name);
-      const relPath = rp.split('/').slice(1).join('/') || rp;
+      const relPath = (_prefix && rp.startsWith(_prefix)) ? rp.slice(_prefix.length) : rp;
       if (_RF_IMG.test(rp)) return { relPath, content: await _readDataURL(f), binary: true };
       const content = await f.text();
       return { relPath, content, binary: false };
@@ -382,18 +398,7 @@ function _importRFFiles(files, source) {
   if (!files || !files.length) { showToast(t('imp.noRobotFile')); return; }
   // Normaliser les chemins : retirer le prefixe commun redondant
   var _allPaths = files.map(function(f){ return f.path; });
-  var _commonPrefix = (function(){
-    if (_allPaths.length === 0) return '';
-    var parts = _allPaths[0].split('/');
-    var prefix = [];
-    for (var pi = 0; pi < parts.length - 1; pi++) {
-      var seg = parts[pi];
-      if (_allPaths.every(function(p){ return p.split('/')[pi] === seg; })) {
-        prefix.push(seg);
-      } else { break; }
-    }
-    return prefix.length ? prefix.join('/') + '/' : '';
-  })();
+  var _commonPrefix = _rfCommonPrefix(_allPaths);
   var rf = files.map(function(f){
     var cleanPath = _commonPrefix && f.path.startsWith(_commonPrefix)
       ? f.path.slice(_commonPrefix.length) : f.path;

@@ -235,6 +235,7 @@ function cleanOrphanWdmLocks() {
 }
 
 if (!fs.existsSync(TESTS_DIR)) fs.mkdirSync(TESTS_DIR);
+if (!fs.existsSync(path.join(TESTS_DIR, 'imports'))) fs.mkdirSync(path.join(TESTS_DIR, 'imports'), { recursive: true });
 
 // ── POST /api/rf/run ──────────────────────────────────────────
 // Body: { code, filename, headless }
@@ -727,6 +728,26 @@ app.post('/api/rf/run', async (req, res) => {
   const fileParts   = finalCode.split(/\*{5}\s*FILE:[^\n]+\n/);
 
   if (fileHeaders.length >= 2) {
+    // [ISOLATION IMPORT — LOT 2a] Un projet importé est écrit ET exécuté dans son propre
+    // sous-dossier rf_tests/imports/<slug> -> aucun mélange entre projets importés.
+    // Gate unique : isImport. Pour un GÉNÉRÉ (defAvailable=true) -> writeBase = TESTS_DIR (inchangé).
+    const isImport = (!defAvailable && fileHeaders.length >= 2);
+    let slug = '';
+    if (isImport) {
+      slug = String(req.body.importName || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+      if (!slug) { // pas de nom fiable -> HASH des relPaths (unique, évite la collision sur filename)
+        const _h = fileHeaders.map(h => (h[1] || '').trim()).join('|');
+        let _n = 0; for (let _i = 0; _i < _h.length; _i++) _n = (_n * 31 + _h.charCodeAt(_i)) >>> 0;
+        slug = 'projet-' + _n.toString(36);
+      }
+    }
+    const importDir = isImport ? path.join(TESTS_DIR, 'imports', slug) : null;
+    const writeBase = isImport ? importDir : (isSuiteBloc ? runBaseDir : TESTS_DIR);
+    if (isImport) {
+      try { fs.rmSync(importDir, { recursive: true, force: true }); } catch (e) {}
+      try { fs.mkdirSync(importDir, { recursive: true }); } catch (e) {}
+      console.log('  [IMPORT] isolation ->', path.relative(TESTS_DIR, importDir).replace(/\\/g, '/'));
+    }
     // Clean old POM files before writing new ones — only remove .robot, keep XML/logs.
     const removeRobots = (d) => {
       fs.readdirSync(d).forEach(f => {
@@ -740,17 +761,15 @@ app.post('/api/rf/run', async (req, res) => {
         }
       });
     };
-    // Généré : purge resources/ + tests/. IMPORT (defAvailable=false) : purge TOUT le
-    // périmètre (sauf suite_runs) pour ne pas mélanger avec les résidus d'un import précédent.
-    const cleanDirs = defAvailable
-      ? ['resources', 'tests']
-      : (() => { try { return fs.readdirSync(TESTS_DIR).filter(f => {
-          try { return fs.statSync(path.join(TESTS_DIR, f)).isDirectory() && f !== 'suite_runs'; } catch(e) { return false; }
-        }); } catch(e) { return ['resources', 'tests']; } })();
-    cleanDirs.forEach(dir => {
-      const dirPath = path.join(TESTS_DIR, dir);
-      if (fs.existsSync(dirPath)) { try { removeRobots(dirPath); console.log('  POM: cleaned', dir); } catch(e) {} }
-    });
+    // Import : déjà isolé+purgé via importDir ci-dessus -> PAS de cleanup global (effacerait
+    // les AUTRES imports). Généré : purge resources/ + tests/ (STRICTEMENT inchangé).
+    if (!isImport) {
+      const cleanDirs = ['resources', 'tests'];
+      cleanDirs.forEach(dir => {
+        const dirPath = path.join(TESTS_DIR, dir);
+        if (fs.existsSync(dirPath)) { try { removeRobots(dirPath); console.log('  POM: cleaned', dir); } catch(e) {} }
+      });
+    }
 
     // POM multi-file — save each file separately
     let execFile = null;
@@ -758,8 +777,8 @@ app.post('/api/rf/run', async (req, res) => {
     fileHeaders.forEach((h, i) => {
       const relPath = h[1].trim().replace(/\\/g, '/');
       const content = (fileParts[i + 1] || '').trim();
-      // For suite blocs, write to isolated runBaseDir; otherwise use TESTS_DIR
-      const baseForFile = isSuiteBloc ? runBaseDir : TESTS_DIR;
+      // [LOT 2a] writeBase centralisé : import -> importDir, suite -> runBaseDir, généré -> TESTS_DIR
+      const baseForFile = writeBase;
       const absPath = path.join(baseForFile, relPath);
       const absDir  = path.dirname(absPath);
       if (!fs.existsSync(absDir)) fs.mkdirSync(absDir, { recursive: true });
@@ -853,8 +872,10 @@ app.post('/api/rf/run', async (req, res) => {
             });
           }
         }
-        if (!execFile) execFile = absPath;
-        else execFile = path.join(TESTS_DIR, 'tests');
+        if (defAvailable) {            // [LOT 2a] imports ciblés plus bas via importDir
+          if (!execFile) execFile = absPath;
+          else execFile = path.join(TESTS_DIR, 'tests');
+        }
       }
     });
 
@@ -1034,30 +1055,13 @@ app.post('/api/rf/run', async (req, res) => {
     // *** Test Cases ***/Tasks dans tout le périmètre (hors suite_runs) et on cible leur
     // dossier ancêtre commun -> robot le parcourt récursivement et exécute tous les suites.
     if (!defAvailable) {
-      const _runRoot = (typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR;
-      const _testRobots = [];
-      const _scanTests = (dir) => {
-        let items; try { items = fs.readdirSync(dir); } catch (e) { return; }
-        for (const f of items) {
-          if (f === 'suite_runs' || f === 'node_modules' || f === '__pycache__' || f === '.git') continue;
-          const fp = path.join(dir, f);
-          let st; try { st = fs.statSync(fp); } catch (e) { continue; }
-          if (st.isDirectory()) { _scanTests(fp); continue; }
-          if (!f.endsWith('.robot')) continue;
-          try { if (/\*{3}\s*(Test Cases|Tasks)\s*\*{3}/i.test(fs.readFileSync(fp, 'utf8'))) _testRobots.push(fp.replace(/\\/g, '/')); } catch (e) {}
-        }
-      };
-      _scanTests(_runRoot);
-      if (_testRobots.length) {
-        // Dossier ancêtre commun des fichiers de test
-        const _parts = _testRobots.map(p => p.split('/'));
-        let _common = _parts[0].slice(0, -1);
-        for (const pr of _parts) { let i = 0; while (i < _common.length && i < pr.length - 1 && _common[i] === pr[i]) i++; _common = _common.slice(0, i); }
-        const _commonDir = _common.join('/');
-        execFile = (_commonDir && fs.existsSync(_commonDir)) ? _commonDir : _testRobots[0];
-        console.log('  [IMPORT] exécution du projet réel ->', path.relative(TESTS_DIR, execFile), '(' + _testRobots.length + ' fichier(s) de test détecté(s))');
+      // [ISOLATION IMPORT — LOT 2a] Cible SCOPÉE au dossier du projet importé. robot le
+      // parcourt récursivement -> uniquement ce projet (plus de scan global de rf_tests/).
+      if (importDir && fs.existsSync(importDir)) {
+        execFile = importDir;
+        console.log('  [IMPORT] exécution scopée ->', path.relative(TESTS_DIR, execFile).replace(/\\/g, '/'));
       } else {
-        console.log('  [IMPORT] aucun *** Test Cases *** trouvé dans le projet importé');
+        console.log('  [IMPORT] importDir introuvable -> execFile inchangé:', execFile);
       }
     }
 
@@ -1066,10 +1070,11 @@ app.post('/api/rf/run', async (req, res) => {
     const testFiles = fs.existsSync(testsDir)
       ? fs.readdirSync(testsDir).filter(f => f.endsWith('.robot') && f !== 'tests.robot')
       : [];
-    if (testFiles.length > 1) {
+    if (defAvailable && testFiles.length > 1) {   // [LOT 2a-bis] import: ne jamais écraser execFile=importDir
       execFile = testsDir; // Lancer robot tests/ (tout le dossier)
     }
-    // IMPORT : pas de fallback/placeholder tests/ — la cible réelle est posée plus bas (override import).
+    // IMPORT : pas de fallback/placeholder tests/ — la cible réelle (execFile=importDir) est posée
+    //          PLUS HAUT (bloc isolation, ~1060). Ce fallback est réservé au GÉNÉRÉ (defAvailable).
     if (!execFile && defAvailable) {
       const fallback = path.join(TESTS_DIR, 'tests', 'tests.robot');
       const _featFiles = (() => { try { return fs.readdirSync(path.join(TESTS_DIR, 'tests')).filter(x => x.startsWith('feature_') && x.endsWith('.robot')); } catch (e) { return []; } })();

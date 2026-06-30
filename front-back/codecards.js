@@ -948,7 +948,7 @@ function renderResultCard(files, existingCardId) {
         const _card = (window._codeCards || []).find(c => c.cardId === cardId);
         const imported = !!(_card && (_card.imported || _card.type === 'pulled'
           || (_card.files || []).some(f => f.desc === 'Importé')));
-        runTestsFromCard(combined, fname, { imported });
+        runTestsFromCard(combined, fname, { imported, importName: (_card && _card.title) || '' });
       } else if (action === 'copy') {
         navigator.clipboard.writeText(files[activeTab].code)
           .then(() => showToast(t('codecards.copied')));
