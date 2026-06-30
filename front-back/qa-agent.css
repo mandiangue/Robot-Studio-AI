@@ -253,6 +253,17 @@ body.sidebar-resizing { cursor: col-resize; user-select: none; }
   padding-left: 4px; margin-left: -4px;
 }
 
+/* [BREAKPOINT LOT A] surlignage jaune des lignes breakpointées (cohérent avec le bouton ● BP) */
+.rf-line { display: block; }
+.rf-line-active { outline: 1px dotted var(--warn); outline-offset: -1px; }
+.rf-breakpoint-line {
+  background: rgba(251,191,36,0.12);
+  border-left: 3px solid var(--warn);
+  padding-left: 4px; margin-left: -4px;
+}
+/* thème clair : --warn=#b45309 ; jaune pâle peu visible sur fond clair -> teinte ambre plus dense */
+body.theme-light .rf-breakpoint-line { background: rgba(180,83,9,0.14); }
+
 .msg-bubble .tag {
   display: inline-block; padding: 3px 10px; border-radius: 4px;
   font-family: 'IBM Plex Mono', monospace;

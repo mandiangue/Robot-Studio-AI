@@ -480,6 +480,44 @@ function renderMultiFileMsg(raw) {
 
 // ── Render result card in chat ─────────────────────────────────────────────────
 
+// [BREAKPOINT LOT B] Persistance DÉDIÉE (localStorage 'qa_breakpoints') — indépendante de Mongo
+// (FileSchema strippe les champs extra, Mongo = source primaire au reload).
+// Structure : { [cardId]: { [filename]: [lineIdx] } }.
+function _bpGetFor(cardId, filename) {
+  try {
+    const all = JSON.parse(localStorage.getItem('qa_breakpoints') || '{}');
+    return (all[cardId] && all[cardId][filename]) || [];
+  } catch (e) { return []; }
+}
+function _bpSaveFor(cardId, filename, lines) {
+  try {
+    const all = JSON.parse(localStorage.getItem('qa_breakpoints') || '{}');
+    if (lines && lines.length) { (all[cardId] = all[cardId] || {})[filename] = lines.slice(); }
+    else if (all[cardId]) { delete all[cardId][filename]; if (!Object.keys(all[cardId]).length) delete all[cardId]; }
+    localStorage.setItem('qa_breakpoints', JSON.stringify(all));
+  } catch (e) {}
+}
+
+// [BREAKPOINT LOT C] Injecte Pause Execution (Dialogs) aux lignes breakpointées. Travaille sur une
+// COPIE (ne mute JAMAIS f.code). bpLines = indices 0-based du code AFFICHÉ (cleanRobotCodeFromHtml).
+function _bpInject(code, bpLines) {
+  const lines = code.split('\n');
+  // 1) Pause Execution avant chaque bp, ORDRE DÉCROISSANT (un splice haut ne décale pas les bas).
+  const sorted = [...new Set(bpLines)].filter(i => i >= 0 && i < lines.length).sort((a, b) => b - a);
+  for (const i of sorted) {
+    const indent = (lines[i].match(/^[ \t]*/) || [''])[0];   // MÊME indentation que la ligne cible
+    lines.splice(i, 0, indent + 'Pause Execution    msg=🔴 Breakpoint ligne ' + (i + 1) + ' — inspecte le navigateur, clique OK pour continuer');
+  }
+  let out = lines.join('\n');
+  // 2) Library Dialogs (APRÈS les insertions -> décalage uniforme du fichier, sans incidence structure).
+  if (!/^\s*Library\s+Dialogs\b/m.test(out)) {
+    out = /\*\*\* Settings \*\*\*/.test(out)
+      ? out.replace(/^(\*\*\* Settings \*\*\*[^\n]*\n)/m, '$1Library    Dialogs\n')
+      : '*** Settings ***\nLibrary    Dialogs\n\n' + out;
+  }
+  return out;
+}
+
 function buildFileTree(files, activeTab, cardId) {
   const tree = {};
   files.forEach((f, i) => {
@@ -671,6 +709,8 @@ function renderResultCard(files, existingCardId) {
     const isBinary = !!f.binary || /^data:/i.test(_code) || _imgExt || /\.(pdf|dcm|dicom)$/i.test(f.filename || '');
     const isImage  = !!f.isImage || /^data:image\//i.test(_code) || _imgExt;
     const isRf = !isBinary && /\.(robot|resource)$/i.test(f.filename || '');
+    // [BREAKPOINT LOT B] hydrate depuis localStorage -> les bp survivent au reload (Mongo les strippe)
+    if (isRf) f.breakpoints = _bpGetFor(cardId, f.filename);
     // rawCode/safe : vides en binaire -> ni cleanRobotCodeFromHtml, ni syntaxHL, ni la textarea
     // ne reçoivent le base64 géant. (Conservés en variables : utilisés plus bas pour la textarea.)
     const rawCode = isBinary ? '' : cleanRobotCodeFromHtml(f.code);
@@ -689,7 +729,9 @@ function renderResultCard(files, existingCardId) {
         hl = `<div style="padding:32px;text-align:center;color:var(--gray);font-size:13px">📄 ${_name}<div style="font-size:12px;margin-top:6px">fichier binaire · ${_kb} Ko</div></div>`;
       }
     } else {
-      hl = isRf ? syntaxHLLinted(rawCode) : syntaxHL(safe);
+      hl = isRf
+        ? _bpWrapLines(syntaxHLLinted(rawCode), new Set(f.breakpoints || []))
+        : syntaxHL(safe);
     }
 
     // Multi-file run selector
@@ -730,6 +772,10 @@ function renderResultCard(files, existingCardId) {
                        font-weight:700;cursor:pointer;white-space:nowrap">
                 ▶️ Run
               </button>
+              ${isRf ? `<button data-card="${cardId}" data-raction="breakpoint" title="Breakpoint sur la ligne active (clique une ligne d'abord)"
+                style="background:rgba(251,191,36,0.15);border:1px solid var(--warn);color:var(--warn);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer;font-weight:700">● BP</button>` : ''}
+              ${isRf && f.breakpoints && f.breakpoints.length ? `<button data-card="${cardId}" data-raction="bpclear" title="Effacer tous les breakpoints de ce fichier"
+                style="background:transparent;border:1px solid var(--warn);color:var(--warn);padding:4px 8px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">✕ BP</button>` : ''}
               <button data-card="${cardId}" data-raction="copy" data-i18n-title="codecards.tCopy"
                 style="background:rgba(0,212,170,0.08);border:1px solid var(--teal);color:var(--teal);padding:4px 10px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer">📋</button>
               <button data-card="${cardId}" data-raction="download" data-i18n-title="codecards.tDownload"
@@ -820,6 +866,16 @@ function renderResultCard(files, existingCardId) {
 
     // Event delegation
     div.onclick = async e => {
+      // [BREAKPOINT LOT A] clic sur une ligne de la vue -> ligne active (pas une action data-raction)
+      const lineEl = e.target.closest('.rf-line');
+      if (lineEl) {
+        const li = parseInt(lineEl.dataset.line, 10);
+        window._activeBpLine = window._activeBpLine || {};
+        window._activeBpLine[cardId] = li;
+        div.querySelectorAll('.rf-line-active').forEach(el => el.classList.remove('rf-line-active'));
+        lineEl.classList.add('rf-line-active');
+        return;
+      }
       const btn = e.target.closest('[data-raction]');
       if (!btn) return;
       const action = btn.dataset.raction;
@@ -848,7 +904,39 @@ function renderResultCard(files, existingCardId) {
         treeDelete(e, parseInt(btn.dataset.ridx), cardId);
       } else if (action === 'tab') {
         activeTab = parseInt(btn.dataset.ridx);
+        if (window._activeBpLine) delete window._activeBpLine[cardId];
         buildCard(activeTab);
+      } else if (action === 'breakpoint') {
+        // [BREAKPOINT LOT A] toggle un breakpoint sur la ligne active (validation ligne d'action)
+        const f = files[activeTab];
+        if (!f || f.binary || !/\.(robot|resource)$/i.test(f.filename || '')) {
+          showToast('Breakpoint : fichiers RF uniquement'); return;
+        }
+        const li = (window._activeBpLine || {})[cardId];
+        if (li == null) { showToast('Clique d\'abord une ligne'); return; }
+        const lineTxt = (cleanRobotCodeFromHtml(f.code).split('\n')[li]) || '';
+        const isExecutable = /^[ \t]+\S/.test(lineTxt)
+          && !/^\s*#/.test(lineTxt) && !/^\s*\[/.test(lineTxt)
+          && !/^\s*\.\.\./.test(lineTxt) && !/^\s*\*{3}/.test(lineTxt);
+        if (!isExecutable) { showToast('Breakpoint possible uniquement sur une ligne d\'action (indentée)'); return; }
+        f.breakpoints = f.breakpoints || [];
+        const pos = f.breakpoints.indexOf(li);
+        if (pos >= 0) f.breakpoints.splice(pos, 1); else f.breakpoints.push(li);   // toggle
+        _bpSaveFor(cardId, f.filename, f.breakpoints);   // [LOT B] persiste AVANT le re-render (hydratation relit la valeur fraîche)
+        const _pre = document.getElementById(cardId + '-edit-' + activeTab + '-pre');
+        const _st  = _pre ? _pre.scrollTop : 0;
+        buildCard(activeTab);
+        const _pre2 = document.getElementById(cardId + '-edit-' + activeTab + '-pre');
+        if (_pre2) _pre2.scrollTop = _st;
+        const _act = div.querySelector('.rf-line[data-line="' + li + '"]');
+        if (_act) _act.classList.add('rf-line-active');
+      } else if (action === 'bpclear') {
+        // [BREAKPOINT LOT B] effacer TOUS les breakpoints du fichier actif
+        const f = files[activeTab];
+        if (f) { f.breakpoints = []; _bpSaveFor(cardId, f.filename, []); }
+        if (window._activeBpLine) delete window._activeBpLine[cardId];
+        buildCard(activeTab);
+        showToast('Tous les breakpoints effacés');
       } else if (action === 'toggleedit') {
         const eid   = cardId + '-edit-' + activeTab;
         const view  = document.getElementById(eid + '-view');
@@ -866,6 +954,12 @@ function renderResultCard(files, existingCardId) {
         if (files[activeTab] && files[activeTab].binary) { showToast(t('editor.binaryNoEdit')); return; }
         // Update files array with new code
         files[activeTab].code = ta.value;
+        // [BREAKPOINT LOT B] code modifié -> index de ligne invalides -> effacer les bp du fichier
+        if (files[activeTab].breakpoints && files[activeTab].breakpoints.length) {
+          files[activeTab].breakpoints = [];
+          _bpSaveFor(cardId, files[activeTab].filename, []);
+          showToast('Breakpoints effacés (code modifié)');
+        }
         // Persist in _codeCards
         window._codeCards = (window._codeCards||[]).map(c => {
           if (c.cardId !== cardId) return c;
@@ -930,17 +1024,30 @@ function renderResultCard(files, existingCardId) {
         } else {
           filesToRun = [files[parseInt(val)]];
         }
+        // [BREAKPOINT LOT C] fichiers RF avec breakpoints -> injection Pause Execution (sur COPIE)
+        const _bpFiles = filesToRun.filter(f => f.breakpoints && f.breakpoints.length && /\.(robot|resource)$/i.test(f.filename || ''));
+        const _hasBp = _bpFiles.length > 0;
+        if (_hasBp) {  // check/install Dialogs (réutilise le mécanisme Debug)
+          try {
+            const _chk = await fetch(window._runnerBase + '/api/check-library', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ library: 'Dialogs' }) });
+            const _r = await _chk.json();
+            if (!_r.installed) { if (confirm(t('run.dialogsConfirm'))) installLibrary('Dialogs'); return; }
+          } catch (e) {}
+        }
+        // injection basée sur le code AFFICHÉ (alignement des index bp) ; f.code source JAMAIS modifié
+        const _codeFor = (f) => (_hasBp && f.breakpoints && f.breakpoints.length && /\.(robot|resource)$/i.test(f.filename || ''))
+          ? _bpInject(cleanRobotCodeFromHtml(f.code), f.breakpoints) : f.code;
         // For multi-file POM: send combined code WITH delimiters so server can split
         let combined, fname;
         if (filesToRun.length > 1) {
           // Always send ALL files with FILE: delimiters so server writes them all to disk.
           // Fichiers binaires (images) -> marqueur ` | BINARY` ; f.code = dataURL base64.
           combined = filesToRun.map(f =>
-            '***** FILE: ' + f.filename + ' | ' + (f.label || f.filename.split('/').pop().replace('.robot','')) + ' | ' + (f.desc || f.filename) + (f.binary ? ' | BINARY' : '') + '\n' + f.code
+            '***** FILE: ' + f.filename + ' | ' + (f.label || f.filename.split('/').pop().replace('.robot','')) + ' | ' + (f.desc || f.filename) + (f.binary ? ' | BINARY' : '') + '\n' + _codeFor(f)
           ).join('\n');
           fname = 'tests/tests';
         } else {
-          combined = filesToRun[0].code;
+          combined = _codeFor(filesToRun[0]);
           fname    = filesToRun[0].filename;
         }
         window._lastCardId = cardId;
@@ -948,7 +1055,7 @@ function renderResultCard(files, existingCardId) {
         const _card = (window._codeCards || []).find(c => c.cardId === cardId);
         const imported = !!(_card && (_card.imported || _card.type === 'pulled'
           || (_card.files || []).some(f => f.desc === 'Importé')));
-        runTestsFromCard(combined, fname, { imported, importName: (_card && _card.title) || '' });
+        runTestsFromCard(combined, fname, { imported, importName: (_card && _card.title) || '', hasBreakpoint: _hasBp });
       } else if (action === 'copy') {
         navigator.clipboard.writeText(files[activeTab].code)
           .then(() => showToast(t('codecards.copied')));

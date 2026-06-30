@@ -176,14 +176,15 @@ function connectLive() {
   // Sync disque → UI : mise à jour depuis VS Code
   _liveEvtSource.addEventListener('file-changed', e => {
     const { filepath, content } = JSON.parse(e.data);
+    const _clean = _bpStripInjected(content);   // [BREAKPOINT FIX] strip AVANT compare/écriture
     // Mettre à jour toutes les cartes qui contiennent ce fichier
     let updated = false;
     let _changedCard2 = null;
     (window._codeCards||[]).forEach(card => {
       if (!card.files) return;
       const f = card.files.find(f => f.filename === filepath || f.filename.endsWith('/' + filepath.split('/').pop()));
-      if (f && f.code !== content) {
-        f.code = content;
+      if (f && f.code !== _clean) {
+        f.code = _clean;
         updated = true;
         _changedCard2 = card;
       }

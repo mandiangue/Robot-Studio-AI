@@ -94,6 +94,15 @@ function syntaxHLLinted(rawCode) {
   return lines.join('\n');
 }
 
+// [BREAKPOINT LOT A] Enveloppe CHAQUE ligne en <span class="rf-line" data-line="i"> (display:block).
+// join('') SANS \n -> pas de double interligne. Ligne breakpointée -> classe rf-breakpoint-line.
+function _bpWrapLines(hl, bpSet) {
+  return hl.split('\n').map(function (ln, i) {
+    var cls = 'rf-line' + (bpSet && bpSet.has(i) ? ' rf-breakpoint-line' : '');
+    return '<span class="' + cls + '" data-line="' + i + '">' + (ln === '' ? ' ' : ln) + '</span>';
+  }).join('');
+}
+
 
 // ── Markdown renderer (minimal) ────────────────────────────────────────────────
 function renderMarkdown(text) {
@@ -112,6 +121,16 @@ function escHtml(s) {
 
 function stripHtml(h) {
   return (h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+}
+
+// [BREAKPOINT FIX] Retire UNIQUEMENT les lignes injectées par le LOT C (marqueur "msg=🔴 Breakpoint ligne").
+// NE touche PAS un "Pause Execution" utilisateur légitime (sans ce marqueur). Réutilisé par les 2
+// handlers file-changed (core.js + live.js) ET le nettoyage one-shot (storage.js).
+function _bpStripInjected(content) {
+  if (!content || content.indexOf('msg=🔴 Breakpoint ligne') === -1) return content;   // fast-path
+  return content.split('\n')
+    .filter(line => !/^\s*Pause Execution\s+msg=🔴 Breakpoint ligne /.test(line))
+    .join('\n');
 }
 
 function cleanRobotCodeFromHtml(code) {
@@ -1109,11 +1128,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // (variables.robot, keywords.robot...) communs -> le run d'un bloc ecrasait
       // le code des autres cartes. On cible desormais la seule carte _lastCardId.
       const _tgtCard = (window._codeCards||[]).find(c => c.cardId === window._lastCardId);
+      const _clean = _bpStripInjected(content);   // [BREAKPOINT FIX] strip AVANT compare/écriture
       if (_tgtCard && _tgtCard.files) {
         const fname = filepath.split('/').pop();
         const f = _tgtCard.files.find(f => f.filename === filepath || (f.filename||'').split('/').pop() === fname);
-        if (f && f.code !== content) {
-          f.code = content;
+        if (f && f.code !== _clean) {
+          f.code = _clean;
           updated = true;
           _changedCard = _tgtCard;
         }

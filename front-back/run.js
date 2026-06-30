@@ -174,11 +174,13 @@ async function runTestsFromCard(code, filename, suiteCtx) {
 
   try {
     const browserType = document.getElementById('optBrowserType')?.value || 'chrome';
-    const headless = document.getElementById('optHeadless')?.value === 'headless';
+    let headless = document.getElementById('optHeadless')?.value === 'headless';
+    // [BREAKPOINT LOT C] un breakpoint impose le mode visible (Pause Execution figerait sans UI)
+    if (suiteCtx && suiteCtx.hasBreakpoint) { if (headless) showToast('Mode visible forcé (breakpoint)'); headless = false; }
     const r    = await fetch(window._runnerBase + '/api/rf/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '', suiteFilter: window._runSuiteFilter || null, imported: !!(suiteCtx && suiteCtx.imported), importName: (suiteCtx && suiteCtx.importName) || '' }),
+      body: JSON.stringify({ code, filename: filename?.replace('.robot','') || 'test', headless, browserType, pageTitle: window._lastGeneratedTitle || '', suiteFilter: window._runSuiteFilter || null, imported: !!(suiteCtx && suiteCtx.imported), importName: (suiteCtx && suiteCtx.importName) || '', hasBreakpoint: !!(suiteCtx && suiteCtx.hasBreakpoint) }),
     });
     const data = await r.json();
     hideTyping();

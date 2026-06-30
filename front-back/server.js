@@ -1494,7 +1494,7 @@ def get_no_popup_options(browser="chrome", headless=False):
     const cmd2 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
     _runStartTs = Date.now();
     _manualStop = false;
-    _rfProcess = exec(cmd2, { cwd: ((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), timeout: 600000 }, (err, stdout, stderr) => {
+    _rfProcess = exec(cmd2, { cwd: ((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), timeout: req.body.hasBreakpoint ? 0 : 600000 }, (err, stdout, stderr) => {
       _rfProcess = null;
       if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
       if (!fs.existsSync(outputXml)) {
@@ -1672,7 +1672,7 @@ def get_no_popup_options(browser="chrome", headless=False):
         const cmd3 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${robotFiles[0]}"`;
         _runStartTs = Date.now();
         _manualStop = false;
-        _rfProcess = exec(cmd3, { cwd: testsDir, timeout: 600000 }, (err, stdout, stderr) => {
+        _rfProcess = exec(cmd3, { cwd: testsDir, timeout: req.body.hasBreakpoint ? 0 : 600000 }, (err, stdout, stderr) => {
           _rfProcess = null;
           if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
           if (!fs.existsSync(outputXml)) {
@@ -1700,7 +1700,7 @@ def get_no_popup_options(browser="chrome", headless=False):
 
   _runStartTs = Date.now();
   _manualStop = false;
-  _rfProcess = exec(cmd, { cwd: execCwd, timeout: 600000 }, (err, stdout, stderr) => {
+  _rfProcess = exec(cmd, { cwd: execCwd, timeout: req.body.hasBreakpoint ? 0 : 600000 }, (err, stdout, stderr) => {
     _rfProcess = null;
     if (_manualStop) { _manualStop = false; return res.json({ stopped: true, skipped: 'manual stop - no report' }); }
     // Parse output.xml regardless of exit code (tests may fail but XML is generated)

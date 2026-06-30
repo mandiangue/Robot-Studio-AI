@@ -156,6 +156,15 @@ const LS = {
             }
             if (cards.length > 0) {
               window._codeCards = cards;
+              // [BREAKPOINT FIX] one-shot : retirer les Pause Execution injectés ayant FUI dans f.code
+              let _bpCleaned = false;
+              (window._codeCards || []).forEach(c => (c.files || []).forEach(f => {
+                if (f && typeof f.code === 'string' && f.code.indexOf('msg=🔴 Breakpoint ligne') !== -1) {
+                  const _s = _bpStripInjected(f.code);
+                  if (_s !== f.code) { f.code = _s; _bpCleaned = true; }
+                }
+              }));
+              if (_bpCleaned) { try { saveCodeCards(); } catch (e) {} }
               cards.forEach(card => {
                 if (card.type === 'suite-report') {
                   setTimeout(() => renderConsolidatedSuiteReport(card), 0);
