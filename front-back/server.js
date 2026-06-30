@@ -879,6 +879,23 @@ app.post('/api/rf/run', async (req, res) => {
       }
     });
 
+    // [LIB-SCAN Niveau 1] Import seulement : détecter les Library Python manquantes AVANT robot.
+    // Dégradation gracieuse : si python/scan échoue -> log + run normal (le scan est une aide).
+    // TODO Lot 2 (client) : la modale devra proposer "Lancer quand même" -> ne pas piéger
+    //   l'utilisateur sur un éventuel FAUX POSITIF (le court-circuit ci-dessous est strict pour l'instant).
+    if (isImport) {
+      try {
+        const _missing = await scanMissingLibraries(importDir);
+        if (_missing.length) {
+          console.log('  [LIB-SCAN] manquantes ->', _missing.map(m => m.name + (m.missingModule && m.missingModule !== m.name ? ' (' + m.missingModule + ')' : '')).join(', '));
+          return res.json({ ok: false, missingLibraries: _missing, skippedRun: true });
+        }
+        console.log('  [LIB-SCAN] OK : toutes les Library importables');
+      } catch (e) {
+        console.log('  [LIB-SCAN] ignoré (dégradation gracieuse):', e.message);
+      }
+    }
+
     // Fix ALL resource paths + inject Open Browser No Popup keyword
     const sharedRes = path.join(TESTS_DIR, 'resources').replace(/\\/g, '/');
     const targetRes  = isSuiteBloc ? path.join(runBaseDir, 'resources').replace(/\\/g, '/') : sharedRes;
@@ -2965,6 +2982,90 @@ const LIBRARY_PACKAGES = {
   'RequestsLibrary':  { pip: 'robotframework-requests',        post: null },
   'DatabaseLibrary':  { pip: 'robotframework-databaselibrary', post: null },
 };
+
+// ── [LIB-SCAN Niveau 1] Détection des Library Python manquantes d'un import ───
+// Note interpréteur : le scan utilise 'python' nu = le MÊME interpréteur que les runs `robot`
+// (installation unique sur le PATH, robot étant le launcher de ce python) -> pas de faux positif.
+// nom RF Library -> package pip (fiable). Étend LIBRARY_PACKAGES.
+const RF_LIB_PIP = {
+  SeleniumLibrary: 'robotframework-seleniumlibrary',
+  Browser: 'robotframework-browser',
+  AppiumLibrary: 'robotframework-appiumlibrary',
+  RequestsLibrary: 'robotframework-requests',
+  DatabaseLibrary: 'robotframework-databaselibrary',
+  ScreenCapLibrary: 'robotframework-screencaplibrary',
+  JSONLibrary: 'robotframework-jsonlibrary',
+  SSHLibrary: 'robotframework-sshlibrary',
+  FakerLibrary: 'robotframework-faker',
+};
+// module Python manquant (e.name) -> package pip quand il DIFFÈRE du nom du module.
+const MODULE_PIP = {
+  cv2: 'opencv-python', PIL: 'pillow', mss: 'mss', numpy: 'numpy',
+  jsonpath_ng: 'jsonpath-ng', jsonschema: 'jsonschema', paramiko: 'paramiko', faker: 'Faker',
+};
+const _RF_STD_LIBS = new Set(['BuiltIn', 'Collections', 'DateTime', 'Dialogs', 'OperatingSystem',
+  'Process', 'Screenshot', 'String', 'Telnet', 'XML', 'Remote']);
+
+// Extrait les noms de Library externes (hors std, hors chemins/.py locaux) sous un dossier.
+function _scanImportLibraries(dir) {
+  const libs = new Set();
+  const walk = (d) => {
+    let items; try { items = fs.readdirSync(d); } catch (e) { return; }
+    for (const f of items) {
+      const fp = path.join(d, f);
+      let st; try { st = fs.statSync(fp); } catch (e) { continue; }
+      if (st.isDirectory()) { walk(fp); continue; }
+      if (!/\.(robot|resource)$/i.test(f)) continue;
+      let content; try { content = fs.readFileSync(fp, 'utf8'); } catch (e) { continue; }
+      content.split(/\r?\n/).forEach(line => {
+        const m = line.match(/^\s*Library\s+(\S+)/);
+        if (!m) return;
+        const tok = m[1].trim();
+        if (/[\/\\]/.test(tok) || /\.py$/i.test(tok)) return;   // fichier local -> pas un pip
+        if (_RF_STD_LIBS.has(tok)) return;                       // std RF -> toujours présent
+        libs.add(tok);
+      });
+    }
+  };
+  walk(dir);
+  return [...libs];
+}
+
+// Choisit la commande pip. verified=false si non garanti (INCONNU). Le module manquant guide en priorité.
+function _pipForMissing(library, missingModule) {
+  if (missingModule && MODULE_PIP[missingModule]) return { pip: MODULE_PIP[missingModule], verified: true, suggestion: null };
+  if (library.startsWith('RPA.')) return { pip: 'rpaframework', verified: true, suggestion: null };
+  if (RF_LIB_PIP[library]) return { pip: RF_LIB_PIP[library], verified: true, suggestion: null };
+  // INCONNU : ne JAMAIS présenter une commande devinée comme sûre.
+  const hint = missingModule ? ('pip install ' + missingModule + '  (à vérifier)') : null;
+  return { pip: null, verified: false, suggestion: hint };
+}
+
+// Teste l'importabilité en UN seul appel python ; capture e.name (module réellement manquant).
+function scanMissingLibraries(importDir) {
+  return new Promise((resolve, reject) => {
+    const libs = _scanImportLibraries(importDir);
+    if (!libs.length) return resolve([]);
+    const PY = [
+      'import importlib,json,sys',
+      'out=[]',
+      'for n in sys.argv[1:]:',
+      '    try: importlib.import_module(n)',
+      '    except ModuleNotFoundError as e: out.append({"library":n,"missingModule":getattr(e,"name",None) or n})',
+      '    except Exception as e: out.append({"library":n,"missingModule":getattr(e,"name",None)})',
+      'print(json.dumps(out))',
+    ].join('\n');
+    require('child_process').execFile('python', ['-c', PY, ...libs], { timeout: 15000 }, (err, stdout) => {
+      if (err && !stdout) return reject(err);            // python introuvable / timeout
+      let failures;
+      try { failures = JSON.parse(String(stdout || '').trim() || '[]'); } catch (e) { return reject(e); }
+      resolve(failures.map(f => {
+        const r = _pipForMissing(f.library, f.missingModule);
+        return { name: f.library, missingModule: f.missingModule || null, pip: r.pip, verified: r.verified, suggestion: r.suggestion };
+      }));
+    });
+  });
+}
 
 
 // ── Check if RF library is installed ─────────────────────────────────────────

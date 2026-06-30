@@ -56,6 +56,45 @@ async function syncCardFilesToDisk(cardId) {
   }));
 }
 
+// [LIB-SCAN Lot 2] Copie robuste : lit le textContent de l'élément (zéro échappement),
+// fallback si navigator.clipboard indisponible (ex. accès via IP LAN, contexte non sécurisé).
+function copyCmd(el) {
+  const txt = (el && el.textContent || '').trim();
+  try {
+    navigator.clipboard.writeText(txt)
+      .then(() => showToast('📋 Copié'))
+      .catch(() => showToast('Sélectionne le texte pour copier'));
+  } catch (e) { showToast('Sélectionne le texte pour copier'); }
+}
+
+// [LIB-SCAN Lot 2] Modale des bibliothèques Python manquantes (réutilise showConfirmDialog).
+function showMissingLibsModal(missing) {
+  const verified = missing.filter(m => m.verified && m.pip);
+  const codeStyle = "cursor:pointer;user-select:text;display:inline-block;margin-top:3px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--teal);font-family:'IBM Plex Mono',monospace";
+  const rows = missing.map(m => {
+    const name = escHtml(m.name);
+    if (m.verified && m.pip) {
+      const cmd = 'pip install ' + m.pip;
+      return `<div style="margin:8px 0">✅ <b style="color:var(--text)">${name}</b><br>
+        <code onclick="copyCmd(this)" title="Cliquer pour copier" style="${codeStyle}">${escHtml(cmd)}</code></div>`;
+    }
+    const mod  = (m.missingModule && m.missingModule !== m.name) ? ' <span style="color:var(--gray)">(module: ' + escHtml(m.missingModule) + ')</span>' : '';
+    const sugg = m.suggestion ? `<br><span style="color:var(--gray);font-size:12px">à vérifier : <i>${escHtml(m.suggestion)}</i> — non garanti</span>` : '';
+    return `<div style="margin:8px 0">⚠️ <b style="color:var(--text)">${name}</b>${mod} — <span style="color:#f59e0b">package à vérifier</span>${sugg}</div>`;
+  }).join('');
+  let grouped = '';
+  if (verified.length > 1) {
+    const cmd = 'pip install ' + verified.map(m => m.pip).join(' ');
+    grouped = `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--gray);margin-bottom:4px">Tout installer d'un coup :</div>
+      <code onclick="copyCmd(this)" title="Cliquer pour copier" style="${codeStyle};border-color:var(--teal);font-weight:700">${escHtml(cmd)}</code></div>`;
+  }
+  const intro = `<div style="margin-bottom:6px">Bibliothèques Python référencées mais non installées. Installe-les puis relance le run :</div>`;
+  showConfirmDialog('⚠️ Bibliothèques manquantes', intro + rows + grouped, null,
+    { okLabel: 'Fermer', hideCancel: true, maxWidth: '460px',
+      okStyle: 'background:var(--card);border:1px solid var(--border);color:var(--text)' });
+}
+
 async function runTestsFromCard(code, filename, suiteCtx) {
   // Bloquer si un run est deja en cours
   if (window._rfRunning && !suiteCtx?.isSuite) {
@@ -143,6 +182,17 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     });
     const data = await r.json();
     hideTyping();
+    // [LIB-SCAN Lot 2] Import : libs Python manquantes détectées côté serveur (skippedRun) ->
+    // afficher la modale et NE PAS ouvrir de rapport (aucun run n'a eu lieu).
+    if (data && Array.isArray(data.missingLibraries) && data.missingLibraries.length) {
+      window._rfRunning = false;
+      const _lbl = window._currentRunMsgId && document.getElementById(window._currentRunMsgId + '-label');
+      if (_lbl) { _lbl.textContent = '⚠️ Run annulé — bibliothèques manquantes'; _lbl.style.color = 'var(--red)'; }
+      window._currentRunMsg = null; window._currentRunMsgId = null;
+      try { localStorage.removeItem('qa_active_run'); } catch (e) {}
+      showMissingLibsModal(data.missingLibraries);
+      return;
+    }
     if (data && data.stopped === true) { window._currentRunMsg = null; return; }
 
     if (!r.ok) {

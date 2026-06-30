@@ -222,30 +222,35 @@ function showInputDialog(title, label, defaultVal, callback) {
     callback(val);
   };
 }
-function showConfirmDialog(title, message, callback) {
+function showConfirmDialog(title, message, callback, opts) {
+  opts = opts || {};
+  const okLabel     = opts.okLabel     || '🗑 Supprimer';
+  const cancelLabel = opts.cancelLabel || 'Annuler';
+  const okStyle     = opts.okStyle     || 'background:rgba(220,38,38,0.15);border:1px solid var(--red);color:var(--red)';
+  const maxWidth    = opts.maxWidth    || '380px';
+  const hideCancel  = !!opts.hideCancel;
   document.getElementById('_customDialog')?.remove();
   const d = document.createElement('div');
   d.id = '_customDialog';
   d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
   d.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:380px;overflow:hidden">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:${maxWidth};overflow:hidden">
       <div style="padding:14px 18px;background:var(--card);border-bottom:1px solid var(--border);font-size:14px;font-weight:700;color:var(--text)">${title}</div>
       <div style="padding:18px;font-size:13px;color:var(--gray)">${message}</div>
       <div style="display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--border);background:var(--card)">
         <button id="_dialogConfirmOk"
-          style="flex:1;background:rgba(220,38,38,0.15);border:1px solid var(--red);color:var(--red);
-                 padding:9px;border-radius:7px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
-          🗑 Supprimer
+          style="flex:1;${okStyle};padding:9px;border-radius:7px;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;cursor:pointer">
+          ${okLabel}
         </button>
-        <button onclick="document.getElementById('_customDialog').remove()"
+        ${hideCancel ? '' : `<button onclick="document.getElementById('_customDialog').remove()"
           style="background:transparent;border:1px solid var(--border);color:var(--gray);
                  padding:9px 16px;border-radius:7px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer">
-          Annuler
-        </button>
+          ${cancelLabel}
+        </button>`}
       </div>
     </div>`;
   document.body.appendChild(d);
-  document.getElementById('_dialogConfirmOk').onclick = () => { d.remove(); callback(); };
+  document.getElementById('_dialogConfirmOk').onclick = () => { d.remove(); if (callback) callback(); };
 }
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 function toggleTheme() {
