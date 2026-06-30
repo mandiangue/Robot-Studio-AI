@@ -399,7 +399,8 @@ app.post('/api/rf/run', async (req, res) => {
   //    (fiable : un POM généré sans ***** FILE: keywords.robot littéral n'est plus classé import à tort).
   //  - import avéré (carte imported:true / pulled / desc 'Importé') -> false -> Open Browser/Go To préservés.
   //  - mode suite -> toujours maison.
-  const defAvailable = isSuiteBloc || !imported;
+  const defAvailable = isSuiteBloc || !imported;   // (P) CHEMIN : writeBase / execFile / isImport — suite-aware
+  const applyHomeFixes = !imported;                // (T) TRANSFORMATIONS maison : OFF pour tout import (suite incluse)
   if (!defAvailable) console.log('  [IMPORT] imported=true -> transformations maison désactivées (Open Browser/Go To importés préservés)');
   // Remplacer le navigateur si browserType specifie et different de chrome
   if (browserType && browserType !== 'chrome') {
@@ -556,8 +557,8 @@ app.post('/api/rf/run', async (req, res) => {
     }
 
     // FIX headless (GÉNÉRÉ Browser) : poser ${HEADLESS} selon le flag (la def Open Browser
-    // Session utilise déjà headless=${HEADLESS}). Import (defAvailable=false) -> intact.
-    if (defAvailable) {
+    // Session utilise déjà headless=${HEADLESS}). Import (applyHomeFixes=false) -> intact.
+    if (applyHomeFixes) {
       const varFileP = path.join(runBaseDir, 'resources', 'variables.robot');
       if (fs.existsSync(varFileP)) {
         try {
@@ -657,7 +658,7 @@ app.post('/api/rf/run', async (req, res) => {
   // [GATE LOT 1] Injection anti-popup : GÉNÉRÉS uniquement (defAvailable). Un projet IMPORTÉ
   // garde ses Open Browser intacts — l'injection corrompait les keywords custom "Open Browser
   // Firefox/Edge" (1 arg) en leur ajoutant options=... (-> "expected 1 argument, got 2").
-  if (defAvailable) {
+  if (applyHomeFixes) {
     if (headless) {
       const headlessArgs = 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage")';
       finalCode = finalCode.replace(
@@ -688,7 +689,7 @@ app.post('/api/rf/run', async (req, res) => {
   // args headless ici pour que CE point d'ouverture soit invisible lui aussi.
   const suiteHeadlessArgs = headless ? 'add_argument("--headless=new");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");' : '';
   // [GATE LOT 1] Idem Suite Setup Open Browser : GÉNÉRÉS uniquement.
-  if (defAvailable) {
+  if (applyHomeFixes) {
     finalCode = finalCode.replace(
       /^(Suite Setup[ \t]+Open Browser[ \t]+\S+[ \t]+\S+)$/gm,
       '$1    options=' + suiteHeadlessArgs + popupArgs + ';' + prefsStr
@@ -697,7 +698,7 @@ app.post('/api/rf/run', async (req, res) => {
 
     // Inject screenshot on failure into each test case
   // FIX import : transformations maison gatées — un projet importé garde ses keywords intacts.
-  if (defAvailable) {
+  if (applyHomeFixes) {
     finalCode = fixAppiumKeywords(finalCode);
     finalCode = fixBrowserKeywords(finalCode);
     finalCode = injectScreenshotOnFailure(finalCode, req.body.browserSession || 'per-test');
@@ -812,7 +813,7 @@ app.post('/api/rf/run', async (req, res) => {
       injected = fixBrowserKeywords(injected);
       // FIX import : injectScreenshotOnFailure (réécritures maison Go To/Open Browser/Setup)
       // n'est appliqué qu'aux projets générés ; un import garde ses keywords intacts.
-      if (defAvailable) injected = injectScreenshotOnFailure(injected, req.body.browserSession || 'per-test');
+      if (applyHomeFixes) injected = injectScreenshotOnFailure(injected, req.body.browserSession || 'per-test');
       // Deduplicate all sections before writing
       injected = deduplicateRobotSettings(injected);
       if (relPath.includes('variables.robot')) {
@@ -966,7 +967,7 @@ app.post('/api/rf/run', async (req, res) => {
         // Skip files that use Browser/Playwright library or contain keyword definition
         const strippedForCheck = c.replace(/Open Browser No Popup[\s\S]*?(?=\n[A-Za-z]|$)/g, '__KW_DEF__');
         const isPlaywrightFile = c.includes('Library    Browser') || c.includes('Library     Browser') || c.includes('New Browser') || c.includes('New Page');
-        if (defAvailable && !isPlaywrightFile && strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
+        if (applyHomeFixes && !isPlaywrightFile && strippedForCheck.includes('Open Browser') && !strippedForCheck.includes('Open Browser No Popup')) {
           const before = c;
           c = c.replace(/^([ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
           c = c.replace(/^(Suite Setup[ \t]+)Open Browser([ \t]+)(\S+)([ \t]+)(\S+)[^\n]*/gm, '$1Open Browser No Popup    $3    $5');
@@ -1258,7 +1259,7 @@ def get_no_popup_options(browser="chrome", headless=False):
   // FIX suite : cibler la copie ISOLÉE (runBaseDir) — la suite exécute suite_runs/<id>/resources/
   // variables.robot, pas celui de TESTS_DIR. Sinon ${HEADLESS} reste ${False} -> visible.
   // (Reproduit le pattern Playwright ~518 qui cible déjà runBaseDir.)
-  if (defAvailable) {
+  if (applyHomeFixes) {
     const varFileH = path.join((isSuiteBloc ? runBaseDir : TESTS_DIR), 'resources', 'variables.robot');
     if (fs.existsSync(varFileH)) {
       try {
@@ -1373,7 +1374,7 @@ def get_no_popup_options(browser="chrome", headless=False):
     // FIX import (Défaut B) : ne créer le __init__.robot maison (Test Setup Open Browser No
     // Popup + Resource keywords.robot) QUE si la def est disponible. Sinon -> projet importé :
     // garder ses propres setups, ne rien injecter (sinon keyword absent -> "No keyword found").
-    if (defAvailable) {
+    if (applyHomeFixes) {
       if (!fs.existsSync(initFile)) {
         fs.writeFileSync(initFile, initContent, 'utf8');
       }
@@ -1383,11 +1384,15 @@ def get_no_popup_options(browser="chrome", headless=False):
     }
   // Executer le dossier tests/ pour que __init__.robot soit pris en compte (PROJET GÉNÉRÉ).
   // IMPORT (defAvailable=false) : on garde l'execFile ciblé sur le projet réel (override import).
-  if (defAvailable) execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
+  if (isSuiteBloc && imported) {
+    execFile = runBaseDir;   // [IMPORT EN SUITE] projet ENTIER (comme importDir en run normal) -> couvre scenarios/ etc.
+  } else if (defAvailable) {
+    execFile = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
+  }
     // Retirer Test Setup/Teardown des fichiers feature_*.robot — UNIQUEMENT en mode maison
     // (un projet importé doit conserver ses propres Test Setup/Teardown).
     const testsDir4 = path.join(((typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR), 'tests');
-    if (defAvailable && fs.existsSync(testsDir4)) {
+    if (applyHomeFixes && fs.existsSync(testsDir4)) {
       fs.readdirSync(testsDir4).filter(f => f.endsWith('.robot') && f !== '__init__.robot').forEach(f => {
         const fp4 = path.join(testsDir4, f);
         let c4 = fs.readFileSync(fp4, 'utf8');
@@ -1407,7 +1412,7 @@ def get_no_popup_options(browser="chrome", headless=False):
   // resources/keywords.robot littéral), on crée/complète resources/keywords.robot avec la def.
   // (NoPopupOptions.py est déjà écrit inconditionnellement plus haut.) Un projet Browser ne
   // référence jamais "Open Browser No Popup" -> filet inactif pour lui.
-  if (defAvailable && !isSuiteBloc) {
+  if (applyHomeFixes && !isSuiteBloc) {
     let _refd = false, _defd = false;
     const _scanNP = (dir) => {
       let items; try { items = fs.readdirSync(dir); } catch (e) { return; }
@@ -1447,7 +1452,7 @@ def get_no_popup_options(browser="chrome", headless=False):
   // disque n'est jamais régénéré -> on le réécrit ici en forme 2 args headless-aware. Gaté
   // defAvailable (GÉNÉRÉS only) -> les projets importés restent intacts. ${HEADLESS} a déjà
   // été posé dans variables.robot juste avant (cf. FIX headless ~1173). Idempotent.
-  if (defAvailable) {
+  if (applyHomeFixes) {
     const _npRoot = (typeof isSuiteBloc !== 'undefined' && isSuiteBloc) ? runBaseDir : TESTS_DIR;
     const _upgradeNP = (dir) => {
       let items; try { items = fs.readdirSync(dir); } catch (e) { return; }
@@ -1590,10 +1595,10 @@ def get_no_popup_options(browser="chrome", headless=False):
   // FIX import : ne réécrire vers Open Browser No Popup QUE si la def est disponible
   // (mode suite, keywords.robot maison, ou def déjà présente dans le fichier / les resources).
   // Sinon -> projet importé standard : laisser Open Browser SeleniumLibrary intact.
-  const defAvailableSingle = isSuiteBloc
+  const defAvailableSingle = applyHomeFixes && (isSuiteBloc
     || fs.existsSync(path.join(TESTS_DIR, 'resources', 'keywords.robot'))
     || /^Open Browser No Popup\b/m.test(cleanFinal)
-    || hasNoPopupDefInTree(path.join(TESTS_DIR, 'resources'));
+    || hasNoPopupDefInTree(path.join(TESTS_DIR, 'resources')));
   if (defAvailableSingle) {
     // Final fix: ensure Suite Setup uses Open Browser not Go To
     cleanFinal = cleanFinal.replace(

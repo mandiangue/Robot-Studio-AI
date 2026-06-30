@@ -80,22 +80,31 @@ function addNewSuiteGroup() {
       const code = mainFile?.code || '';
       const id = generateSuiteId();
 
+      // [IMPORT EN SUITE] carte importée -> bundle COMPLET (arbo préservée), pas de réduction tests/
+      const _imported = !!(card.imported || card.type === 'pulled' || (card.files||[]).some(f => f.desc === 'Importé'));
       // Build pomCode for post-reload use
       let pomCode = '';
       if (card.files?.some(f => f.code?.trim())) {
-        const fname = 'suite_PLACEHOLDER_' + id + '.robot';
-        const pomLines = card.files
-          .filter(f => f.code?.trim() && !_isTestFile(f))
-          .map(f => {
-            const relPath = f.filename.replace(/^.*rf_tests[/\\]/, '').replace(/\\/g, '/');
-            const label = relPath.split('/').pop().replace('.robot','');
-            return '***** FILE: ' + relPath + ' | ' + label + ' | suite bloc | ' + title + '\n' + f.code;
-          });
-        pomLines.push('***** FILE: tests/' + fname + ' | tests | suite bloc | ' + title + '\n' + code);
-        pomCode = pomLines.join('\n\n');
+        if (_imported) {
+          // import : tous les fichiers, relPath d'origine, BINARY identique au run normal (codecards.js) ; PAS de suite_PLACEHOLDER_
+          pomCode = card.files.filter(f => f.code?.trim())
+            .map(f => '***** FILE: ' + f.filename + ' | ' + (f.label || f.filename.split('/').pop().replace('.robot','')) + ' | ' + (f.desc || f.filename) + (f.binary ? ' | BINARY' : '') + '\n' + f.code)
+            .join('\n');
+        } else {
+          const fname = 'suite_PLACEHOLDER_' + id + '.robot';
+          const pomLines = card.files
+            .filter(f => f.code?.trim() && !_isTestFile(f))
+            .map(f => {
+              const relPath = f.filename.replace(/^.*rf_tests[/\\]/, '').replace(/\\/g, '/');
+              const label = relPath.split('/').pop().replace('.robot','');
+              return '***** FILE: ' + relPath + ' | ' + label + ' | suite bloc | ' + title + '\n' + f.code;
+            });
+          pomLines.push('***** FILE: tests/' + fname + ' | tests | suite bloc | ' + title + '\n' + code);
+          pomCode = pomLines.join('\n\n');
+        }
       }
 
-      suiteRegistry.push({ id, cardId: card.cardId, name: title, filename: (mainFile?.filename||'tests.robot').split('/').pop(), code, pomCode, addedAt: new Date().toISOString(), droppedIntoGroup: true });
+      suiteRegistry.push({ id, cardId: card.cardId, name: title, filename: (mainFile?.filename||'tests.robot').split('/').pop(), code, pomCode, imported: _imported, addedAt: new Date().toISOString(), droppedIntoGroup: true });
       newSuite.testIds.push(id);
     });
 
@@ -232,7 +241,15 @@ async function runSuiteGroup(idx) {
     const card = (window._codeCards||[]).find(c => c.cardId === t.cardId);
     // Use pre-built POM code if card files are not in memory (after reload)
     const hasFullFiles = card?.files?.some(f => f.code?.trim() && (f.filename.includes('variables') || f.filename.includes('keywords')));
-    if (card?.files?.length > 1 && hasFullFiles) {
+    // [IMPORT EN SUITE] import (carte en mémoire OU flag registre après reload) -> bundle COMPLET, pas de réduction tests/
+    const _imp = !!(t.imported || (card && (card.imported || card.type === 'pulled' || (card.files||[]).some(f => f.desc === 'Importé'))));
+    if (_imp && card?.files?.length) {
+      suiteCode = card.files.filter(f => f.code?.trim())
+        .map(f => '***** FILE: ' + f.filename + ' | ' + (f.label || f.filename.split('/').pop().replace('.robot','')) + ' | ' + (f.desc || f.filename) + (f.binary ? ' | BINARY' : '') + '\n' + f.code)
+        .join('\n');
+    } else if (_imp && t.pomCode && t.pomCode.includes('***** FILE:')) {
+      suiteCode = t.pomCode.replace(/suite_PLACEHOLDER_/g, 'suite_' + suite.id + '_' + (i+1) + '_');
+    } else if (card?.files?.length > 1 && hasFullFiles) {
       // Send all resource files + THIS bloc's test code (not the shared tests.robot)
       const pomLines = card.files
         .filter(f => f.code?.trim() && !_isTestFile(f))  // skip shared tests
@@ -269,7 +286,9 @@ async function runSuiteGroup(idx) {
     await runTestsFromCard(suiteCode, fname, {
       isSuite: true,
       suiteName: suite.title + ' [' + (i+1) + '/' + tests.length + ']',
-      tests: [{ id: t.id, name: t.name }]
+      tests: [{ id: t.id, name: t.name }],
+      // [FIX import-en-suite] flag import PAR BLOC (carte OU registre) -> applyHomeFixes + execFile entier côté serveur
+      imported: _imp
     });
     // Restore headless setting
     if (document.getElementById('optHeadless')) document.getElementById('optHeadless').value = savedHeadless;
