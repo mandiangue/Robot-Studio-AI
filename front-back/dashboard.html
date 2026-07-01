@@ -17,8 +17,6 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 .logo{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--teal);letter-spacing:2px;display:flex;align-items:center;gap:8px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,0.4)}50%{box-shadow:0 0 0 6px rgba(0,212,170,0)}}
-.back-btn{padding:7px 16px;border:1px solid var(--border);border-radius:7px;color:var(--gray);background:transparent;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;text-decoration:none;transition:all .15s}
-.back-btn:hover{border-color:var(--teal);color:var(--teal)}
 .main{padding:24px 28px;max-width:1400px;margin:0 auto}
 .section-title{font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:2px;color:var(--gray);margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 
@@ -62,7 +60,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 .failing-since{font-size:11px;color:var(--red);font-family:'IBM Plex Mono',monospace}
 .fail-streak{display:inline-block;background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);padding:2px 8px;border-radius:10px;font-size:10px;font-family:'IBM Plex Mono',monospace}
 
-@media print{:root,body,body.theme-light{--gray:#111!important;--white:#111!important;--green:#166534!important;--warn:#92400e!important;--red:#b91c1c!important;--teal:#0e7490!important;--blue:#1d4ed8!important;--purple:#6d28d9!important}body{background:#fff;color:#111}.topbar{display:none}.back-btn{display:none}button{display:none}.chart-card,.kpi{break-inside:avoid}}
+@media print{:root,body,body.theme-light{--gray:#111!important;--white:#111!important;--green:#166534!important;--warn:#92400e!important;--red:#b91c1c!important;--teal:#0e7490!important;--blue:#1d4ed8!important;--purple:#6d28d9!important}body{background:#fff;color:#111}.topbar{display:none}button{display:none}.chart-card,.kpi{break-inside:avoid}}
 @media(max-width:768px){.charts-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -71,7 +69,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 <div class="topbar">
   <div class="logo"><div class="dot"></div>ROBOTEST STUDIO</div>
   <span data-i18n="dashboard.title" style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace">Dashboard</span>
-  <button onclick="window.print()" data-i18n="dashboard.exportPdf" style="padding:7px 14px;border:1px solid var(--teal);border-radius:7px;color:var(--teal);background:rgba(0,212,170,0.08);font-size:12px;font-family:IBM Plex Mono,monospace;cursor:pointer">🖨️ Export PDF</button><a href="qa-agent.html" class="back-btn" data-i18n="dashboard.backAgent" style="margin-left:8px">← Agent</a>
+  <button onclick="window.print()" data-i18n="dashboard.exportPdf" style="padding:7px 14px;border:1px solid var(--teal);border-radius:7px;color:var(--teal);background:rgba(0,212,170,0.08);font-size:12px;font-family:IBM Plex Mono,monospace;cursor:pointer">🖨️ Export PDF</button>
 </div>
 
 <div class="main">
@@ -137,7 +135,7 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 // ── Mini-i18n autonome (iframe isolée : pas d'import de core.js) ────────────────
 const DASH_I18N = {
   fr: {
-    'dashboard.title':'Dashboard', 'dashboard.exportPdf':'🖨️ Export PDF', 'dashboard.backAgent':'← Agent',
+    'dashboard.title':'Dashboard', 'dashboard.exportPdf':'🖨️ Export PDF',
     'dashboard.overview':'📊 VUE D\'ENSEMBLE',
     'dashboard.kpiTotal':'RUNS TOTAUX', 'dashboard.kpiPass':'TESTS RÉUSSIS', 'dashboard.kpiFail':'TESTS ÉCHOUÉS',
     'dashboard.kpiRate':'TAUX MOYEN', 'dashboard.kpiSuites':'SUITES RUNS', 'dashboard.kpiAvgDur':'DURÉE MOYENNE',
@@ -158,7 +156,7 @@ const DASH_I18N = {
     'dashboard.pass':'✅ PASS', 'dashboard.fail':'❌ FAIL',
   },
   en: {
-    'dashboard.title':'Dashboard', 'dashboard.exportPdf':'🖨️ Export PDF', 'dashboard.backAgent':'← Agent',
+    'dashboard.title':'Dashboard', 'dashboard.exportPdf':'🖨️ Export PDF',
     'dashboard.overview':'📊 OVERVIEW',
     'dashboard.kpiTotal':'TOTAL RUNS', 'dashboard.kpiPass':'PASSED TESTS', 'dashboard.kpiFail':'FAILED TESTS',
     'dashboard.kpiRate':'AVG RATE', 'dashboard.kpiSuites':'SUITE RUNS', 'dashboard.kpiAvgDur':'AVG DURATION',
