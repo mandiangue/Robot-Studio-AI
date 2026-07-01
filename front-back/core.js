@@ -123,6 +123,35 @@ function stripHtml(h) {
   return (h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 }
 
+// [US FORMAT] Azure HTML -> texte structuré (sauts/puces préservés, vs stripHtml qui aplatit).
+function htmlToStructuredText(html) {
+  return String(html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(div|p|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '\n• ')
+    .replace(/<\/(ul|ol|li)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')                                  // strip balises restantes
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"').replace(/&#0?39;|&apos;/gi, "'") // entités décodées EN DERNIER
+    .replace(/•[ \t]*\n+[ \t]*/g, '• ')                       // recolle puce orpheline "•\n<texte>" -> "• <texte>"
+    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+// [US FORMAT] Rendu aéré (Azure HTML ou Jira texte) : titre scénario, Given/When/Then indentés (FR+EN), puces.
+function renderUsContent(raw) {
+  if (!raw) return '';
+  const text = /<[a-z][\s\S]*?>/i.test(raw) ? htmlToStructuredText(raw) : String(raw);
+  return text.split('\n').map(line => {
+    const s = line.trim();
+    if (!s) return '<div class="us-blank"></div>';
+    const esc = escHtml(s);                                   // ÉCHAPPE le contenu AVANT l'enveloppe
+    if (/^(Scenario|Scénario)\s*:/i.test(s)) return `<div class="us-scenario">${esc}</div>`;
+    if (/^(Given|When|Then|And|But|[ÉEée]tant\s+donné(?:e|s|es)?|Soit|Quand|Lorsqu[e']|Alors|Et|Mais)\b/i.test(s)) return `<div class="us-gherkin">${esc}</div>`;
+    if (/^•\s/.test(s)) return `<div class="us-bullet">${escHtml(s.replace(/^•\s*/, ''))}</div>`;
+    return `<div class="us-line">${esc}</div>`;
+  }).join('');
+}
+
 // [BREAKPOINT FIX] Retire UNIQUEMENT les lignes injectées par le LOT C (marqueur "msg=🔴 Breakpoint ligne").
 // NE touche PAS un "Pause Execution" utilisateur légitime (sans ce marqueur). Réutilisé par les 2
 // handlers file-changed (core.js + live.js) ET le nettoyage one-shot (storage.js).

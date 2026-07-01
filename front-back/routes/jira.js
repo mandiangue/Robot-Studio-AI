@@ -31,10 +31,18 @@ router.get('/issue/:key', async (req, res) => {
     const extractAdf = (adf) => {
       if (!adf) return '';
       if (typeof adf === 'string') return adf;
-      const texts = [];
-      const walk = (node) => { if (node.type === 'text') texts.push(node.text); if (node.content) node.content.forEach(walk); };
+      let out = '';
+      const walk = (node) => {
+        if (!node) return;
+        if (node.type === 'text')      { out += (node.text || ''); return; }
+        if (node.type === 'hardBreak') { out += '\n'; return; }
+        if (node.type === 'listItem')  { out += '• '; (node.content||[]).forEach(walk); if (!out.endsWith('\n')) out += '\n'; return; }
+        const isBlock = ['paragraph','heading','blockquote','codeBlock'].includes(node.type);
+        (node.content||[]).forEach(walk);
+        if (isBlock && !out.endsWith('\n')) out += '\n';
+      };
       walk(adf);
-      return texts.join(' ');
+      return out.replace(/\n{3,}/g, '\n\n').trim();
     };
     res.json({
       id:          req.params.key,

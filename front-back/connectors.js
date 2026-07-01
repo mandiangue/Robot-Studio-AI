@@ -122,7 +122,7 @@ async function handleFetchAndGenerate(id, shouldGenerate, apiKey, originalMsg) {
     const cardHtml = renderUsCard(us);
     const usCardId = 'azure-us-' + Date.now();
     const div = document.createElement('div');
-    div.className = 'msg agent';
+    div.className = 'msg agent has-us';
     div.id = usCardId;
 
     if (shouldGenerate) {
@@ -276,13 +276,18 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
     const extractAdf = (adf) => {
       if (!adf) return '';
       if (typeof adf === 'string') return adf;
-      const texts = [];
+      let out = '';
       const walk = (node) => {
-        if (node.type === 'text') texts.push(node.text);
-        if (node.content) node.content.forEach(walk);
+        if (!node) return;
+        if (node.type === 'text')      { out += (node.text || ''); return; }
+        if (node.type === 'hardBreak') { out += '\n'; return; }
+        if (node.type === 'listItem')  { out += '• '; (node.content||[]).forEach(walk); if (!out.endsWith('\n')) out += '\n'; return; }
+        const isBlock = ['paragraph','heading','blockquote','codeBlock'].includes(node.type);
+        (node.content||[]).forEach(walk);
+        if (isBlock && !out.endsWith('\n')) out += '\n';
       };
       walk(adf);
-      return texts.join(' ');
+      return out.replace(/\n{3,}/g, '\n\n').trim();
     };
 
     const issue = {
@@ -309,16 +314,17 @@ async function handleJiraFetch(id, shouldGenerate, apiKey) {
     // Render card
     const cardHtml = `
       <div class="us-card">
+        <button class="us-x" onclick="this.closest('.msg.agent')?.remove()" title="Supprimer">✕</button>
         <div class="us-id">🟦 ${issue.id} · ${issueTypeTag(issue.type)} · <span class="tag warn">${issue.state}</span></div>
         <div class="us-title">${escHtml(issue.title)}</div>
-        ${issue.description ? `<div class="us-section"><div class="us-section-label">${t('conn.card.description')}</div><div class="us-section-content">${escHtml(issue.description)}</div></div>` : ''}
-        ${issue.acceptance  ? `<div class="us-section"><div class="us-section-label">${t('conn.card.acceptance')}</div><div class="us-section-content us-acceptance">${escHtml(issue.acceptance)}</div></div>` : ''}
+        ${issue.description ? `<div class="us-section"><div class="us-section-label">${t('conn.card.description')}</div><div class="us-section-content">${renderUsContent(issue.description)}</div></div>` : ''}
+        ${issue.acceptance  ? `<div class="us-section"><div class="us-section-label">${t('conn.card.acceptance')}</div><div class="us-section-content us-acceptance">${renderUsContent(issue.acceptance)}</div></div>` : ''}
         ${issue.labels.length ? `<div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;margin-top:8px">${t('conn.card.labels')} ${issue.labels.map(l => `<span class="tag jira">${escHtml(l)}</span>`).join(' ')}</div>` : ''}
       </div>`;
 
     const issueCardId = 'issue-' + Date.now();
     const div = document.createElement('div');
-    div.className = 'msg agent';
+    div.className = 'msg agent has-us';
     div.id = issueCardId;
     div.innerHTML = `
       <div class="msg-avatar">🤖</div>

@@ -308,6 +308,31 @@ body.theme-light .rf-breakpoint-line { background: rgba(180,83,9,0.14); }
 .us-card .us-section-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--gray); letter-spacing: 1px; margin-bottom: 4px; }
 .us-card .us-section-content { color: #8ab4c4; line-height: 1.6; font-size: 12.5px; }
 .us-card .us-acceptance { border-left: 3px solid var(--teal); padding-left: 10px; color: var(--white); }
+.us-card .us-scenario { font-weight: 700; color: var(--white); margin-top: 8px; margin-bottom: 2px; }
+.us-card .us-gherkin  { padding-left: 18px; line-height: 1.6; }
+.us-card .us-bullet   { padding-left: 22px; position: relative; line-height: 1.6; }
+.us-card .us-bullet::before { content: '•'; position: absolute; left: 8px; color: var(--teal); }
+.us-card .us-line     { line-height: 1.6; }
+.us-card .us-blank    { height: 6px; }
+/* [US UI] largeur relâchée UNIQUEMENT pour les messages contenant une US */
+.msg.has-us { max-width: none; }
+/* carte US redimensionnable (poignée bas-droite) + ancrage de la croix */
+.us-card {
+  position: relative;
+  resize: both;
+  overflow: auto;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 360px;
+}
+/* croix de suppression discrète, hover rouge */
+.us-card .us-x {
+  position: absolute; top: 6px; right: 8px;
+  background: transparent; border: none; color: var(--gray);
+  font-size: 13px; line-height: 1; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px; z-index: 2;
+}
+.us-card .us-x:hover { color: var(--red); background: rgba(230,57,70,0.1); }
 
 /* ── Input bar ────────────────────────────────────────────────── */
 .input-bar {

@@ -90,10 +90,11 @@ function azureTypeTag(type) {
 function renderUsCard(us) {
   const html = `
     <div class="us-card">
+      <button class="us-x" onclick="this.closest('.msg.agent')?.remove()" title="Supprimer">✕</button>
       <div class="us-id">📋 Work Item #${us.id} · ${azureTypeTag(us.type)} · <span class="tag warn">${us.state}</span></div>
       <div class="us-title">${escHtml(us.title)}</div>
-      ${us.description ? `<div class="us-section"><div class="us-section-label">${t('conn.card.description')}</div><div class="us-section-content">${escHtml(stripHtml(us.description))}</div></div>` : ''}
-      ${us.acceptance  ? `<div class="us-section"><div class="us-section-label">${t('conn.card.acceptance')}</div><div class="us-section-content us-acceptance">${escHtml(stripHtml(us.acceptance))}</div></div>` : ''}
+      ${us.description ? `<div class="us-section"><div class="us-section-label">${t('conn.card.description')}</div><div class="us-section-content">${renderUsContent(us.description)}</div></div>` : ''}
+      ${us.acceptance  ? `<div class="us-section"><div class="us-section-label">${t('conn.card.acceptance')}</div><div class="us-section-content us-acceptance">${renderUsContent(us.acceptance)}</div></div>` : ''}
       ${us.tags ? `<div style="font-size:11px;color:var(--gray);font-family:'IBM Plex Mono',monospace;margin-top:8px">${t('conn.card.tags')} ${escHtml(us.tags)}</div>` : ''}
     </div>`;
   return html;
