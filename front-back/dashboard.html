@@ -62,7 +62,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--white);min-h
 .failing-since{font-size:11px;color:var(--red);font-family:'IBM Plex Mono',monospace}
 .fail-streak{display:inline-block;background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);padding:2px 8px;border-radius:10px;font-size:10px;font-family:'IBM Plex Mono',monospace}
 
-@media print{body{background:#fff;color:#111}.topbar{display:none}.back-btn{display:none}button{display:none}.chart-card,.kpi{break-inside:avoid}}
+@media print{:root,body,body.theme-light{--gray:#111!important;--white:#111!important;--green:#166534!important;--warn:#92400e!important;--red:#b91c1c!important;--teal:#0e7490!important;--blue:#1d4ed8!important;--purple:#6d28d9!important}body{background:#fff;color:#111}.topbar{display:none}.back-btn{display:none}button{display:none}.chart-card,.kpi{break-inside:avoid}}
 @media(max-width:768px){.charts-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -274,6 +274,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 const charts = {}; // refs conservées hors de la fonction -> destroy avant recreate (idempotent)
+
+// ── PDF/print : recolorer légendes/axes/grille des charts Chart.js (canvas = non touché par @media print).
+//    beforeprint -> foncé + update('none') ; afterprint -> restauration depuis _printSaved. Écran inchangé. ──
+window.addEventListener('beforeprint', () => {
+  Object.values(charts).forEach(ch => {                 // charts vide (historique vide) -> no-op sûr
+    if (!ch || !ch.options) return;
+    const o = ch.options;
+    ch._printSaved = ch._printSaved || {                // sauvegarde one-shot (pas d'écrasement si 2× sans afterprint)
+      legend: o.plugins?.legend?.labels?.color,
+      xt: o.scales?.x?.ticks?.color, yt: o.scales?.y?.ticks?.color,
+      xg: o.scales?.x?.grid?.color,  yg: o.scales?.y?.grid?.color,
+    };
+    if (o.plugins?.legend?.labels) o.plugins.legend.labels.color = '#111';          // légendes -> noir
+    if (o.scales?.x) { o.scales.x.ticks.color = '#111'; o.scales.x.grid.color = 'rgba(0,0,0,0.15)'; }  // guard doughnut
+    if (o.scales?.y) { o.scales.y.ticks.color = '#111'; o.scales.y.grid.color = 'rgba(0,0,0,0.15)'; }
+    ch.update('none');                                  // re-render sans animation
+  });
+});
+window.addEventListener('afterprint', () => {
+  Object.values(charts).forEach(ch => {
+    if (!ch || !ch._printSaved) return;
+    const o = ch.options, s = ch._printSaved;
+    if (o.plugins?.legend?.labels) o.plugins.legend.labels.color = s.legend;        // restauration écran (sombre)
+    if (o.scales?.x) { o.scales.x.ticks.color = s.xt; o.scales.x.grid.color = s.xg; }
+    if (o.scales?.y) { o.scales.y.ticks.color = s.yt; o.scales.y.grid.color = s.yg; }
+    ch.update('none');
+    ch._printSaved = null;                              // reset -> prochaine impression re-sauvegarde l'origine
+  });
+});
 window.initDashboard = function initDashboard() {
 
 // ── KPIs ──────────────────────────────────────────────────────────────────────
