@@ -674,6 +674,7 @@ function renderResultCard(files, existingCardId) {
   const cardId  = existingCardId || ('result-' + Date.now());
   const isMulti = files.length > 1;
   let activeTab = 0;
+  let runFollowsTab = false;   // [RUN-ONE] false au montage -> runselect sur "Tous" ; passe true au 1er clic fichier/onglet
 
   // Position préservée en re-render : si une carte de même cardId existe déjà dans #messages, on
   // capture sa place (parent + nœud suivant) et on insère le nouveau div AU MÊME endroit, au lieu
@@ -739,7 +740,7 @@ function renderResultCard(files, existingCardId) {
       <select data-card="${cardId}" data-raction="runselect"
         style="background:var(--code);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 8px;outline:none;min-width:160px">
         <option value="all" data-i18n="codecards.runAll">▶ Tous les fichiers</option>
-        ${files.map((f,i) => `<option value="${i}">▶ ${escHtml(f.filename.split('/').pop())}</option>`).join('')}
+        ${files.map((f,i) => `<option value="${i}" ${runFollowsTab && i===activeTab ? 'selected' : ''}>▶ ${escHtml(f.filename.split('/').pop())}</option>`).join('')}
       </select>` : '';
 
     const editId = cardId + '-edit-' + active;
@@ -797,7 +798,7 @@ function renderResultCard(files, existingCardId) {
           <div style="display:flex;min-height:360px;flex:1">
 
             <!-- File tree (multi only) -->
-            ${isMulti ? `<div style="width:200px;min-width:140px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:10px 0;overflow-y:auto;resize:horizontal;overflow:auto"
+            ${isMulti ? `<div style="width:280px;min-width:180px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:10px 0;overflow-y:auto;resize:horizontal;overflow:auto"
   ondragover="event.preventDefault()"
   ondrop="treeDropToFolder(event,'','${cardId}')">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px 8px;border-bottom:1px solid var(--border);margin-bottom:6px">
@@ -879,21 +880,8 @@ function renderResultCard(files, existingCardId) {
       const btn = e.target.closest('[data-raction]');
       if (!btn) return;
       const action = btn.dataset.raction;
-      if (btn.dataset.card) {
-        try {
-          const selRF = document.querySelector('select[data-raction="runselect"][data-card="' + btn.dataset.card + '"]');
-          let sfRF = null;
-          if (selRF && selRF.value !== 'all') {
-            const cardRF = (window._codeCards || []).find(c => c.cardId === btn.dataset.card);
-            const fRF = cardRF && cardRF.files && cardRF.files[Number(selRF.value)];
-            const fnRF = fRF ? String(fRF.filename || '') : '';
-            if (fnRF.indexOf('tests/') === 0 && !fnRF.endsWith('__init__.robot')) {
-              sfRF = fnRF.split('/').pop().replace(/\.robot$/i, '');
-            }
-          }
-          window._runSuiteFilter = sfRF;
-        } catch (eRF) { window._runSuiteFilter = null; }
-      }
+      // [RUN-ONE] _runSuiteFilter supprimé : le lancement d'un fichier unique passe désormais
+      // par runOnlyFile (execFile=chemin), plus par --suite. Neutralise la collision Suite métier.
       if (action === 'folder-rename') {
         treeFolderRename(e, btn.dataset.folder, cardId);
       } else if (action === 'folder-delete') {
@@ -904,6 +892,7 @@ function renderResultCard(files, existingCardId) {
         treeDelete(e, parseInt(btn.dataset.ridx), cardId);
       } else if (action === 'tab') {
         activeTab = parseInt(btn.dataset.ridx);
+        runFollowsTab = true;   // [RUN-ONE] à partir d'ici, le dropdown suit l'onglet actif
         if (window._activeBpLine) delete window._activeBpLine[cardId];
         buildCard(activeTab);
       } else if (action === 'breakpoint') {
@@ -1018,11 +1007,13 @@ function renderResultCard(files, existingCardId) {
       } else if (action === 'run') {
         const sel = div.querySelector('[data-raction="runselect"]');
         const val = sel ? sel.value : 'all';
-        let filesToRun;
+        let filesToRun, runOnlyFile = null;
         if (!sel || val === 'all') {
-          filesToRun = files;
+          filesToRun = files;                 // "Tous" : STRICTEMENT inchangé
         } else {
-          filesToRun = [files[parseInt(val)]];
+          // [RUN-ONE] envoyer TOUS les fichiers (dépendances sur disque), n'exécuter QUE la cible
+          filesToRun = files;
+          runOnlyFile = files[parseInt(val)] ? files[parseInt(val)].filename : null;
         }
         // [BREAKPOINT LOT C] fichiers RF avec breakpoints -> injection Pause Execution (sur COPIE)
         const _bpFiles = filesToRun.filter(f => f.breakpoints && f.breakpoints.length && /\.(robot|resource)$/i.test(f.filename || ''));
@@ -1055,7 +1046,7 @@ function renderResultCard(files, existingCardId) {
         const _card = (window._codeCards || []).find(c => c.cardId === cardId);
         const imported = !!(_card && (_card.imported || _card.type === 'pulled'
           || (_card.files || []).some(f => f.desc === 'Importé')));
-        runTestsFromCard(combined, fname, { imported, importName: (_card && _card.title) || '', hasBreakpoint: _hasBp });
+        runTestsFromCard(combined, fname, { imported, importName: (_card && _card.title) || '', hasBreakpoint: _hasBp, runOnlyFile });
       } else if (action === 'copy') {
         navigator.clipboard.writeText(files[activeTab].code)
           .then(() => showToast(t('codecards.copied')));

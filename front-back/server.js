@@ -263,6 +263,7 @@ app.post('/api/inspect-dom', (req, res) => {
 
 app.post('/api/rf/run', async (req, res) => {
   const { code, filename, headless, browserType, suiteFilter, imported } = req.body;
+  const runOnlyFile = req.body.runOnlyFile || null;   // [RUN-ONE] cible unique (relpath = f.filename)
   if (!code) return res.status(400).json({ error: "code requis" });
   console.log("[BROWSER] type:", browserType, "headless:", headless);
   console.log("[CODE] first200:", code.slice(0,200).replace(/\n/g,"|"));  console.log("[CODE] hasLibBrowser:", code.includes("Library    Browser"), "hasNewBrowser:", code.includes("New Browser"));
@@ -1494,6 +1495,14 @@ def get_no_popup_options(browser="chrome", headless=False):
       }
     }
   } catch (eSE) { console.log('  [SPLIT@EXEC] skip:', eSE.message); }
+  // [RUN-ONE] lancer UNIQUEMENT le fichier ciblé via son CHEMIN (pas --suite).
+  // Gate !isSuiteBloc -> n'affecte JAMAIS la Suite métier ni l'import-en-suite (execFile posé à 1387-1391).
+  // path.join(writeBase, runOnlyFile) couvre généré (TESTS_DIR/tests/...) ET import simple (importDir/...).
+  if (runOnlyFile && !isSuiteBloc) {
+    const _only = path.join(writeBase, String(runOnlyFile).replace(/\\/g, '/'));
+    if (fs.existsSync(_only)) { execFile = _only; console.log('  [RUN-ONE] cible unique ->', path.relative(writeBase, _only)); }
+    else console.log('  [RUN-ONE] cible introuvable, execFile inchangé:', runOnlyFile);
+  }
   console.log('  POM: executing', path.relative(TESTS_DIR, execFile), '| TC count:', tcCount);
 
     const cmd2 = `robot --nostatusrc${suiteFilter ? ' --suite "' + String(suiteFilter) + '"' : ''} --output "${outputXml}" --report NONE --log "${path.join(TESTS_DIR, safeBase + '_log.html')}" "${execFile}"`;
