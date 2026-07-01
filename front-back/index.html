@@ -98,13 +98,7 @@
       <button class="action-btn ghost" onclick="openLivePanel()" data-i18n="ui.live">🔴 Live Tests</button>
       <button class="action-btn ghost" onclick="openAnalysisPanel()" data-i18n="ui.analysis">🔍 Analyse des tests</button>
       <button class="action-btn ghost" onclick="openCICDPanel()"><span data-i18n="ui.cicd">🚀 CI/CD Deploy</span><span id="cicdBadge" style="color:#c084fc"></span></button>
-      <button class="action-btn ghost" onclick="document.getElementById('userInput').focus()" data-i18n="genTestCases">
-        📋 Générer des cas de tests
-      </button>
       <input type="file" id="tcImportInput" accept=".csv,.tsv,.txt,.xlsx,.xls" style="display:none" onchange="importTCFromFile(this.files[0]); this.value='';">
-      <button class="action-btn teal-outline" onclick="generateCodeFromCases(window._lastApiKey)" data-i18n="genRFCode">
-        ⚡ Générer le code RF
-      </button>
 
     </div>
 
