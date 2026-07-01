@@ -484,16 +484,15 @@ app.post('/api/rf/run', async (req, res) => {
         if (!fs.existsSync(dd)) fs.mkdirSync(dd, { recursive: true });
       });
 
-      // Nettoyer les anciens feature_*.robot avant d'ecrire les nouveaux
-      const newFeatureFiles = new Set(
-        fileMatches2.map(m => m[1].trim()).filter(p => p.startsWith('tests/feature_')).map(p => path.basename(p))
-      );
+      // [FIX doublons] Purge COMPLÈTE des .robot de runBaseDir/tests (SAUF __init__.robot) AVANT écriture.
+      // Symétrise le nettoyage : retire aussi bien un tests.robot résiduel (run Suite Teardown précédent)
+      // que des feature_*.robot orphelins. Sans ça, robot exécute le DOSSIER avec 2 jeux (4+4=8).
+      // Scope = runBaseDir/tests (le dossier réellement exécuté, cf. testsFile2 ~515), PAS TESTS_DIR.
       const testsDir3 = path.join(runBaseDir, 'tests');
-      if (newFeatureFiles.size > 0 && fs.existsSync(testsDir3)) {
+      if (fs.existsSync(testsDir3)) {
         fs.readdirSync(testsDir3).forEach(f => {
-          if (f.startsWith('feature_') && f.endsWith('.robot') && !newFeatureFiles.has(f)) {
-            fs.unlinkSync(path.join(testsDir3, f));
-            console.log('  Browser/Playwright: removed old', f);
+          if (f.endsWith('.robot') && f !== '__init__.robot') {
+            try { fs.unlinkSync(path.join(testsDir3, f)); console.log('  Browser/Playwright: purged old', f); } catch (e) {}
           }
         });
       }
@@ -510,18 +509,6 @@ app.post('/api/rf/run', async (req, res) => {
         if (!fs.existsSync(dir2)) fs.mkdirSync(dir2, { recursive: true });
         fs.writeFileSync(absPath2, content2, 'utf8');
         console.log('  Browser/Playwright: wrote', relPath);
-        // Si on ecrit tests/tests.robot, supprimer les feature_*.robot
-        if (relPath === 'tests/tests.robot') {
-          const td = path.join(runBaseDir, 'tests');
-          if (fs.existsSync(td)) {
-            fs.readdirSync(td).forEach(f => {
-              if (f.endsWith('.robot') && f !== '__init__.robot' && f !== 'tests.robot') {
-                fs.unlinkSync(path.join(td, f));
-                console.log('  Browser/Playwright: removed old feature file:', f);
-              }
-            });
-          }
-        }
         if (relPath.includes('tests/') && relPath.endsWith('.robot')) {
           if (!testsFile2 || testsFile2 === robotFile) testsFile2 = absPath2;
           else testsFile2 = path.join(runBaseDir, 'tests'); // plusieurs fichiers -> dossier tests/

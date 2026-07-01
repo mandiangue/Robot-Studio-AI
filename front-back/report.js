@@ -320,6 +320,19 @@ function applyReportEdits() {
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmtD(ms){if(!ms||ms<0)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(2)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
+// [CASSE] Affichage pur : sentence-case en préservant les acronymes tout-majuscules (URL, API, ID, TC_001).
+// Ne touche JAMAIS les données (t.name reste brut) — appliqué uniquement au texte visible du rapport.
+function toSentenceCasePreserveAcronyms(str){
+  let started=false;
+  return String(str||'').split(/(\s+)/).map(tok=>{
+    if(/^\s+$/.test(tok))return tok;              // espaces préservés
+    if(/^[A-Z0-9_]{2,}$/.test(tok))return tok;    // acronyme/ID tout-majuscule (URL, API, ID, TC_001)
+    if(!/[A-Za-z]/.test(tok))return tok;          // ponctuation seule ("-") : ne démarre pas la phrase
+    const low=tok.toLowerCase();
+    if(!started){started=true;return low.charAt(0).toUpperCase()+low.slice(1);}  // 1er mot alpha capitalisé
+    return low;
+  }).join('');
+}
 
 function buildInlineReport(data) {
   // Thème : l'iframe blob est un document isolé -> on détecte le thème du parent au build et on
@@ -373,13 +386,13 @@ function buildInlineReport(data) {
       </div>` : '';
 
     return `
-      <div style="background:var(--r-card);border:1px solid var(--r-border);border-left:5px solid ${color};border-radius:10px;margin-bottom:12px;overflow:hidden">
+      <div class="tc-card" style="background:var(--r-card);border:1px solid var(--r-border);border-left:5px solid ${color};border-radius:10px;margin-bottom:12px;overflow:hidden">
         <!-- Test header -->
         <div onclick="var b=document.getElementById('tb${i}');b.style.display=b.style.display==='none'?'block':'none'"
           style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:var(--r-panel)">
           <span style="font-size:18px">${icon}</span>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:700;color:var(--r-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px" title="${esc(t.name)}">${esc(t.name)}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--r-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px" title="${esc(t.name)}">${esc(toSentenceCasePreserveAcronyms(t.name))}</div>
             <div style="font-size:11px;color:var(--r-muted);font-family:monospace;margin-top:2px">${iconEn} · ${fmtD(t.duration)}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end;overflow:hidden;max-width:300px;flex-shrink:0">${tags}</div>
@@ -422,9 +435,23 @@ function buildInlineReport(data) {
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI',Arial,sans-serif; background:var(--r-bg); color:var(--r-text); min-height:100vh; }
   @media print {
+    /* Overrides couleur PRINT UNIQUEMENT : force des teintes lisibles sur fond blanc.
+       Les var(--r-*) étant résolues jusque dans les styles inline, surcharger les variables
+       corrige tous les usages d'un coup. :root + body + body.theme-light + !important -> gagne
+       quel que soit le thème. Écran (fond sombre) STRICTEMENT inchangé (hors @media print). */
+    :root, body, body.theme-light {
+      --r-muted:#111 !important;    /* gris clair  -> noir       : durées, lib, en-têtes ST/STEP, ▼ */
+      --r-green:#166534 !important; /* vert clair  -> vert foncé : statut / badge PASS */
+      --r-text:#111 !important;     /* blanc cassé -> noir       : noms TC/steps (sinon invisibles sur blanc) */
+      --r-teal:#0e7490 !important;  /* turquoise   -> teal foncé : tags */
+      --r-red:#b91c1c !important;   /* rouge clair -> rouge foncé: messages/échecs lisibles sur blanc */
+      --r-orange:#9a3412 !important;/* jaune pâle  -> brun foncé : texte suggestion de fix */
+      --r-amber:#92400e !important; /* amber       -> ambre foncé: label FIX SUGGÉRÉ */
+    }
     body { background:#fff; color:#111; }
     .no-print { display:none !important; }
-    .test-body { display:block !important; }
+    [id^="tb"], .test-body { display:block !important; }   /* force TOUS les corps de TC ouverts dans le PDF */
+    .tc-card { break-inside:avoid; }                        /* évite la coupure d'une carte TC entre 2 pages */
   }
   .page { max-width:900px; margin:0 auto; padding:28px 24px; }
   .header-bar { background:linear-gradient(135deg,var(--r-panel),var(--r-card)); border:1px solid var(--r-border); border-radius:12px; padding:24px 28px; margin-bottom:24px; }
@@ -468,6 +495,7 @@ function buildInlineReport(data) {
   <!-- Print button -->
   <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap">
     <button class="print-btn" onclick="window.print()">${_t('report.print')}</button>
+    <button class="print-btn" style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.35);color:var(--r-blue)" onclick="window.print()">📄 Export PDF</button>
     ${data.logUrl ? `<a href="${data.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logRf')}</a>` : ''}
     ${(data.isSuite && Array.isArray(data.blocs)) ? data.blocs.filter(b => b.logUrl).map(b => `<a href="${b.logUrl}" target="_blank" class="print-btn no-print" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#c084fc;text-decoration:none">${_t('report.logBloc')} ${b.idx}</a>`).join('') : ''}
     <button class="print-btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:var(--r-green)" onclick="document.querySelectorAll('[id^=tb]').forEach(e=>e.style.display='block')">${_t('report.expandAll')}</button>
