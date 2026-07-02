@@ -102,7 +102,6 @@ async function runTestsFromCard(code, filename, suiteCtx) {
     return;
   }
   window._rfRunning = true;
-  const apiKey = document.getElementById('apiKey').value.trim();
   const isSuiteRun = suiteCtx?.isSuite;
 
   // Store immediately so Debug/Replay can use during run

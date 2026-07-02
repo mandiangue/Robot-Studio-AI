@@ -9,24 +9,15 @@ async function sendMessage() {
   const text  = input.value.trim();
   if (!text || isThinking) return;
 
-  // Utiliser la clé serveur si disponible, sinon celle saisie manuellement
-  const apiKey = window._serverApiKey || document.getElementById('apiKey').value.trim();
-  const provider = getCurrentProvider();
-  const keyPrefixes = {
-    anthropic: 'sk-ant-',
-    openai: 'sk-',
-    gemini: '', // Gemini keys don't have a fixed prefix
-    mistral: '',
-  };
-  const prefix = keyPrefixes[provider] || '';
-  if (!apiKey || (prefix && !apiKey.startsWith(prefix))) {
-    showToast(t('gen.configApiKey').replace('{provider}', provider));
+  // Clé côté serveur uniquement : _serverApiKey est un booléen "configuré".
+  const apiKey = window._serverApiKey;
+  if (!apiKey) {
+    showToast(t('gen.configApiKey').replace('{provider}', getCurrentProvider()));
     return;
   }
 
   input.value = '';
   input.style.height = 'auto';
-  window._lastApiKey = apiKey;
   renderUserMsg(text);
   await processMessage(text, apiKey);
 }
@@ -82,7 +73,7 @@ async function processMessage(userText, apiKey) {
     const isCodeCmd = /génère\s+le\s+code|genere\s+le\s+code|generate\s+(the\s+)?code|convertis|robot\s+framework|\.robot/i.test(lower);
     if (isCodeCmd && pendingTestCases) {
       hideTyping();
-      await generateCodeFromCases(window._serverApiKey || apiKey);
+      await generateCodeFromCases(window._serverApiKey);
       return;
     }
 
@@ -302,8 +293,7 @@ async function generatePOMFromBlocks(apiKey) {
 
 // ── STEP 2 : Générer le code RF depuis les cas en attente ─────────────────────
 async function generateCodeFromCases(apiKey) {
-  // Get key from DOM if not passed (called from sidebar button)
-  if (!apiKey) apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) apiKey = window._serverApiKey;
   if (!apiKey || false /* provider key check disabled */) {
     showToast(t('gen.configApiKey').replace('{provider}', getCurrentProvider()));
     return;
@@ -400,7 +390,7 @@ async function callClaude(apiKey, userText) {
     { role: 'user', content: userText },
   ];
 
-  return await callAI(apiKey, messages, system, 2048);
+  return await callAI(messages, system, 2048);
 }
 
 
@@ -408,7 +398,7 @@ async function callClaude(apiKey, userText) {
 
 // ── Haiku API call — fast, for TC generation (JSON responses) ─────────────────
 async function callClaudeHaiku(apiKey, prompt) {
-  return await callAI(apiKey, [{ role: 'user', content: prompt }], null, 2048);
+  return await callAI([{ role: 'user', content: prompt }], null, 2048);
 }
 
 
@@ -611,20 +601,13 @@ async function loadApiKeyForProvider(provider) {
     const keyR = await fetch(`/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
     if (keyR.ok) {
       const keyD = await keyR.json();
-      if (keyD.key) {
-        window._serverApiKey = keyD.key;
-        const keyEl = document.getElementById('apiKey');
-        if (keyEl) { keyEl.value = ''; keyEl.disabled = true; keyEl.placeholder = t('gen.apiKeyConfigured'); }
-        updateKeyStatus(keyD.key);
-        return true;
-      }
+      window._serverApiKey = !!keyD.configured;
+      updateKeyStatus(window._serverApiKey);
+      return window._serverApiKey;
     }
   } catch(e) {}
-  // Pas de clé en .env
-  window._serverApiKey = null;
-  const keyEl = document.getElementById('apiKey');
-  if (keyEl) { keyEl.disabled = false; keyEl.placeholder = t('gen.apiKeyField'); keyEl.value = localStorage.getItem('qa_agent_key') || ''; }
-  updateKeyStatus(keyEl?.value || '');
+  window._serverApiKey = false;
+  updateKeyStatus(false);
   return false;
 }
 
@@ -638,17 +621,7 @@ function onProviderChange(provider) {
   sel.innerHTML = models.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
   sel.value = models[1]?.value || models[0]?.value;
   localStorage.setItem('qa_agent_model', sel.value);
-  // Update placeholder
-  const key = document.getElementById('apiKey');
-  if (key) key.placeholder = t(PROVIDER_PLACEHOLDER[provider] || 'gen.apiKeyField');
-  // Remet le statut seulement si pas de clé déjà saisie
-  const existingKey = document.getElementById('apiKey')?.value || '';
-  if (!existingKey) {
-    document.getElementById('keyStatus').textContent = '⬤ no key';
-    document.getElementById('keyStatus').classList.remove('ok');
-  } else {
-    updateKeyStatus(existingKey);
-  }
+  // Le statut clé (configuré ?) est mis à jour par loadApiKeyForProvider ci-dessus.
 }
 
 function getCurrentProvider() {
@@ -680,86 +653,29 @@ async function fetchDomSnapshot(text) {
   } catch (e) { return ''; }
 }
 
-async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
+// [PROXY] Token de session mis en cache (récupéré une fois, réutilisé pour /api/ai).
+async function _getSessionToken() {
+  if (window._sessionToken) return window._sessionToken;
+  try {
+    const d = await (await fetch('/api/config/token')).json();
+    window._sessionToken = d.token;
+  } catch (e) {}
+  return window._sessionToken;
+}
+// [PROXY] Plus AUCUN appel direct provider : on relaie via /api/ai (clé côté serveur).
+// Les 4 branches + transformations (o-series, rôles Gemini, nettoyage Anthropic) vivent désormais dans server.js.
+async function callAI(messages, systemPrompt, maxTokens = 2048) {
   const provider = getCurrentProvider();
   const model    = document.getElementById('modelSelect')?.value || 'claude-sonnet-4-6';
-
-  if (provider === 'openai') {
-    // o-series models don't support system role — inject as first user message
-    const isOSeries = model.startsWith('o');
-    let msgs;
-    if (isOSeries) {
-      msgs = systemPrompt
-        ? [{ role: 'user', content: systemPrompt }, { role: 'assistant', content: 'Understood.' }, ...messages]
-        : messages;
-    } else {
-      msgs = systemPrompt
-        ? [{ role: 'system', content: systemPrompt }, ...messages]
-        : messages;
-    }
-    const tokenParam = isOSeries ? { max_completion_tokens: maxTokens } : { max_tokens: maxTokens };
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, ...tokenParam, messages: msgs }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'OpenAI error ' + r.status); }
-    const d = await r.json();
-    return d.choices[0]?.message?.content?.trim() || '';
-
-  } else if (provider === 'gemini') {
-    // Gemini requires alternating user/model roles — merge consecutive same-role messages
-    const rawParts = messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
-    const parts = [];
-    for (const p of rawParts) {
-      if (parts.length > 0 && parts[parts.length-1].role === p.role) {
-        parts[parts.length-1].parts[0].text += '\n' + p.parts[0].text;
-      } else {
-        parts.push(p);
-      }
-    }
-    // Gemini requires first message to be user
-    if (parts.length > 0 && parts[0].role !== 'user') parts.shift();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const body = { contents: parts };
-    if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
-    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Gemini error ' + r.status); }
-    const d = await r.json();
-    return d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-
-  } else if (provider === 'mistral') {
-    const msgs = systemPrompt
-      ? [{ role: 'system', content: systemPrompt }, ...messages]
-      : messages;
-    const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, max_tokens: maxTokens, messages: msgs }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Mistral error ' + r.status); }
-    const d = await r.json();
-    return d.choices[0]?.message?.content?.trim() || '';
-
-  } else {
-    // Anthropic (default)
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({ model, max_tokens: maxTokens, ...(systemPrompt ? { system: systemPrompt } : {}), messages }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || 'Anthropic error ' + r.status); }
-    const d = await r.json();
-    var raw = d.content[0]?.text?.trim() || '';
-    raw = raw.replace(/<span[^>]*>/g,'').replace(/<\/span>/g,'');
-    raw = raw.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
-    return raw;
-  }
+  const token    = await _getSessionToken();
+  const r = await fetch('/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, provider, model, messages, systemPrompt, maxTokens }),
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || 'AI error ' + r.status); }
+  const d = await r.json();
+  return d.text || '';
 }async function callClaudeRaw(apiKey, prompt, library, maxTokens = 4096) {
   // Deux usages distincts, NE PAS confondre :
   // - getSessionRules() = keywords Selenium en dur (Open Browser No Popup / executable_path / Close Browser)
@@ -773,7 +689,7 @@ async function callAI(apiKey, messages, systemPrompt, maxTokens = 2048) {
   const sys = `You are a Robot Framework expert. Output ONLY valid Robot Framework code. No explanations, no markdown fences, no comments outside RF syntax.${needsSessionRules ? ' ' + getSessionRules() : ''}`;
   const domSnap = needsDomSnapshot ? await fetchDomSnapshot(prompt) : '';
   if (domSnap) console.log('[DOM-AWARE] snapshot injecte (' + domSnap.length + ' chars)');
-  return await callAI(apiKey, [{ role: 'user', content: prompt + domSnap }], sys, maxTokens);
+  return await callAI([{ role: 'user', content: prompt + domSnap }], sys, maxTokens);
 }
 
 

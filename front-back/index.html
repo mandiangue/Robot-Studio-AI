@@ -36,13 +36,6 @@
       <option value="claude-sonnet-4-6" selected>🧠 Claude Sonnet 4.6</option>
       <option value="claude-opus-4-7">💎 Claude Opus 4.7</option>
     </select>
-    <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px 8px;transition:border-color .2s" id="keyBox">
-      <!-- Champ API masqué — clé chargée depuis .env -->
-      <input type="password" class="key-input" id="apiKey" data-i18n-ph="ui.apiKeyPh" placeholder="🔒 Clé API (.env)"
-        style="border:none;background:transparent;width:180px;padding:3px 4px;display:none"
-        onfocus="document.getElementById('keyBox').style.borderColor='var(--teal)'"
-        onblur="document.getElementById('keyBox').style.borderColor='var(--border)'" />
-    </div>
     <div class="key-status" id="keyStatus">⬤ no key</div>
     <div style="position:relative" id="langSelectorWrap">
       <button onclick="toggleLang()" id="langBtn"

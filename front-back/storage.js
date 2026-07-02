@@ -7,10 +7,6 @@
 const LS = {
   save() {
     try {
-      // Ne sauvegarder la clé que si elle est saisie manuellement (pas depuis .env)
-      if (!window._serverApiKey) {
-        localStorage.setItem('qa_agent_key', document.getElementById('apiKey').value);
-      }
       localStorage.setItem('qa_agent_history', JSON.stringify(chatHistory));
       // Save TC_STORE — only cards still in DOM
       const tcStoreLight = {};
@@ -37,10 +33,6 @@ const LS = {
     // Welcome message is already in index.html — no need to render it here
 
     try {
-      // ── API key
-      const key = localStorage.getItem('qa_agent_key');
-      if (key) { document.getElementById('apiKey').value = key; updateKeyStatus(key); }
-
       // ── Selects
       const lib   = localStorage.getItem('qa_agent_lib');
       const style = localStorage.getItem('qa_agent_style');

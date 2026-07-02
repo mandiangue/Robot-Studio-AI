@@ -329,7 +329,7 @@ function rebuildCard(cardId) {
       st.pages.push({ label: 'Page ' + (st.pages.length + 1), cases: [{ id: 1, testId: 'TC_001', name: 'Nouveau cas', description: '', expected: '' }] });
       syncStoreToPending(cid); rebuildCard(cid);
     } else if (action === 'copy')           tcCopy(cid);
-    else if (action === 'generate')         generateCodeFromCard(cid, window._serverApiKey || document.getElementById('apiKey').value.trim());
+    else if (action === 'generate')         generateCodeFromCard(cid, window._serverApiKey);
     else if (action === 'downloadcsv')      downloadCasesCSV(cid);
     else if (action === 'select-blocks')    { openBlockSelector(cid); return; }
     else if (action === 'merge-all')        { mergeAllCards(cid); return; }
@@ -552,7 +552,7 @@ function mergeSelectedBlocks(targetCardId) {
   const inp = document.getElementById('userInput');
   if (inp) { inp.value = ''; inp.style.height = 'auto'; }
   showToast(t('cards.mergedToGen').replace('{n}', merged));
-  setTimeout(() => { const k=window._serverApiKey||document.getElementById('apiKey')?.value?.trim(); if(k) generateCodeFromCases(k); else showToast(t('cards.warnApiKey')); }, 300);
+  setTimeout(() => { const k=window._serverApiKey; if(k) generateCodeFromCases(k); else showToast(t('cards.warnApiKey')); }, 300);
 }
 
 // ── Merge all TC cards in the chat into one ───────────────────────────────────

@@ -3292,9 +3292,113 @@ app.get('/api/config/apikey', (req, res) => {
     key = process.env[p.plain];
   }
 
-  if (!key) return res.status(404).json({ error: 'Clé non configurée' });
+  res.json({ configured: !!key });
+});
 
-  res.json({ key });
+// ── Proxy IA : le serveur relaie les appels providers avec la clé du .env. ────────
+// Le navigateur n'envoie/ne reçoit JAMAIS de clé. Body: {token, provider, model, messages, systemPrompt?, maxTokens?}
+// Les 4 branches reproduisent VERBATIM callAI client (generation.js) -> résultats identiques.
+app.post('/api/ai', async (req, res) => {
+  const { token, provider, model, messages, systemPrompt, maxTokens = 2048 } = req.body || {};
+  if (token !== SESSION_TOKEN) return res.status(401).json({ error: 'Token invalide' });
+  if (!provider || !model || !Array.isArray(messages)) {
+    return res.status(400).json({ error: 'Requête invalide (provider, model, messages requis)' });
+  }
+
+  // Récupération de la clé côté serveur — même logique que /api/config/apikey (jamais renvoyée au client)
+  const providerMap = {
+    anthropic: { env: 'ANTHROPIC_KEY_ENC', plain: 'ANTHROPIC_KEY' },
+    openai:    { env: 'OPENAI_KEY_ENC',    plain: 'OPENAI_KEY' },
+    gemini:    { env: 'GEMINI_KEY_ENC',    plain: 'GEMINI_KEY' },
+    mistral:   { env: 'MISTRAL_KEY_ENC',   plain: 'MISTRAL_KEY' },
+  };
+  const p = providerMap[provider];
+  if (!p) return res.status(400).json({ error: 'Provider inconnu' });
+  const secret = process.env.ENCRYPTION_SECRET;
+  let apiKey = null;
+  if (process.env[p.env] && secret) apiKey = decryptApiKey(process.env[p.env], secret);
+  if (!apiKey && process.env[p.plain]) apiKey = process.env[p.plain];
+  if (!apiKey) return res.status(404).json({ error: 'Clé non configurée pour ' + provider });
+
+  try {
+    let text = '';
+
+    if (provider === 'openai') {
+      // o-series models don't support system role — inject as first user message
+      const isOSeries = model.startsWith('o');
+      let msgs;
+      if (isOSeries) {
+        msgs = systemPrompt
+          ? [{ role: 'user', content: systemPrompt }, { role: 'assistant', content: 'Understood.' }, ...messages]
+          : messages;
+      } else {
+        msgs = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages;
+      }
+      const tokenParam = isOSeries ? { max_completion_tokens: maxTokens } : { max_tokens: maxTokens };
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({ model, ...tokenParam, messages: msgs }),
+      });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'OpenAI error ' + r.status }); }
+      const d = await r.json();
+      text = d.choices[0]?.message?.content?.trim() || '';
+
+    } else if (provider === 'gemini') {
+      // Gemini requires alternating user/model roles — merge consecutive same-role messages
+      const rawParts = messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+      const parts = [];
+      for (const pt of rawParts) {
+        if (parts.length > 0 && parts[parts.length - 1].role === pt.role) {
+          parts[parts.length - 1].parts[0].text += '\n' + pt.parts[0].text;
+        } else {
+          parts.push(pt);
+        }
+      }
+      // Gemini requires first message to be user
+      if (parts.length > 0 && parts[0].role !== 'user') parts.shift();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const body = { contents: parts };
+      if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'Gemini error ' + r.status }); }
+      const d = await r.json();
+      text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+
+    } else if (provider === 'mistral') {
+      const msgs = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages;
+      const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({ model, max_tokens: maxTokens, messages: msgs }),
+      });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'Mistral error ' + r.status }); }
+      const d = await r.json();
+      text = d.choices[0]?.message?.content?.trim() || '';
+
+    } else {
+      // Anthropic (default) — header dangerous-direct-browser-access retiré (inutile server-side)
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({ model, max_tokens: maxTokens, ...(systemPrompt ? { system: systemPrompt } : {}), messages }),
+      });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'Anthropic error ' + r.status }); }
+      const d = await r.json();
+      let raw = d.content[0]?.text?.trim() || '';
+      raw = raw.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
+      raw = raw.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      text = raw;
+    }
+
+    res.json({ text });
+  } catch (e) {
+    res.status(500).json({ error: 'Erreur proxy IA: ' + (e.message || 'inconnue') });
+  }
 });
 
 

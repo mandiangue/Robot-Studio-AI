@@ -8,13 +8,11 @@
 
 // ── API key (attached in DOMContentLoaded below) ──────────────────────────────
 
-function updateKeyStatus(val) {
+function updateKeyStatus(configured) {
   const el = document.getElementById('keyStatus');
-  const provider = getCurrentProvider();
-  const minLen = { anthropic: 20, openai: 20, gemini: 10, mistral: 10 };
-  const ok = val && val.length >= (minLen[provider] || 10);
-  el.textContent = ok ? t('conn.ready') : t('conn.noKey');
-  el.className   = 'key-status' + (ok ? ' ok' : '');
+  if (!el) return;
+  el.textContent = configured ? t('conn.ready') : t('conn.noKey');
+  el.className   = 'key-status' + (configured ? ' ok' : '');
 }
 // ── Azure connect — direct browser call ───────────────────────────────────────
 function parseAzureUrl(url) {
@@ -460,29 +458,7 @@ Le tableau "cases" contient AUTANT d'objets que de critères couverts (+ cas d'e
 }
 
 
-// ── API key helpers ───────────────────────────────────────────────────────────
-function clearApiKey() {
-  const el = document.getElementById('apiKey');
-  el.value = '';
-  el.type = 'password';
-  document.getElementById('keyToggle').textContent = '👁';
-  updateKeyStatus('');
-  try { localStorage.removeItem('qa_agent_key'); } catch(e) {}
-  el.focus();
-  showToast(t('conn.apiKeyCleared'));
-}
-
-function toggleKeyVisibility() {
-  const el  = document.getElementById('apiKey');
-  const btn = document.getElementById('keyToggle');
-  if (el.type === 'password') {
-    el.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    el.type = 'password';
-    btn.textContent = '👁';
-  }
-}
+// ── API key : clé côté serveur uniquement (.env) — plus de saisie/effacement client. ──
 
 // ══════════════════════════════════════════════════════════════════════════════
 // GRAPHICAL CONNECTION UI
@@ -628,7 +604,7 @@ async function uiFetchAzure() {
     const r    = await fetch(`/api/azure/workitem/${id}`);
     const data = await r.json();
     if (!r.ok) { showConnError('azure', '❌ ' + (data.error || t('conn.err.httpError').replace('{status}', r.status))); return; }
-    const apiKey = window._serverApiKey || document.getElementById('apiKey').value.trim();
+    const apiKey = window._serverApiKey;
     await handleFetchAndGenerate(id, false, apiKey, '', data);  // false = afficher carte + question + 2 boutons (génère au clic "Oui", comme Jira)
   } catch(err) {
     showConnError('azure', err.message.includes('fetch') ? '❌ Serveur proxy non démarré' : '❌ ' + err.message);
@@ -711,7 +687,7 @@ async function uiFetchJira() {
   const btn = document.querySelector('#jiraCard .mini-btn');
   if (btn) btn.textContent = '⏳';
 
-  await handleJiraFetch(id, false, window._serverApiKey || document.getElementById('apiKey').value.trim());
+  await handleJiraFetch(id, false, window._serverApiKey);
 
   if (btn) btn.textContent = t('conn.fetch');
 }

@@ -1108,15 +1108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // API key status + save
-  const apiKeyEl = document.getElementById('apiKey');
-  if (apiKeyEl) {
-    apiKeyEl.addEventListener('input', e => {
-      updateKeyStatus(e.target.value);
-      LS.save();
-    });
-  }
-
   // Selects save on change
   ['optLibrary', 'optStyle', 'optMode'].forEach(id => {
     const el = document.getElementById(id);
@@ -1132,13 +1123,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const keyR = await fetch(`/api/config/apikey?token=${tokenD.token}&provider=${provider}`);
       if (keyR.ok) {
         const keyD = await keyR.json();
-        if (keyD.key) {
-          window._serverApiKey = keyD.key;
-          document.getElementById('apiKey').value = '';
-          document.getElementById('apiKey').placeholder = '🔒 Clé API configurée dans .env';
-          document.getElementById('apiKey').disabled = true;
-          updateKeyStatus(keyD.key);
-        }
+        window._serverApiKey = !!keyD.configured;
+        updateKeyStatus(window._serverApiKey);
       }
     } catch(e) {
       // Pas de serveur ou pas de clé — utiliser la clé saisie manuellement
