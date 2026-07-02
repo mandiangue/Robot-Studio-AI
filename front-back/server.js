@@ -3309,6 +3309,9 @@ const MODEL_PRICES = {
   'claude-sonnet-5':   { in: 2,  out: 10 },   // tarif INTRO jusqu'au 31/08/2026, puis 3/15
   'claude-sonnet-4-6': { in: 3,  out: 15 },
   'claude-haiku-4-5-20251001': { in: 1, out: 5 },
+  'claude-opus-4-5-20251101':   { in: 5, out: 25 },
+  'claude-opus-4-1-20250805':   { in: 5, out: 25 },
+  'claude-sonnet-4-5-20250929': { in: 3, out: 15 },
   // OpenAI
   'gpt-4.1':      { in: 2,    out: 8 },
   'gpt-4.1-mini': { in: 0.4,  out: 1.6 },
@@ -3433,7 +3436,8 @@ app.post('/api/ai', async (req, res) => {
       });
       if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'Anthropic error ' + r.status }); }
       const d = await r.json();
-      let raw = d.content[0]?.text?.trim() || '';
+      const textBlock = (d.content || []).find(c => c.type === 'text');   // Sonnet 5 place un bloc "thinking" en [0]
+      let raw = (textBlock?.text || '').trim();
       raw = raw.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
       raw = raw.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
       text = raw;
@@ -3471,6 +3475,137 @@ app.get('/api/usage', async (req, res) => {
     res.json({ totalTokens, totalCost, count: docs.length, estimatedCost, estimatedCalls, byProvider, byModel, byDay });
   } catch (e) {
     res.json({ totalTokens: 0, totalCost: 0, count: 0, byProvider: {}, byModel: {}, byDay: {} });
+  }
+});
+
+// ── [MODELS] Liste dynamique des modèles par provider (filtrée + labels fusionnés + cache 3h) ──
+const _modelCache = {};                              // { provider: { at, models } }
+const MODEL_CACHE_TTL = 3 * 60 * 60 * 1000;          // 3h
+// Labels curés (miroir de PROVIDER_MODELS client — à garder en phase). id connu -> emoji.
+const CURATED_LABELS = {
+  anthropic: {
+    'claude-sonnet-5':'🌟 Claude Sonnet 5',
+    'claude-opus-4-8':'💎 Claude Opus 4.8',
+    'claude-opus-4-7':'Claude Opus 4.7',
+    'claude-opus-4-6':'Claude Opus 4.6',
+    'claude-opus-4-5-20251101':'Claude Opus 4.5',
+    'claude-opus-4-1-20250805':'Claude Opus 4.1',
+    'claude-sonnet-4-6':'Claude Sonnet 4.6',
+    'claude-sonnet-4-5-20250929':'Claude Sonnet 4.5',
+    'claude-haiku-4-5-20251001':'⚡ Claude Haiku 4.5',
+  },
+  openai: {
+    'gpt-4.1':'🧠 GPT-4.1', 'gpt-4.1-mini':'⚡ GPT-4.1 Mini', 'gpt-4.1-nano':'🚀 GPT-4.1 Nano',
+    'gpt-4o':'🔵 GPT-4o', 'gpt-4o-mini':'💨 GPT-4o Mini',
+  },
+  gemini: {
+    'gemini-3.1-pro-preview':'🌟 Gemini 3.1 Pro Preview', 'gemini-3-flash-preview':'⚡ Gemini 3 Flash Preview',
+    'gemini-2.5-pro':'💎 Gemini 2.5 Pro', 'gemini-2.5-flash':'✨ Gemini 2.5 Flash',
+    'gemini-2.5-flash-lite-preview-06-17':'🚀 Gemini 2.5 Flash Lite', 'gemini-2.0-flash':'💨 Gemini 2.0 Flash',
+  },
+  mistral: {
+    'mistral-large-latest':'💎 Mistral Large 3', 'mistral-small-latest':'⚡ Mistral Small 4',
+    'mistral-medium-latest':'🧠 Mistral Medium', 'open-mistral-nemo':'🌐 Mistral Nemo',
+  },
+};
+function _prettifyModel(id) {
+  return String(id).replace(/[-_]/g, ' ').replace(/\b(gpt|api|ai|rf)\b/gi, s => s.toUpperCase())
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+function _filterModels(provider, raw) {
+  const kept = [];
+  for (const m of raw) {
+    const id = m.id;
+    if (!id) continue;
+    if (provider === 'anthropic') {
+      if (!/^claude-/i.test(id)) continue;
+      if (/^claude-(instant|[0-3])[-.]/i.test(id)) continue;               // exclut claude-2.x, claude-3-*, instant
+      if (/^claude-(fable|mythos)-/i.test(id)) continue;                   // exclut familles non-QA (Fable/Mythos)
+    } else if (provider === 'openai') {
+      if (!(/^gpt-4/i.test(id) || /^gpt-5/i.test(id) || /^o[1-9]/i.test(id))) continue;
+      if (/^gpt-3/i.test(id)) continue;                                     // gpt-3.5
+      if (/embedding|whisper|tts|dall-e|image|moderation|realtime|audio|transcribe|search|davinci|babbage|ada/i.test(id)) continue;
+      if (/-instruct\b/i.test(id)) continue;
+      if (/-\d{4}(-\d{2}-\d{2})?$/.test(id)) continue;                      // snapshots datés
+    } else if (provider === 'gemini') {
+      if (!/^gemini-/i.test(id)) continue;
+      if (!(m.supportedGenerationMethods || []).includes('generateContent')) continue;
+      if (/^gemini-(1\.|2\.0)/i.test(id)) continue;                         // 1.x + 2.0 (déprécié)
+      if (/^gemini-pro/i.test(id)) continue;
+      if (/-exp\b|exp-\d/i.test(id)) continue;                              // expérimentaux (garde -preview)
+    } else if (provider === 'mistral') {
+      if (m.deprecation != null) continue;                                  // champ officiel Mistral
+      if (!/^(mistral-(large|small|medium)|ministral-|magistral-|open-mistral-nemo)/i.test(id)) continue;
+      if (/embed|moderation|ocr|tiny|-7b|mixtral|codestral|pixtral/i.test(id)) continue;
+      if (/-\d{4}$/.test(id)) continue;                                     // versions datées -> garde -latest
+    }
+    kept.push({ id, display_name: m.display_name });
+  }
+  const curated = CURATED_LABELS[provider] || {};
+  const order = Object.keys(curated);
+  const seen = new Set();
+  const models = kept
+    .filter(m => (seen.has(m.id) ? false : seen.add(m.id)))
+    .map(m => ({
+      value: m.id,
+      label: curated[m.id] || m.display_name || _prettifyModel(m.id),
+      known: Object.prototype.hasOwnProperty.call(curated, m.id),
+    }));
+  models.sort((a, b) => {                                                   // connus d'abord (ordre curated), puis alpha
+    const ia = order.indexOf(a.value), ib = order.indexOf(b.value);
+    if (ia !== -1 || ib !== -1) { if (ia === -1) return 1; if (ib === -1) return -1; return ia - ib; }
+    return a.value.localeCompare(b.value);
+  });
+  return models;
+}
+app.get('/api/models', async (req, res) => {
+  const { token, provider } = req.query;
+  if (token !== SESSION_TOKEN) return res.status(401).json({ ok: false, error: 'Token invalide', models: [] });
+  const providerMap = {
+    anthropic: { env: 'ANTHROPIC_KEY_ENC', plain: 'ANTHROPIC_KEY' },
+    openai:    { env: 'OPENAI_KEY_ENC',    plain: 'OPENAI_KEY' },
+    gemini:    { env: 'GEMINI_KEY_ENC',    plain: 'GEMINI_KEY' },
+    mistral:   { env: 'MISTRAL_KEY_ENC',   plain: 'MISTRAL_KEY' },
+  };
+  const p = providerMap[provider];
+  if (!p) return res.status(400).json({ ok: false, error: 'Provider inconnu', models: [] });
+
+  const cached = _modelCache[provider];
+  if (cached && (Date.now() - cached.at) < MODEL_CACHE_TTL) {
+    return res.json({ ok: true, models: cached.models, cached: true });
+  }
+
+  const secret = process.env.ENCRYPTION_SECRET;
+  let apiKey = null;
+  if (process.env[p.env] && secret) apiKey = decryptApiKey(process.env[p.env], secret);
+  if (!apiKey && process.env[p.plain]) apiKey = process.env[p.plain];
+  if (!apiKey) return res.json({ ok: false, error: 'Clé non configurée', models: [] });
+
+  try {
+    const sig = AbortSignal.timeout(10000);
+    let raw = [];
+    if (provider === 'anthropic') {
+      const r = await fetch('https://api.anthropic.com/v1/models?limit=1000', { headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }, signal: sig });
+      if (!r.ok) throw new Error('anthropic ' + r.status);
+      raw = ((await r.json()).data || []).map(m => ({ id: m.id, display_name: m.display_name }));
+    } else if (provider === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': 'Bearer ' + apiKey }, signal: sig });
+      if (!r.ok) throw new Error('openai ' + r.status);
+      raw = ((await r.json()).data || []).map(m => ({ id: m.id }));
+    } else if (provider === 'gemini') {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=' + apiKey, { signal: sig });
+      if (!r.ok) throw new Error('gemini ' + r.status);
+      raw = ((await r.json()).models || []).map(m => ({ id: String(m.name || '').replace(/^models\//, ''), supportedGenerationMethods: m.supportedGenerationMethods || [] }));
+    } else if (provider === 'mistral') {
+      const r = await fetch('https://api.mistral.ai/v1/models', { headers: { 'Authorization': 'Bearer ' + apiKey }, signal: sig });
+      if (!r.ok) throw new Error('mistral ' + r.status);
+      raw = ((await r.json()).data || []).map(m => ({ id: m.id, deprecation: m.deprecation }));
+    }
+    const models = _filterModels(provider, raw);
+    _modelCache[provider] = { at: Date.now(), models };
+    res.json({ ok: true, models });
+  } catch (e) {
+    res.json({ ok: false, error: e.message || 'models error', models: [] });
   }
 });
 

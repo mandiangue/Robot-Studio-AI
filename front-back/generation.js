@@ -614,14 +614,29 @@ async function loadApiKeyForProvider(provider) {
 function onProviderChange(provider) {
   localStorage.setItem('qa_provider', provider);
   loadApiKeyForProvider(provider);
-  // Update model list
+  populateModels(provider);   // liste dynamique via /api/models (fallback PROVIDER_MODELS)
+}
+
+// Peuple #modelSelect depuis /api/models (dynamique) ; fallback PROVIDER_MODELS si échec. Générique (4 providers).
+async function populateModels(provider) {
   const sel = document.getElementById('modelSelect');
   if (!sel) return;
-  const models = PROVIDER_MODELS[provider] || PROVIDER_MODELS.anthropic;
+  window._modelCache = window._modelCache || {};
+  let models = window._modelCache[provider];
+  if (!models) {
+    try {
+      const token = await _getSessionToken();
+      const r = await fetch(`/api/models?provider=${provider}&token=${token}`);
+      const d = await r.json();
+      if (d.ok && Array.isArray(d.models) && d.models.length) models = d.models;
+    } catch (e) {}
+    if (!models) models = PROVIDER_MODELS[provider] || PROVIDER_MODELS.anthropic;   // FALLBACK
+    window._modelCache[provider] = models;
+  }
+  const want = localStorage.getItem('qa_agent_model') || sel.value;   // préserve la sélection
   sel.innerHTML = models.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
-  sel.value = models[1]?.value || models[0]?.value;
+  sel.value = models.some(m => m.value === want) ? want : (models[0]?.value || '');
   localStorage.setItem('qa_agent_model', sel.value);
-  // Le statut clé (configuré ?) est mis à jour par loadApiKeyForProvider ci-dessus.
 }
 
 function getCurrentProvider() {
