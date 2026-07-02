@@ -11,6 +11,8 @@ const app     = express();
 const PORT    = process.env.PORT || 3001;
 
 const { connectDB } = require('./db');
+const mongoose = require('mongoose');                       // [USAGE] readyState guard
+const TokenUsage = require('./models/TokenUsage');          // [USAGE] collecte tokens
 const pulledBlocksRouter = require('./routes/pulledblocks');
 // connectDB() n'est PAS appele ici (fire-and-forget) : on l'attend (cape) dans start() en fin de
 // fichier, AVANT app.listen -> le serveur n'accepte du trafic qu'une fois Mongo pret (ou cap 8s).
@@ -3298,6 +3300,44 @@ app.get('/api/config/apikey', (req, res) => {
 // ── Proxy IA : le serveur relaie les appels providers avec la clé du .env. ────────
 // Le navigateur n'envoie/ne reçoit JAMAIS de clé. Body: {token, provider, model, messages, systemPrompt?, maxTokens?}
 // Les 4 branches reproduisent VERBATIM callAI client (generation.js) -> résultats identiques.
+// ── [USAGE] Tarifs $/1M tokens (in=prompt, out=complétion). Source de vérité à maintenir. ──
+const MODEL_PRICES = {
+  // Anthropic (tarifs 4.x — PAS les anciens 15/75 d'Opus 3)
+  'claude-opus-4-8':   { in: 5,  out: 25 },
+  'claude-opus-4-7':   { in: 5,  out: 25 },
+  'claude-opus-4-6':   { in: 5,  out: 25 },
+  'claude-sonnet-5':   { in: 2,  out: 10 },   // tarif INTRO jusqu'au 31/08/2026, puis 3/15
+  'claude-sonnet-4-6': { in: 3,  out: 15 },
+  'claude-haiku-4-5-20251001': { in: 1, out: 5 },
+  // OpenAI
+  'gpt-4.1':      { in: 2,    out: 8 },
+  'gpt-4.1-mini': { in: 0.4,  out: 1.6 },
+  'gpt-4.1-nano': { in: 0.1,  out: 0.4 },
+  'gpt-4o':       { in: 2.5,  out: 10 },
+  'gpt-4o-mini':  { in: 0.15, out: 0.6 },
+  // Gemini
+  'gemini-2.5-pro':   { in: 1.25, out: 10 },
+  'gemini-2.5-flash': { in: 0.3,  out: 2.5 },
+  'gemini-2.0-flash': { in: 0.1,  out: 0.4 },
+  // Mistral
+  'mistral-large-latest':  { in: 2,   out: 6 },
+  'mistral-small-latest':  { in: 0.2, out: 0.6 },
+  'mistral-medium-latest': { in: 0.4, out: 2 },
+};
+// Fallback par provider (ne PAS surestimer)
+const PROVIDER_AVG = {
+  anthropic: { in: 3,   out: 15 },
+  openai:    { in: 1,   out: 4 },
+  gemini:    { in: 0.5, out: 4 },
+  mistral:   { in: 0.9, out: 3 },
+};
+function estimateCost(provider, model, inTok, outTok) {
+  let price = MODEL_PRICES[model], estimated = false;
+  if (!price) { price = PROVIDER_AVG[provider] || { in: 2, out: 8 }; estimated = true; }
+  const cost = (inTok / 1e6) * price.in + (outTok / 1e6) * price.out;
+  return { cost, estimated };
+}
+
 app.post('/api/ai', async (req, res) => {
   const { token, provider, model, messages, systemPrompt, maxTokens = 2048 } = req.body || {};
   if (token !== SESSION_TOKEN) return res.status(401).json({ error: 'Token invalide' });
@@ -3322,6 +3362,7 @@ app.post('/api/ai', async (req, res) => {
 
   try {
     let text = '';
+    let inTok = 0, outTok = 0;
 
     if (provider === 'openai') {
       // o-series models don't support system role — inject as first user message
@@ -3343,6 +3384,7 @@ app.post('/api/ai', async (req, res) => {
       if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'OpenAI error ' + r.status }); }
       const d = await r.json();
       text = d.choices[0]?.message?.content?.trim() || '';
+      inTok = d.usage?.prompt_tokens || 0; outTok = d.usage?.completion_tokens || 0;
 
     } else if (provider === 'gemini') {
       // Gemini requires alternating user/model roles — merge consecutive same-role messages
@@ -3364,6 +3406,7 @@ app.post('/api/ai', async (req, res) => {
       if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'Gemini error ' + r.status }); }
       const d = await r.json();
       text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      inTok = d.usageMetadata?.promptTokenCount || 0; outTok = d.usageMetadata?.candidatesTokenCount || 0;
 
     } else if (provider === 'mistral') {
       const msgs = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages;
@@ -3375,6 +3418,7 @@ app.post('/api/ai', async (req, res) => {
       if (!r.ok) { const e = await r.json().catch(() => ({})); return res.status(r.status).json({ error: e.error?.message || 'Mistral error ' + r.status }); }
       const d = await r.json();
       text = d.choices[0]?.message?.content?.trim() || '';
+      inTok = d.usage?.prompt_tokens || 0; outTok = d.usage?.completion_tokens || 0;
 
     } else {
       // Anthropic (default) — header dangerous-direct-browser-access retiré (inutile server-side)
@@ -3393,11 +3437,40 @@ app.post('/api/ai', async (req, res) => {
       raw = raw.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
       raw = raw.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
       text = raw;
+      inTok = d.usage?.input_tokens || 0; outTok = d.usage?.output_tokens || 0;
+    }
+
+    // [USAGE] enregistrement NON bloquant — n'impacte jamais la réponse IA
+    const { cost, estimated } = estimateCost(provider, model, inTok, outTok);
+    if (mongoose.connection?.readyState === 1) {   // 1 = connected -> sinon skip (pas de buffering)
+      TokenUsage.create({ provider, model, inputTokens: inTok, outputTokens: outTok,
+        totalTokens: inTok + outTok, cost, estimated }).catch(() => {});
     }
 
     res.json({ text });
   } catch (e) {
     res.status(500).json({ error: 'Erreur proxy IA: ' + (e.message || 'inconnue') });
+  }
+});
+
+// ── [USAGE] Lecture agrégée de la consommation tokens (pour le panneau Temps 2) ──
+app.get('/api/usage', async (req, res) => {
+  try {
+    const docs = await TokenUsage.find().lean();
+    let totalTokens = 0, totalCost = 0, estimatedCost = 0, estimatedCalls = 0;
+    const byProvider = {}, byModel = {}, byDay = {};
+    const acc = (obj, key) => (obj[key] = obj[key] || { tokens: 0, cost: 0, calls: 0 });
+    for (const u of docs) {
+      totalTokens += u.totalTokens || 0; totalCost += u.cost || 0;
+      if (u.estimated) { estimatedCost += u.cost || 0; estimatedCalls++; }
+      const day = new Date(u.createdAt).toISOString().slice(0, 10);
+      const P = acc(byProvider, u.provider || 'unknown'); P.tokens += u.totalTokens || 0; P.cost += u.cost || 0; P.calls++;
+      const M = acc(byModel, u.model || 'unknown');       M.tokens += u.totalTokens || 0; M.cost += u.cost || 0; M.calls++;
+      const D = acc(byDay, day);                          D.tokens += u.totalTokens || 0; D.cost += u.cost || 0; D.calls++;
+    }
+    res.json({ totalTokens, totalCost, count: docs.length, estimatedCost, estimatedCalls, byProvider, byModel, byDay });
+  } catch (e) {
+    res.json({ totalTokens: 0, totalCost: 0, count: 0, byProvider: {}, byModel: {}, byDay: {} });
   }
 });
 

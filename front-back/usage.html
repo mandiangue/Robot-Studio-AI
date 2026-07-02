@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RoboTest Studio — Consommation Token API</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--bg:#07090f;--surface:#0d1117;--card:#111820;--border:#2a3f55;--gold:#f59e0b;--text:#e8f0f8;--muted:#94afc8;
+      --anthropic:#a855f7;--openai:#22c55e;--gemini:#60a5fa;--mistral:#f59e0b}
+body.theme-light{--bg:#f1f5f9;--surface:#ffffff;--card:#f8fafc;--border:#cbd5e1;--gold:#b45309;--text:#0f172a;--muted:#475569;
+      --anthropic:#7c3aed;--openai:#15803d;--gemini:#1d4ed8;--mistral:#b45309}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px 22px}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.head h1{font-size:16px;font-weight:800;letter-spacing:.5px}
+.head .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.metric-toggle{margin-left:auto;display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px}
+.metric-toggle button{background:transparent;border:none;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 12px;border-radius:6px;cursor:pointer}
+.metric-toggle button.active{background:rgba(245,158,11,0.15);color:var(--gold);font-weight:700}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:14px}
+.kpi-val{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace}
+.kpi-lbl{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-top:4px}
+.kpi.est{border-left-color:var(--muted)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:260px}
+.chart-card.full{grid-column:1 / -1}
+.chart-wrap{position:relative;height:220px}
+.chart-card.full .chart-wrap{height:260px}
+.chart-title{font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.empty{text-align:center;padding:50px;color:var(--muted);font-size:13px}
+@media(max-width:720px){.charts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="head">
+    <span class="dot"></span>
+    <h1 data-i18n="title">💰 Consommation Token API</h1>
+    <div class="metric-toggle">
+      <button id="mCost"   class="active" onclick="setMetric('cost')"   data-i18n="mCost">Coût $</button>
+      <button id="mTokens"               onclick="setMetric('tokens')" data-i18n="mTokens">Tokens</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="empty" data-i18n="loading">Chargement…</div>
+  </div>
+
+<script>
+// ── i18n minimal (fr/en) ─────────────────────────────────────────────────────
+const U_I18N = {
+  fr: { title:'💰 Consommation Token API', mCost:'Coût $', mTokens:'Tokens', loading:'Chargement…',
+    kTokens:'TOKENS TOTAUX', kCost:'COÛT TOTAL ESTIMÉ', kCalls:'APPELS', kToday:'AUJOURD\'HUI', kEst:'DONT PRIX ESTIMÉ', kCallSingular:'appel', kCallPlural:'appels',
+    cProvider:'Répartition par provider', cModel:'Par modèle', cDay:'Évolution par jour',
+    empty:'Aucune consommation enregistrée pour l\'instant. Lance des générations IA.' },
+  en: { title:'💰 API Token Usage', mCost:'Cost $', mTokens:'Tokens', loading:'Loading…',
+    kTokens:'TOTAL TOKENS', kCost:'TOTAL EST. COST', kCalls:'CALLS', kToday:'TODAY', kEst:'OF WHICH ESTIMATED', kCallSingular:'call', kCallPlural:'calls',
+    cProvider:'Breakdown by provider', cModel:'By model', cDay:'Daily evolution',
+    empty:'No usage recorded yet. Run some AI generations.' },
+};
+let _lang = 'fr';
+function tl(k){ return (U_I18N[_lang] && U_I18N[_lang][k]) || U_I18N.fr[k] || k; }
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { const k = el.getAttribute('data-i18n'); el.textContent = tl(k); });
+  document.documentElement.lang = _lang;
+}
+
+// ── état ─────────────────────────────────────────────────────────────────────
+let _data = null;
+let _metric = 'cost';            // 'cost' | 'tokens'
+const charts = {};
+const PROVIDER_COLOR = { anthropic:'--anthropic', openai:'--openai', gemini:'--gemini', mistral:'--mistral' };
+const PALETTE = ['#f59e0b','#a855f7','#22c55e','#60a5fa','#ef4444','#14b8a6','#c084fc','#eab308','#fb7185','#38bdf8'];
+
+function cssVar(name){ return getComputedStyle(document.body).getPropertyValue(name).trim() || name; }
+function fmtNum(n){ return (n||0).toLocaleString(_lang === 'en' ? 'en-GB' : 'fr-FR'); }
+function fmtCost(c){ c = c||0; if (c >= 1) return '$'+c.toFixed(2); if (c >= 0.01) return '$'+c.toFixed(4); return '$'+c.toFixed(6); }
+function val(obj){ return _metric === 'cost' ? (obj.cost||0) : (obj.tokens||0); }
+function fmtVal(v){ return _metric === 'cost' ? fmtCost(v) : fmtNum(v); }
+// Pluriel des appels : FR = singulier si N≤1 (0 appel, 1 appel, 2 appels) ; EN = singulier si N===1 (0 calls, 1 call, 2 calls)
+function plCalls(n){ n = n||0; const one = _lang === 'en' ? (n === 1) : (n <= 1); return n + ' ' + tl(one ? 'kCallSingular' : 'kCallPlural'); }
+
+// ── chargement ───────────────────────────────────────────────────────────────
+async function loadUsage(){
+  try {
+    const r = await fetch('/api/usage', { cache:'no-store' });
+    _data = await r.json();
+  } catch(e) { _data = { totalTokens:0, totalCost:0, count:0, estimatedCost:0, estimatedCalls:0, byProvider:{}, byModel:{}, byDay:{} }; }
+  render();
+}
+
+function setMetric(m){
+  _metric = m;
+  document.getElementById('mCost').classList.toggle('active', m==='cost');
+  document.getElementById('mTokens').classList.toggle('active', m==='tokens');
+  if (_data) render();
+}
+
+// ── rendu ────────────────────────────────────────────────────────────────────
+function render(){
+  const d = _data || {};
+  const content = document.getElementById('content');
+  if (!d.count) {
+    Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+    content.innerHTML = '<div class="empty">'+tl('empty')+'</div>';
+    return;
+  }
+  const today = (d.byDay || {})[new Date().toISOString().slice(0,10)] || { tokens:0, cost:0, calls:0 };
+  content.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">${fmtNum(d.totalTokens)}</div><div class="kpi-lbl">${tl('kTokens')}</div></div>
+      <div class="kpi"><div class="kpi-val">${fmtCost(d.totalCost)}</div><div class="kpi-lbl">${tl('kCost')}</div></div>
+      <div class="kpi"><div class="kpi-val">${fmtNum(d.count)}</div><div class="kpi-lbl">${tl('kCalls')}</div></div>
+      <div class="kpi"><div class="kpi-val">${fmtVal(val(today))}</div><div class="kpi-lbl">${tl('kToday')}</div></div>
+      <div class="kpi est"><div class="kpi-val">${fmtCost(d.estimatedCost||0)} (${plCalls(d.estimatedCalls||0)})</div><div class="kpi-lbl">${tl('kEst')}</div></div>
+    </div>
+    <div class="charts">
+      <div class="chart-card"><div class="chart-title">🥧 ${tl('cProvider')}</div><div class="chart-wrap"><canvas id="chProvider"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">📊 ${tl('cModel')}</div><div class="chart-wrap"><canvas id="chModel"></canvas></div></div>
+      <div class="chart-card full"><div class="chart-title">📈 ${tl('cDay')}</div><div class="chart-wrap"><canvas id="chDay"></canvas></div></div>
+    </div>`;
+  buildCharts(d);
+}
+
+function baseOpts(){
+  const muted = cssVar('--muted');
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ labels:{ color:muted, font:{family:"'IBM Plex Mono',monospace", size:11} } } },
+    scales:{ x:{ ticks:{color:muted,font:{family:"'IBM Plex Mono',monospace",size:10}}, grid:{color:'rgba(148,175,200,0.08)'} },
+             y:{ ticks:{color:muted,font:{family:"'IBM Plex Mono',monospace",size:10}}, grid:{color:'rgba(148,175,200,0.08)'} } }
+  };
+}
+
+function buildCharts(d){
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+
+  // 1) Camembert par provider
+  const provKeys = Object.keys(d.byProvider);
+  charts.provider = new Chart(document.getElementById('chProvider'), {
+    type:'doughnut',
+    data:{ labels:provKeys, datasets:[{ data:provKeys.map(k=>val(d.byProvider[k])),
+      backgroundColor:provKeys.map(k=> cssVar(PROVIDER_COLOR[k] || '--gold')), borderColor:cssVar('--surface'), borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ color:cssVar('--muted'), font:{family:"'IBM Plex Mono',monospace",size:11} } },
+        tooltip:{ callbacks:{ label:(c)=> c.label+' : '+fmtVal(c.raw) } } } }
+  });
+
+  // 2) Colonnes par modèle (repli byProvider si < 2 modèles)
+  const useModel = Object.keys(d.byModel).length >= 2;
+  const src = useModel ? d.byModel : d.byProvider;
+  const barKeys = Object.keys(src);
+  charts.model = new Chart(document.getElementById('chModel'), {
+    type:'bar',
+    data:{ labels:barKeys, datasets:[{ label:_metric, data:barKeys.map(k=>val(src[k])),
+      backgroundColor:barKeys.map((k,i)=> useModel ? PALETTE[i%PALETTE.length] : cssVar(PROVIDER_COLOR[k]||'--gold')), borderRadius:5 }] },
+    options:{ ...baseOpts(), plugins:{ ...baseOpts().plugins, legend:{ display:false },
+      tooltip:{ callbacks:{ label:(c)=> fmtVal(c.raw) } } } }
+  });
+
+  // 3) Courbe par jour (trié)
+  const days = Object.keys(d.byDay).sort();
+  charts.day = new Chart(document.getElementById('chDay'), {
+    type:'line',
+    data:{ labels:days, datasets:[{ label:_metric, data:days.map(k=>val(d.byDay[k])),
+      borderColor:cssVar('--gold'), backgroundColor:'rgba(245,158,11,0.12)', tension:.35, fill:true, pointRadius:4 }] },
+    options:{ ...baseOpts(), plugins:{ ...baseOpts().plugins, legend:{ display:false },
+      tooltip:{ callbacks:{ label:(c)=> fmtVal(c.raw) } } } }
+  });
+}
+
+// ── thème / langue (pilotés par le parent, cross-frame same-origin) ───────────
+window.applyUsageTheme = function(isLight){ document.body.classList.toggle('theme-light', !!isLight); if (_data) render(); };
+window.applyUsageLang  = function(lang){ _lang = (lang === 'en') ? 'en' : 'fr'; applyStaticI18n(); if (_data) render(); };
+window.addEventListener('message', function(e){ if (e && e.data && e.data.type === 'refresh-usage') loadUsage(); });
+
+// ── boot ─────────────────────────────────────────────────────────────────────
+try { applyUsageTheme(localStorage.getItem('qa_agent_theme') === 'light'); } catch(e){}
+applyStaticI18n();
+loadUsage();
+</script>
+</body>
+</html>
