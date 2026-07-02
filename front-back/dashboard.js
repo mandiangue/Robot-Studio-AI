@@ -7,6 +7,7 @@
 window.__i18nRerender = window.__i18nRerender || [];
 window.__i18nRerender.push(() => {
   document.getElementById('dashboardIframe')?.contentWindow?.applyDashboardLang?.(currentLang);
+  document.getElementById('usageFrame')?.contentWindow?.applyUsageLang?.(currentLang);
 });
 
 // ── Open dashboard inline ──────────────────────────────────────────────────────
@@ -17,6 +18,7 @@ function openDashboard() {
     closeDashboardPanel();
     return;
   }
+  closeUsagePanel();                        // [EXCLUSIVITÉ] même slot droit
   panel.style.display       = 'flex';
   panel.style.flexDirection = 'column';
   // Re-fetch l'historique à chaque ouverture : le fetch initial (boot de l'iframe) peut avoir
@@ -51,6 +53,46 @@ function closeDashboardPanel() {
   const panel = document.getElementById('dashboardPanel');
   if (panel) panel.style.display = 'none';
   const btn = document.querySelector('[onclick="openDashboard()"]');
+  if (btn) btn.classList.remove('active');
+}
+
+// ── Panneau Consommation Token API (calque de openDashboard) ────────────────────
+function openUsagePanel() {
+  const panel = document.getElementById('usagePanel');
+  if (!panel) { window.open('usage.html', '_blank'); return; }
+  if (panel.style.display === 'flex') { closeUsagePanel(); return; }
+  closeDashboardPanel();                                      // [EXCLUSIVITÉ] même slot droit
+  panel.style.display = 'flex'; panel.style.flexDirection = 'column';
+  const frame = document.getElementById('usageFrame');
+  if (frame && !frame.src) { frame.src = 'usage.html'; }      // LAZY : charge au 1er open
+  else { frame?.contentWindow?.postMessage({ type: 'refresh-usage' }, '*'); }  // refresh aux suivants
+  const btn = document.querySelector('[onclick="openUsagePanel()"]');
+  if (btn) btn.classList.add('active');
+  const handle = document.getElementById('usagePanelHandle');
+  if (handle && !handle._resizeInit) {
+    handle._resizeInit = true;
+    handle.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = panel.offsetWidth;
+      const onMove = function(ev) {
+        const newW = Math.min(Math.max(startW + (startX - ev.clientX), 400), window.innerWidth * 0.95);
+        panel.style.width = newW + 'px';
+      };
+      const onUp = function() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+}
+
+function closeUsagePanel() {
+  const panel = document.getElementById('usagePanel');
+  if (panel) panel.style.display = 'none';
+  const btn = document.querySelector('[onclick="openUsagePanel()"]');
   if (btn) btn.classList.remove('active');
 }
 

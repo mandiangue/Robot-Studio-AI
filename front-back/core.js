@@ -309,6 +309,7 @@ function toggleTheme() {
   try { localStorage.setItem('qa_agent_theme', isLight ? 'light' : 'dark'); } catch(e) {}
   // Propager au dashboard (iframe = document isolé : la classe theme-light ne s'y propage pas seule)
   try { document.getElementById('dashboardIframe')?.contentWindow?.applyDashboardTheme?.(isLight); } catch(e) {}
+  try { document.getElementById('usageFrame')?.contentWindow?.applyUsageTheme?.(isLight); } catch(e) {}
   // Propager aux RAPPORTS ouverts (iframes blob, même origine). Cible EXPLICITE via window._openReports
   // (et non un sélecteur générique #messages iframe qui toucherait toute future iframe du chat).
   // Couvre rapports simples ET de suite (tous enregistrés sous reportCard-<runNum>).
@@ -468,7 +469,7 @@ const TRANSLATIONS = {
     // index.html — chrome statique
     'ui.skipLink':'Aller au contenu principal',
     'ui.statTC':'Cas de tests', 'ui.statGenerated':'Tests RF lancés', 'ui.statSuites':'Suites', 'ui.statPassed':'Réussis', 'ui.statFailed':'Échoués', 'ui.statRate':'Taux réussite',
-    'ui.dashboard':'📊 Dashboard & Analytics', 'ui.live':'🔴 Live Tests', 'ui.analysis':'🔍 Analyse des tests', 'ui.cicd':'🚀 CI/CD Deploy',
+    'ui.dashboard':'📊 Dashboard & Analytics', 'ui.live':'🔴 Live Tests', 'ui.analysis':'🔍 Analyse des tests', 'ui.cicd':'🚀 CI/CD Deploy', 'ui.usage':'💰 Consommation Token API', 'ui.usageTitle':'💰 CONSOMMATION TOKEN API',
     'ui.testSuite':'🧪 TEST SUITE', 'ui.manageSuites':'🧪 Gérer les suites de tests',
     'ui.browserLabel':'NAVIGATEUR', 'ui.sessionLabel':'SESSION',
     'ui.suiteManager':'🧪 Test Suite Manager', 'ui.scheduler':'⏰ Scheduler', 'ui.suites':'SUITES',
@@ -773,7 +774,7 @@ const TRANSLATIONS = {
     // index.html — static chrome
     'ui.skipLink':'Skip to main content',
     'ui.statTC':'Test cases', 'ui.statGenerated':'RF tests run', 'ui.statSuites':'Suites', 'ui.statPassed':'Passed', 'ui.statFailed':'Failed', 'ui.statRate':'Success rate',
-    'ui.dashboard':'📊 Dashboard & Analytics', 'ui.live':'🔴 Live Tests', 'ui.analysis':'🔍 Test analysis', 'ui.cicd':'🚀 CI/CD Deploy',
+    'ui.dashboard':'📊 Dashboard & Analytics', 'ui.live':'🔴 Live Tests', 'ui.analysis':'🔍 Test analysis', 'ui.cicd':'🚀 CI/CD Deploy', 'ui.usage':'💰 API Token Usage', 'ui.usageTitle':'💰 API TOKEN USAGE',
     'ui.testSuite':'🧪 TEST SUITE', 'ui.manageSuites':'🧪 Manage test suites',
     'ui.browserLabel':'BROWSER', 'ui.sessionLabel':'SESSION',
     'ui.suiteManager':'🧪 Test Suite Manager', 'ui.scheduler':'⏰ Scheduler', 'ui.suites':'SUITES',
